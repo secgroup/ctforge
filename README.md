@@ -17,12 +17,12 @@ Install the aforementioned packages
 
 Create an user for running the website instance
 
-    $ sudo useradd ctforge -m -G users -s /bin/bash
+    $ sudo useradd ctforge -m -s /bin/bash
 
 Add a database user with the permission to create new databases
 
+    $ sudo service postgresql start
     $ sudo -u postgres createuser -d -P ctforge
-    $ sudo service postgresql restart
 
 Login as the `ctforge` user, download and unpack the CTForge source code
 
@@ -41,8 +41,26 @@ Install the framework in development mode for now, adjust the configuration file
     (ctforge)$ ./setup.py develop
     (ctforge)$ cp ctforge.conf ctforge.custom.conf
     (ctforge)$ ctforge -c ctforge.custom.conf init
+    [*] Reading configuration from ctforge.custom.ctforge.conf
 
- Now you can run the site and edit your custom template, the application will automatically reload upon file modifications. Take a look at the `dctf2016` resources in the `examples/` folder
+    Welcome to the installation script of CTForge
+    Please backup your /home/ctforge/.ctforge/ctforge.conf file before continuing.
+
+    Do you want to proceed? (y/n) y
+    [*] Creating database schema
+    [*] Installing SQL procedures
+    [*] Adding an administrative user
+        name: Marco
+        surname: Squarcina
+        mail: squarcina@*****.**
+        password: *******************
+        re-enter the password: *******************
+    Save configuration to /home/ctforge/.ctforge/ctforge.conf ? (y/n) y
+    Create log dir /home/ctforge/.ctforge/logs ? (y/n) y
+    Create log file /home/ctforge/.ctforge/logs/site.log ? (y/n) y
+
+
+Now you can run the site and edit your custom template, the application will automatically reload upon file modifications. Take a look at the `dctf2016` resources in the `examples/` folder
 
     (ctforge)$ ctforge run
 
@@ -50,11 +68,10 @@ When you are done editing the template, install the package using
 
     (ctforge)$ ./setup.py install
 
-Congratulations!
+
+### Attack-defense
+Todo.
 
 Deployment using Nginx and Uwsgi
 --------------------------------
-
-
-### Attack-defense
 Todo.
