@@ -15,15 +15,14 @@ Install the aforementioned packages
 
     $ sudo apt install nginx uwsgi postgresql postgresql-contrib postgresql-server-dev-all
 
-Create an user that will be responsible of running the website instance
+Create an user for running the website instance
 
     $ sudo useradd ctforge -m -G users -s /bin/bash
 
-Add a database user with the ability to create new databases
+Add a database user with the permission to create new databases
 
     $ sudo -u postgres createuser -d -P ctforge
     $ sudo service postgresql restart
-
 
 Login as the `ctforge` user, download and unpack the CTForge source code
 
@@ -33,10 +32,20 @@ Login as the `ctforge` user, download and unpack the CTForge source code
 
 Now prepare the Python virtualenv
  
+    $ mkdir -p ~/.venvs/
     $ virtualenv -p /usr/bin/python3 ~/.venvs/ctforge
     $ . ~/.venvs/ctforge/bin/activate
-    (ctforge)$ ./setup.py install
-    (ctforge)$ ctforge_install
+
+Install the framework in development mode for now, adjust the configuration file to your needs and initialize CTForge
+
+    (ctforge)$ ./setup.py develop
+    (ctforge)$ cp ctforge.conf ctforge.custom.conf
+    (ctforge)$ ctforge -c ctforge.custom.conf init
+
+ Now you can run the site and edit your custom template without reloading the application. Take a look at the `dctf2016` resources in the `examples/` folder
+
+    (ctforge)$ 
+
 
 Congratulations!
 

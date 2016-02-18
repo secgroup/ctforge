@@ -42,7 +42,8 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 # initialize the logging system
 if app.config['LOG_FILE'] is not None:
     try:
-        file_handler = logging.FileHandler(app.config['LOG_FILE'])
+        logfile = os.path.expanduser(app.config['LOG_FILE'])
+        file_handler = logging.FileHandler(logfile)
         file_handler.setFormatter(logging.Formatter((
             '-'*90,
             'Message type:       %(levelname)s',
@@ -53,7 +54,7 @@ if app.config['LOG_FILE'] is not None:
             'Message: %(message)s')))
         file_handler.setLevel(logging.WARNING)
         app.logger.addHandler(file_handler)
-    except FileNotFoundError as e:
-        sys.stderr.write('[!] Unable to access the log file {}\n'.format(app.config['LOG_FILE']))
+    except (FileNotFoundError, PermissionError) as e:
+        sys.stderr.write('[!] Unable to access the log file {}\n'.format(logfile))
 
 import ctforge.views

@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<div class="jumbotron"></div>
+
+<p class="lead">Deep Space <del>DAIS</del> CTF (DCTF) is a Capture The Flag hacking contest
+in which a number of alien races fight independently against each other in
+order to tower over the galactic empire.</p>
+
+<div class="row">
+    <div class="col-md-4">
+        <p>The goal of each team is to maintain a set of services such that they
+        remain available and uncompromised throughout the contest. Each team also has
+        to attempt to compromise the other teams' services. Since all the teams have
+        access to a copy of the same virtual machine containing the vulnerable
+        services, each team has to find vulnerabilities in its host and fix them
+        without disrupting the services.</p>
+    </div>
+    <div class="col-md-4">
+        <p>At the same time, the teams have to leverage their knowledge about the
+        vulnerabilities they find to compromise the servers run by other teams.
+        Compromising a service allows a team to bypass the service's security
+        mechanisms and to "capture the flag" associated with the service. The team
+        that has the best combination of attack and defense skills wins.</p>
+    </div>
+    <div class="col-md-4">
+        <p>In parallel with the main contest, a number of side challenges are
+        left to be solved to the bravest participants. Since points earned by
+        solving challenges do not contribute to the score of the teams,
+        these problems must be solved individually.</p>
+    </div>
+</div>
+{% endblock %}

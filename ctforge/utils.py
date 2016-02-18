@@ -32,7 +32,7 @@ def parse_conf(fname):
 
             STATIC_FOLDER = config.get('website', 'static_folder', fallback='static'),
             TEMPLATE_FOLDER = config.get('website', 'template_folder', fallback='templates'),
-            URL = config.get('website', 'url', fallback='https://localhost:5000/'),
+            URL = config.get('website', 'url', fallback='http://localhost:5000/'),
             DATE_START = config.get('website', 'date_start', fallback='2016-01-01 00:00:00.0'),
             DEBUG = config.getboolean('website', 'debug', fallback=False),
             SESSION_COOKIE_SECURE = config.getboolean('website', 'secure_cookie', fallback=True),

@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+{% from "_macros.html" import tabify %}
+
+<h1>Admin Panel</h1>
+
+<ul class="nav nav-tabs" role="tablist" id="tab">
+    <li role="presentation" {% if tab == 'users' %}class="active"{% endif %}>
+        <a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a>
+    </li>
+    {% if config.ATTACKDEFENSE_ACTIVE %}
+    <li role="presentation" {% if tab == 'teams' %}class="active"{% endif %}>
+        <a href="#teams" aria-controls="teams" role="tab" data-toggle="tab">Teams</a>
+    </li>
+    <li role="presentation" {% if tab == 'services' %}class="active"{% endif %}>
+        <a href="#services" aria-controls="services" role="tab" data-toggle="tab">Services</a>
+    </li>
+    {% endif %}
+    {% if config.JEOPARDY_ACTIVE %}
+    <li role="presentation" {% if tab == 'challenges' %}class="active"{% endif %}>
+        <a href="#challenges" aria-controls="challenges" role="tab" data-toggle="tab">Challenges</a>
+    </li>
+    {% endif %}
+</ul>
+
+<div class="tab-content">
+    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'mail', 'hidden', 'admin'], 'user', class = 'active in' if tab == 'users') }}
+{% if config.ATTACKDEFENSE_ACTIVE %}
+    {{ tabify(teams, ['id', 'ip', 'name', 'token', 'poc'], 'team', class = 'active in' if tab == 'teams') }}
+    {{ tabify(services, ['id', 'name', 'active'], 'service', class = 'active in' if tab == 'services') }}
+{% endif %}
+{% if config.JEOPARDY_ACTIVE %}
+    {{ tabify(challenges, ['id', 'name', 'points', 'active'], 'challenge', class = 'active in' if tab == 'challenges') }}
+{% endif %}
+</div>
+
+{% endblock %}
+{% block footer %}{% endblock %}

@@ -89,18 +89,25 @@ def init(args):
     os.makedirs(os.path.expanduser('~/.ctforge/'), mode=0o700, exist_ok=True)
     copy2(args.conf, os.path.expanduser('~/.ctforge/ctforge.conf'))
 
-    logdir = os.path.dirname(app.config['LOG_FILE'])
-    resp = ask('Create log dir {} ? (y/n)'.format(logdir), 'y' if args.yes else None)
-    exit_on_resp(resp)
-    os.makedirs(logdir, mode=0o700, exist_ok=True)
+    if app.config['LOG_FILE'] is not None:
+        logfile = os.path.expanduser(app.config['LOG_FILE'])
+        if not os.path.exists(logfile):
+            logdir = os.path.dirname(logfile)
+            resp = ask('Create log dir {} ? (y/n)'.format(logdir), 'y' if args.yes else None)
+            exit_on_resp(resp)
+            os.makedirs(logdir, mode=0o700, exist_ok=True)
+            resp = ask('Create log file {} ? (y/n)'.format(logfile), 'y' if args.yes else None)
+            exit_on_resp(resp)
+            os.mknod(logfile, mode=0o600)
 
 def run(args):
-    app.run(host=args.host, debug=(not args.disable_debug))
+    debug = args.debug or app.config['DEBUG']
+    app.run(host=args.host, port=args.port, debug=debug)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
     parser.add_argument('-c', '--conf', dest='conf', type=str,
-        help='Configuration file', default='ctforge.conf')
+        help='Configuration file')
     subparsers = parser.add_subparsers(dest='command')
 
     parser_init = subparsers.add_parser('init', help='Install and initialize the framework')
@@ -111,9 +118,9 @@ def parse_args():
     parser_init.add_argument('-y', '--yes', action='store_true', help='Say Yes to all questions')
 
     parser_run = subparsers.add_parser('run', help='Run an instance of the framework for development purposes')
-    parser_run.add_argument('-H', '--host', type=str, default='127.0.0.1', 
-        help='Hostname to listen on (default is 127.0.0.1)')
-    parser_run.add_argument('-D', '--disable-debug', action='store_true', help='Disable debug mode', default=False)
+    parser_run.add_argument('-H', '--host', type=str, help='Hostname to listen on', default='127.0.0.1')
+    parser_run.add_argument('-P', '--port', type=int, help='Port to listen on', default=5000)
+    parser_run.add_argument('-D', '--disable-debug', dest='debug', action='store_true', help='Disable debug mode')
 
     return parser.parse_args()
 
@@ -121,18 +128,18 @@ def main():
     global config
 
     args = parse_args()
+    if args.conf is not None:
+        print('[*] Reading configuration from {}'.format(args.conf))
+        sys.stdout.flush()
 
-    print('[*] Reading configuration from {}'.format(args.conf))
-    sys.stdout.flush()
+        try:
+            config = utils.parse_conf(args.conf)
+        except Exception:
+            sys.stderr.write('Invalid configuration file, aborting!')
+            sys.exit(1)
 
-    try:
-        config = utils.parse_conf(args.conf)
-    except Exception:
-        sys.stderr.write('Invalid configuration file, aborting!')
-        sys.exit(1)
-
-    # update the global app configuration
-    app.config.update(config)
+        # update the global app configuration
+        app.config.update(config)
 
     if args.command == 'run':
         run(args)

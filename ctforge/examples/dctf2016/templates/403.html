@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block title %}Forbidden{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+<div class="row text-center"><span class="glyphicon glyphicon-remove huge-icon" aria-hidden="true"></span></div>
+<h1>Forbidden</h1>
+<p class="lead">The requested page cannot be accessed, try to <a href="{{ url_for('login') }}">login</a></p>
+{% endblock %}
+{% block footer %}{% endblock %}

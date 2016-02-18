@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block title %}Challenge Scoreboard{% endblock %}
+{% block content %}
+
+{% from "_macros.html" import get_jqplot_code %}
+
+<h1>Challenge Scoreboard</h1>
+
+<p>Bonus points: +3, +2, +1 to the first, second, third solver of each challenge</p>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- Table -->
+        <table class="table scoreboard">
+            <thead>
+                <tr>
+                    <td class="text-left">User</td>
+                {% for c, cv in challenges.items() %}
+                    <td class="text-center">
+                        <a href="{{ url_for('challenge', name=cv.name) }}" title="{{ cv.points }} points" class="btn btn-lg btn-default {% if not cv.active %}inactive{% endif %}" role="button">
+                            {{ cv.name }}
+                        </a>
+                    </td>
+                {% endfor %}
+                    <td class="text-right">Total</td>
+                </tr>
+            </thead>
+            <tbody>
+            {% for score in scoreboard %}
+                <tr>
+                    <td class="text-left">{{ score.user }}</td>
+                {% for c, cv in challenges.items() %}
+                    <td class="text-center">
+                    {% if score.challenges[c].timestamp %}
+                        <span class="alert-info" aria-hidden="true" title="{{ score.challenges[c].timestamp }}">{{ score.challenges[c].points }}</span>
+                    {% else %}
+                        <span class="glyphicon glyphicon-remove alert-danger" aria-hidden="true" style="background: none"></span>
+                    {% endif %}
+                    </td>
+                {% endfor %}
+                    <td class="text-right">{{ score.points }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div id="users_time" style="height:600px;"></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div id="challenges_time" style="height:600px;"></div>
+    </div>
+</div>
+<script>
+$(document).ready(function() {
+    {{ get_jqplot_code('users_time', users_graph, users_labels, 'renderer:$.jqplot.DateAxisRenderer', "label: 'Points'", min_x, max_x, min_y, max_y) }}
+    {{ get_jqplot_code('challenges_time', challenges_graph, challenges_labels, 'renderer:$.jqplot.DateAxisRenderer', "label: '#Solvers'", min_x, max_x, min_y, max_y) }}
+});
+</script>
+
+{% endblock %}
