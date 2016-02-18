@@ -35,7 +35,7 @@ def parse_conf(fname):
             URL = config.get('website', 'url', fallback='http://localhost:5000/'),
             DATE_START = config.get('website', 'date_start', fallback='2016-01-01 00:00:00.0'),
             DEBUG = config.getboolean('website', 'debug', fallback=False),
-            SESSION_COOKIE_SECURE = config.getboolean('website', 'secure_cookie', fallback=True),
+            SESSION_COOKIE_SECURE = config.getboolean('website', 'secure_cookie', fallback=False),
             LOG_FILE = config.get('website', 'log_file', fallback=None),
             SECRET_KEY = config.get('website', 'secret_key', fallback='ChengeMeWithRandomStuffASAP')
         )
