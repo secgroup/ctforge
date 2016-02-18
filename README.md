@@ -27,7 +27,7 @@ Add a database user with the permission to create new databases
 Login as the `ctforge` user, download and unpack the CTForge source code
 
     $ sudo -u ctforge -i
-    $ git clone git://...
+    $ git clone git@github.com:secgroup/ctforge.git
     $ cd ctforge
 
 Now prepare the Python virtualenv
@@ -42,12 +42,19 @@ Install the framework in development mode for now, adjust the configuration file
     (ctforge)$ cp ctforge.conf ctforge.custom.conf
     (ctforge)$ ctforge -c ctforge.custom.conf init
 
- Now you can run the site and edit your custom template without reloading the application. Take a look at the `dctf2016` resources in the `examples/` folder
+ Now you can run the site and edit your custom template, the application will automatically reload upon file modifications. Take a look at the `dctf2016` resources in the `examples/` folder
 
-    (ctforge)$ 
+    (ctforge)$ ctforge run
 
+When you are done editing the template, install the package using
+
+    (ctforge)$ ./setup.py install
 
 Congratulations!
+
+Deployment using Nginx and Uwsgi
+--------------------------------
+
 
 ### Attack-defense
 Todo.
