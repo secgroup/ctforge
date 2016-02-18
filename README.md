@@ -13,7 +13,7 @@ Since CTForge is entirely written in Python, a working Python 3 installation is 
 
 Install the aforementioned packages
 
-    $ sudo apt install nginx uwsgi postgresql postgresql-contrib postgresql-server-dev-all
+    $ sudo apt install nginx uwsgi python3-dev postgresql postgresql-contrib postgresql-server-dev-all
 
 Create an user for running the website instance
 

@@ -62,7 +62,7 @@ def init(args):
     resp = ask('Do you want to proceed? (y/n)', 'y' if args.yes else None)
     exit_on_resp(resp)
     
-    print('[*] Creating datbase schema')
+    print('[*] Creating database schema')
     db_create_schema()
 
     print('[*] Installing SQL procedures')
@@ -120,7 +120,7 @@ def parse_args():
     parser_run = subparsers.add_parser('run', help='Run an instance of the framework for development purposes')
     parser_run.add_argument('-H', '--host', type=str, help='Hostname to listen on', default='127.0.0.1')
     parser_run.add_argument('-P', '--port', type=int, help='Port to listen on', default=5000)
-    parser_run.add_argument('-D', '--disable-debug', dest='debug', action='store_true', help='Disable debug mode')
+    parser_run.add_argument('-D', '--disable-debug', dest='debug', action='store_false', help='Disable debug mode')
 
     return parser.parse_args()
 
