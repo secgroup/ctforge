@@ -84,10 +84,11 @@ def init(args):
 
     db_add_admin(admin_name, admin_surname, admin_mail, admin_password)
 
-    resp = ask('Save configuration to ~/.ctforge/ctforge.conf ? (y/n)', 'y' if args.yes else None)
+    confile = os.path.expanduser('~/.ctforge/ctforge.conf')
+    resp = ask('Save configuration to {} ? (y/n)'.format(confile), 'y' if args.yes else None)
     exit_on_resp(resp)
-    os.makedirs(os.path.expanduser('~/.ctforge/'), mode=0o700, exist_ok=True)
-    copy2(args.conf, os.path.expanduser('~/.ctforge/ctforge.conf'))
+    os.makedirs(os.path.dirname(confile), mode=0o700, exist_ok=True)
+    copy2(args.conf, confile)
 
     if app.config['LOG_FILE'] is not None:
         logfile = os.path.expanduser(app.config['LOG_FILE'])
