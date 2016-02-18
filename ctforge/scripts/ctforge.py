@@ -56,8 +56,9 @@ def ask(question, answer=None):
         return input()
 
 def init(args):
+    confile = os.path.expanduser('~/.ctforge/ctforge.conf')
     print(('\nWelcome to the installation script of CTForge\n'
-           'Please backup your ~/.ctforge/ctforge.conf file before continuing.\n'))
+           'Please backup your {} file before continuing.\n'.format(confile)))
     
     resp = ask('Do you want to proceed? (y/n)', 'y' if args.yes else None)
     exit_on_resp(resp)
@@ -84,7 +85,6 @@ def init(args):
 
     db_add_admin(admin_name, admin_surname, admin_mail, admin_password)
 
-    confile = os.path.expanduser('~/.ctforge/ctforge.conf')
     resp = ask('Save configuration to {} ? (y/n)'.format(confile), 'y' if args.yes else None)
     exit_on_resp(resp)
     os.makedirs(os.path.dirname(confile), mode=0o700, exist_ok=True)
