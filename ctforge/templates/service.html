@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}{{ service.name }}{% endblock %}
+{% block content %}
+
+<h2>{{ service.name }}</h2>
+
+{% if not service.active %}
+<p class="lead">Service deactivated</p>
+{% endif %}
+
+{{ service.description|safe }}
+
+{% endblock %}

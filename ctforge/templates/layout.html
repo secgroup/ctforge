@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% block head %}
+        <title>CTForge - {% block title %}{% endblock %}</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="CTForge">
+        <meta name="author" content="Marco Squarcina">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='js/jquery.jqplot.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.0.3.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery.jqplot.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jqplot.dateAxisRenderer.min.js') }}"></script>
+        {% endblock %}
+    </head>
+    <body>
+        {% block navigation %}
+        <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="{{ url_for('index') }}">CTForge</a>
+                </div>
+                <div class="collapse navbar-collapse">
+                    <ul class="nav navbar-nav">
+                    {% if config.JEOPARDY_ACTIVE %}
+                        <li {% if request.path == url_for('challenges') %}class="active"{% endif %}><a href="{{ url_for('challenges') }}">Challenge Scoreboard</a></li>
+                    {% endif %}
+                    {% if config.ATTACKDEFENSE_ACTIVE %}
+                        <li {% if request.path == url_for('scoreboard') %}class="active"{% endif %}><a href="{{ url_for('scoreboard') }}">CTF Scoreboard</a></li>
+                    {% endif %}
+                        <li {% if request.path == url_for('design') %}class="active"{% endif %}><a href="{{ url_for('design') }}">CTF Design</a></li>
+                    {% if config.ATTACKDEFENSE_ACTIVE %}
+                        <li {% if request.path == url_for('teams') %}class="active"{% endif %}><a href="{{ url_for('teams') }}">Teams</a></li>
+                    {% endif %}
+                        <li {% if request.path == url_for('credits') %}class="active"{% endif %}><a href="{{ url_for('credits') }}">Credits</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown">
+                        {% if current_user.is_authenticated %}
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                Hi {{ current_user.name }}<span class="caret">
+                            </span></a>
+                            <ul class="dropdown-menu" role="menu">
+                            {% if config.ATTACKDEFENSE_ACTIVE %}
+                                <li><a href="/team">Team Details</a></li>
+                                <li><a href="/submit">Flag Submission Service</a></li>
+                                <li class="divider"></li>
+                            {% endif %}
+                                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                            </ul>
+                        {% else %}
+                            <a href="{{ url_for('login') }}">Login</a>
+                        {% endif %}
+                        </li>
+                    </ul>
+                </div><!--/.nav-collapse -->
+            </div><!--/.container -->
+        </nav>
+        {% endblock %}
+        <div id="content" class="container">
+            {% block content %}
+            {% endblock %}
+            {% block footer %}
+            <hr>
+            <footer>
+                <p class="muted credit">Created with CTForge.</p>
+            </footer><!-- /footer -->
+            {% endblock %}
+        </div> <!-- /container -->
+    {% if current_user.is_authenticated and current_user.admin %}
+        <div id="admin-button" style="position: fixed; right: 60px; bottom: 20px; opacity: 0.8">
+        {% if 'admin' in request.path %}
+            <a href="{{ url_for('index') }}"><button type="button" class="btn btn-info btn-xl"><span class="glyphicon glyphicon-home"></span></button></a>
+        {% else %}
+            <a href="{{ url_for('admin') }}"><button type="button" class="btn btn-danger btn-xl"><span class="glyphicon glyphicon-cog"></span></button></a>
+        {% endif %}
+    {% endif %}
+        </div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <!-- Modal -->
+        <div class="modal fade" id="flash-messages" tabindex="-1" role="dialog" aria-labelledby="flash-messages" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body">
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Error:</span>
+                    {% elif category == 'success' %}
+                            <div class="alert alert-success" role="alert">
+                            <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                            <span class="sr-only">Success:</span>
+                    {% else %}
+                            <div class="alert alert-info" role="alert">
+                            <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Info:</span>
+                    {% endif %}
+                            {{ message }}
+                        </div>
+                {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>$('#flash-messages').modal('show');</script>
+    {% endif %}
+{% endwith %}
+    </body>
+</html>
