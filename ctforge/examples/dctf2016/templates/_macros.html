@@ -122,16 +122,16 @@
                 min: '{{ min_x }}',
               {% endif %}
               {% if max_x is not none %}
-                max: '{{ max_x }}'
+                max: '{{ max_x }}',
               {% endif %}
               },
               yaxis: {
                 {{ label_y|safe }},
               {% if min_y is not none %}
-                min: '{{ min_y }}',
+                min: {{ min_y }},
                {% endif %}
               {% if max_y is not none %}
-                max: '{{ max_y }}'
+                max: {{ max_y }},
               {% endif %}
               }
             },
