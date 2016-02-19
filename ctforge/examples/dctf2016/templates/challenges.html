@@ -17,7 +17,11 @@
                     <td class="text-left">User</td>
                 {% for c, cv in challenges.items() %}
                     <td class="text-center">
+                    {% if cv.active or current_user.admin %}
                         <a href="{{ url_for('challenge', name=cv.name) }}" title="{{ cv.points }} points" class="btn btn-lg btn-default {% if not cv.active %}inactive{% endif %}" role="button">
+                    {% else %}
+                         <a href="#" title="{{ cv.points }} points" class="btn btn-lg btn-default inactive" role="button">
+                    {%endif %}
                             {{ cv.name }}
                         </a>
                     </td>

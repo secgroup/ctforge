@@ -27,6 +27,8 @@ try:
 except Exception:
     pass
 
+print('CIAO CIAO CIAO CIAO CIAO CIAO CIAO')
+
 app = Flask(__name__, static_folder=config['STATIC_FOLDER'], 
     template_folder=config['TEMPLATE_FOLDER'])
 app.config.update(config)

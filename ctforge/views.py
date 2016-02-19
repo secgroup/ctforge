@@ -43,7 +43,7 @@ def team_required(f):
     def decorated_function(*args, **kwargs):
         if current_user.team_id is None:
             flash('You are not a member of any team', 'error')
-            abort(404)
+            return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -436,6 +436,7 @@ def team():
     members = cur.fetchall()
     # for each service get the number of attacks suffered and inflicted the
     # user's team
+    print(current_user.team_id)
     cur.execute((
         'SELECT S.name AS service_name, '
         '       COUNT(A.flag) AS suffered, '
@@ -448,7 +449,7 @@ def team():
         'JOIN active_flags AS F ON S.id = F.service_id '
         'LEFT JOIN service_attacks AS A ON F.flag = A.flag '
         'WHERE F.team_id = %s '
-        'GROUP BY F.service_id, S.name'),
+        'GROUP BY F.team_id, F.service_id, S.name'),
         [current_user.team_id])
     attacks = cur.fetchall()
     cur.close()
@@ -583,8 +584,9 @@ def challenge(name):
     cur.execute('SELECT * FROM challenges WHERE name = %s',
                 [name])
     challenge = cur.fetchone()
-    # if the challenge is not valid abort
-    if challenge is None:
+    # if the challenge is not valid or disabled, abort. Admins are allowed to
+    # reach disabled chals
+    if challenge is None or not (current_user.admin or challenge['active']):
         cur.close()
         abort(404)
     # initialize the flag form
