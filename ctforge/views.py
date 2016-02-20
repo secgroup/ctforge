@@ -458,10 +458,15 @@ def team():
 
 @app.route('/challenges')
 @jeopardy_mode_required
-@cache.cached(timeout=10)
 def challenges():
     """Display the challenge scoreboard."""
 
+    challenges_data = _challenges()
+
+    return render_template('challenges.html', **challenges_data)
+
+@cache.cached(timeout=30)
+def _challenges():
     db_conn = get_db_connection()
     cur = db_conn.cursor()
     # get the challenges
@@ -567,11 +572,11 @@ def challenges():
         for i in range(1, len(challenges_graph[-1])):
             challenges_graph[-1][i][1] += challenges_graph[-1][i-1][1]
 
-    return render_template('challenges.html',
-                           challenges=chals, scoreboard=scoreboard,
-                           users_graph=users_graph, users_labels=users_labels,
-                           challenges_graph=challenges_graph, challenges_labels=challenges_labels,
-                           min_x=date_start, max_x=date_now+datetime.timedelta(days=1), min_y=0, max_y=None)
+    return {'challenges': chals, 'scoreboard': scoreboard, 'users_graph': users_graph,
+            'users_labels': users_labels, 'challenges_graph': challenges_graph,
+            'challenges_labels': challenges_labels,
+            'min_x': date_start, 'max_x': date_now+datetime.timedelta(days=1),
+            'min_y': 0, 'max_y': None}
 
 @app.route('/challenge/<name>',  methods=['GET', 'POST'])
 @jeopardy_mode_required
