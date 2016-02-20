@@ -188,7 +188,9 @@ table.jqplot-table-legend {
 .jqplot-axis {
 	color: #ffffff;
 }
-
+.jqplot-table-legend-label {
+	padding-left: 5px;
+}
 .huge-icon {
 	font-size: 300px;
 	opacity: 0.8;

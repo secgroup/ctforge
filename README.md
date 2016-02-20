@@ -59,7 +59,6 @@ Install the framework in development mode for now, adjust the configuration file
     Create log dir /home/ctforge/.ctforge/logs ? (y/n) y
     Create log file /home/ctforge/.ctforge/logs/site.log ? (y/n) y
 
-
 Now you can run the site and edit your custom template, the application will automatically reload upon file modifications. Take a look at the `dctf2016` resources in the `examples/` folder
 
     (ctforge)$ ctforge run

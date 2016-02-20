@@ -458,7 +458,7 @@ def team():
 
 @app.route('/challenges')
 @jeopardy_mode_required
-#@cache.cached(timeout=60)
+@cache.cached(timeout=10)
 def challenges():
     """Display the challenge scoreboard."""
 
@@ -556,6 +556,7 @@ def challenges():
             user_performance[i][1] += user_performance[i-1][1]
         # finally add the newly created list to the users_graph list
         users_graph.append(user_performance)
+
     # compute the challenges graph from the challenges graph dictionary
     # previously calculated
     challenges_graph = []
@@ -663,23 +664,31 @@ def teams():
 
 @app.route('/scoreboard')
 @attackdefense_mode_required
-@cache.cached(timeout=60)
 def scoreboard():
-    # get the latest round with respect to the scores table. Note that this
-    # could be not the current round if the round was incremented after the
-    # last scores update. Anyway, we show the service status only depending
-    # by the active_flags table.
+    # get the latest round
     db_conn = get_db_connection()
-    cur = db_conn.cursor()
-    cur.execute('SELECT id AS rnd, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
-    res = cur.fetchone()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT id AS rnd, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
+        res = cur.fetchone()
     rnd = res['rnd']-1 if res is not None and res['rnd'] else 0
-    
+
+    # get the time left until the next round
     date_now = datetime.datetime.now()
     seconds_left = app.config['ROUND_DURATION']
     if rnd >= 1:
         # get seconds left till new round
         seconds_left = max(((res['timestamp'] + datetime.timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
+
+    # get all the other stuff out of the cached function
+    scoreboard_data = _scoreboard(rnd)
+    
+    return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, **scoreboard_data)
+
+@cache.cached(timeout=60)
+def _scoreboard(rnd):
+    db_conn = get_db_connection()
+    cur = db_conn.cursor()
+
     # retrieve the service table
     cur.execute('SELECT id, name, active FROM services')
     services = cur.fetchall()
@@ -769,12 +778,10 @@ def scoreboard():
         defense_graph.append(team['defense_scores'])
         total_graph.append(team['total_scores'])
 
-    return render_template('scoreboard.html', 
-                            services=services, board=sorted_board, rnd=rnd,
-                            time_left=seconds_left, labels=labels,
-                            attack_graph=attack_graph, defense_graph=defense_graph,
-                            total_graph=total_graph,
-                            min_x=0, max_x=rnd, min_y=0, max_y=None)
+    return {'services': services, 'board': sorted_board, 'labels': labels,
+            'attack_graph': attack_graph, 'defense_graph': defense_graph,
+            'total_graph': total_graph,
+            'min_x': 0, 'max_x': rnd, 'min_y': 0, 'max_y': None}
 
 @app.route('/credits')
 def credits():
