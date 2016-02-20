@@ -3,6 +3,7 @@
 
 import os
 import sys
+import csv
 import pkgutil
 import argparse
 import bcrypt
@@ -33,14 +34,18 @@ def db_create_procedures():
     db_conn.close()
 
 def db_add_admin(name, surname, mail, password):
+    db_add_user(name, surname, mail, password, admin=True, hidden=True)
+
+def db_add_user(name, surname, mail, password, admin=False, hidden=False, team_id=None):
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
         cur.execute((
-            'INSERT INTO users (name, surname, mail, password, admin, hidden) '
-            'VALUES (%s, %s, %s, %s, TRUE, TRUE)'),
-            [name, surname, mail, bcrypt.hashpw(password, bcrypt.gensalt())])
+            'INSERT INTO users (team_id, name, surname, mail, password, admin, hidden) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
+            [team_id, name, surname, mail, bcrypt.hashpw(password, bcrypt.gensalt()),
+             admin, hidden])
     db_conn.commit()
-    db_conn.close()    
+    db_conn.close()
 
 def exit_on_resp(resp):
     if resp not in ['y' , 'Y']:
@@ -105,6 +110,15 @@ def run(args):
     debug = args.debug or app.config['DEBUG']
     app.run(host=args.host, port=args.port, debug=debug)
 
+def imp(args):
+    if args.users:
+        print('Importing users...')
+        users = csv.reader(args.users, delimiter=',', quotechar='"')
+        for user in users:
+            db_add_user(name=user[0], surname=user[1], mail=user[2], password=user[3])
+        args.users.close()
+        print('Done!')
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
     parser.add_argument('-c', '--conf', dest='conf', type=str,
@@ -122,6 +136,10 @@ def parse_args():
     parser_run.add_argument('-H', '--host', type=str, help='Hostname to listen on', default='127.0.0.1')
     parser_run.add_argument('-P', '--port', type=int, help='Port to listen on', default=5000)
     parser_run.add_argument('-D', '--disable-debug', dest='debug', action='store_false', help='Disable debug mode')
+
+    parser_import = subparsers.add_parser('import', help='Import users')
+    parser_import.add_argument('-u', '--users', type=argparse.FileType('r'),
+        help='A csv file of users to import. The supported format is: name, surname, mail, password. No header and comma as separator')
 
     return parser.parse_args()
 
@@ -146,6 +164,8 @@ def main():
         run(args)
     elif args.command == 'init':
         init(args)
+    elif args.command == 'import':
+        imp(args)
     else:
         sys.stderr.write("... Doing nothing, bye\n")
         sys.exit(1)
