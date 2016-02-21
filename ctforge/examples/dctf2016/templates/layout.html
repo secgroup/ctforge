@@ -84,9 +84,9 @@
     {% if current_user.is_authenticated and current_user.admin %}
         <div id="admin-button" style="position: fixed; right: 60px; bottom: 20px; opacity: 0.8">
         {% if 'admin' in request.path %}
-            <a href="{{ url_for('index') }}"><button type="button" class="btn btn-info btn-xl"><span class="glyphicon glyphicon-home"></span></button></a>
+            <a href="{{ url_for('index') }}"><button type="button" class="btn btn-info btn-xl" style="padding: 10px"><span class="glyphicon glyphicon-home" style="display: block"></span></button></a>
         {% else %}
-            <a href="{{ url_for('admin') }}"><button type="button" class="btn btn-danger btn-xl"><span class="glyphicon glyphicon-cog"></span></button></a>
+            <a href="{{ url_for('admin') }}"><button type="button" class="btn btn-danger btn-xl" style="padding: 10px"><span class="glyphicon glyphicon-cog" style="display: block"></span></button></a>
         {% endif %}
     {% endif %}
         </div>
