@@ -52,10 +52,9 @@ def query_handler(query, data):
     """Handle UPDATE and INSERT queries in the admin panel."""
 
     try:
-        db_conn = db_connect()
+        db_conn = get_db_connection()
         with db_conn.cursor() as cur:
             cur.execute(query, data)
-            db_conn.commit()
         flash('Operation successfully completed', 'success')
     except psycopg2.Error as e:
         db_conn.rollback()
