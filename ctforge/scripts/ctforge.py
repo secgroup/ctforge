@@ -93,7 +93,10 @@ def init(args):
     resp = ask('Save configuration to {} ? (y/n)'.format(confile), 'y' if args.yes else None)
     exit_on_resp(resp)
     os.makedirs(os.path.dirname(confile), mode=0o700, exist_ok=True)
-    copy2(args.conf, confile)
+    try:
+        copy2(args.conf, confile)
+    except Exception as e:
+        sys.stderr.write('Unable to copy the configuration file "{}" to "{}". Error: "{}"\n'.format(args.conf, confile, e))
 
     if app.config['LOG_FILE'] is not None:
         logfile = os.path.expanduser(app.config['LOG_FILE'])
