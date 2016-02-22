@@ -36,7 +36,7 @@ Now prepare the Python virtualenv
     $ virtualenv -p /usr/bin/python3 ~/.venvs/ctforge
     $ . ~/.venvs/ctforge/bin/activate
 
-Install the framework in development mode for now, adjust the configuration file to your needs and initialize CTForge
+Install the framework in development mode for now, adjust the configuration file to your needs then initialize CTForge. The initialization script will prompt for an administrative user which will be used to login on the website and add/modify the live settings of the game (challenges/services/teams).
 
     (ctforge)$ ./setup.py develop
     (ctforge)$ cp ctforge.conf ctforge.custom.conf

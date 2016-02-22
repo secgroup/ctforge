@@ -122,7 +122,7 @@ def imp(args):
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
     parser.add_argument('-c', '--conf', dest='conf', type=str,
-        help='Configuration file')
+        default='ctforge.conf', help='Configuration file')
     subparsers = parser.add_subparsers(dest='command')
 
     parser_init = subparsers.add_parser('init', help='Install and initialize the framework')
