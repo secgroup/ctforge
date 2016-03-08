@@ -33,7 +33,7 @@
     {{ tabify(services, ['id', 'name', 'active'], 'service', class = 'active in' if tab == 'services') }}
 {% endif %}
 {% if config.JEOPARDY_ACTIVE %}
-    {{ tabify(challenges, ['id', 'name', 'points', 'active'], 'challenge', class = 'active in' if tab == 'challenges') }}
+    {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', class = 'active in' if tab == 'challenges') }}
 {% endif %}
 </div>
 

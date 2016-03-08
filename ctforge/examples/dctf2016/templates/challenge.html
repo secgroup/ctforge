@@ -2,25 +2,71 @@
 {% block title %}{{ challenge.name }}{% endblock %}
 {% block content %}
 
-<h2>{{ challenge.name }} <span class="text-muted">({{ challenge.points }} points)</span></h2>
-
-{% if not challenge.active %}
-    <p class="lead">Challenge deactivated</p>
+<h2>{{ challenge.name }} <span class="text-muted">({{ challenge.points }} points)
+{% if solved %}
+    <span class="glyphicon glyphicon-ok alert-info" aria-hidden="true" style="background: none"></span>
 {% endif %}
-    {{ challenge.description|safe }}
+</h2>
+
+<div class="row">
+<h3>Description</h3>
+{{ challenge.description|safe }}
+</div>
+
+{% if challenge.active %}
+    {% if challenge.writeup and solved %}
+        {% if writeup %}
+            <div class="row">
+                <h3>Writeup</h3>
+                <div class="col-md-4">
+                    <h4>Feedback</h4>
+                    {{ writeup.feedback|safe }}
+                </div>
+                <div class="col-md-8">
+                    <h4>Your writeup</h4>
+                    <pre>
+                        <code class="language-markup">
+                        {{ writeup.text_data }}
+                        </code>
+                    </pre>
+                </div>
+        {% else %}
+            <div class="row">
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
+                        {{ writeup_form.hidden_tag() }}
+                        <div class="form-group">
+                            {{ writeup_form.text_data(placeholder="Writeup data", class="form-control", rows="20", required=True) }}
+                        </div>
+                        <button class="btn btn-primary" type="submit">Submit</button>
+                    </form>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        {% endif %}
+    {% endif %}
+
     <div class="row">
         <div class="col-md-2"></div>
         <div class="col-md-8">
             <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
-                {{ form.hidden_tag() }}
+                {{ flag_form.hidden_tag() }}
                 <div class="form-group">
-                    {{ form.flag.label(class="sr-only") }}
-                    {{ form.flag(placeholder="Flag", class="form-control", required=True) }}
+                    {{ flag_form.flag.label(class="sr-only") }}
+                    {{ flag_form.flag(placeholder="Flag", class="form-control", required=True) }}
                 </div>
                 <button class="btn btn-primary" type="submit">Submit</button>
             </form>
         </div>
         <div class="col-md-2"></div>
     </div>
+
+
+{% else %}
+<div class="row">
+    <p class="lead">Challenge disabled</p>
+</div>
+{% endif %}
 
 {% endblock %}

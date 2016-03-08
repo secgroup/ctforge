@@ -286,10 +286,11 @@ def add_challenge():
         if form.validate_on_submit():
             query_handler((
                 'INSERT INTO challenges (name, description, flag, points, '
-                '                        active) '
-                'VALUES (%s, %s, %s, %s, %s)'),
-                (form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data))
+                '                        active, writeup, writeup_template) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
+                [form.name.data, form.description.data, form.flag.data,
+                 form.points.data, form.active.data, form.writeup.data, 
+                 form.writeup_template.data])
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='challenges'))
@@ -306,10 +307,11 @@ def edit_challenge(id):
             query_handler((
                 'UPDATE challenges '
                 'SET name = %s, description = %s, flag = %s, points = %s, '
-                '    active = %s '
+                '    active = %s, writeup = %s, writeup_template = %s '
                 'WHERE id = %s'),
-                (form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, id))
+                [form.name.data, form.description.data, form.flag.data,
+                 form.points.data, form.active.data, form.writeup.data, 
+                 form.writeup_template.data, id])
         else:
             flash_errors(form)
     else:
@@ -582,58 +584,103 @@ def _challenges():
 @jeopardy_mode_required
 @login_required
 def challenge(name):
-    """Display information about a challenge plus the flag submission form."""
+    """Display information about a challenge plus the flag submission form and the writeup."""
 
     db_conn = db_connect()
     cur = db_conn.cursor()
+
     # get challenge data if the challenge exists
     cur.execute('SELECT * FROM challenges WHERE name = %s',
                 [name])
     challenge = cur.fetchone()
-    # if the challenge is not valid or disabled, abort. Admins are allowed to
-    # reach disabled chals
-    if challenge is None or not (current_user.admin or challenge['active']):
+    # if the challenge is not valid abort
+    if challenge is None:
         cur.close()
         abort(404)
-    # initialize the flag form
-    form = ctforge.forms.ChallengeFlagForm()
-    if request.method == 'POST':
-        # process the form
-        if form.validate_on_submit():
-            flag = form.flag.data
-            if flag == challenge['flag']:
-                try:
-                    # save this attack into the db
-                    cur.execute((
-                        'INSERT INTO challenge_attacks (user_id, challenge_id) '
-                        'VALUES (%s, %s)'),
-                        [current_user.id, challenge['id']])
-                    cur.close()
-                    db_conn.commit()
-                    flash('Flag accepted!', 'success')
-                except psycopg2.IntegrityError:
-                    # this exception is raised not only on duplicated entry,
-                    # but also when key constraint fails
-                    db_conn.rollback()
-                    flash('You already solved this challenge')
-                except psycopg2.Error as e:
-                    db_conn.rollback()
-                    error_msg = 'Unknown database error: {}'.format(e)
-                    flash(error_msg, 'error')
-                    app.logger.error(error_msg)
-                except Exception as e:
-                    db_conn.rollback()
-                    # this should never occur, but we keep it for safety
-                    # reasons
-                    error_msg = 'Unknown error: {}'.format(e)
-                    flash(error_msg, 'error')
-                    app.logger.error(error_msg)
-            else:
-                flash('Invalid flag', 'error')
-        else:
-            flash_errors(form)
+    
+    # check if the current user already solved the challenge
+    cur.execute(('SELECT * FROM challenge_attacks '
+                 'WHERE user_id = %s AND challenge_id = %s'),
+                 [current_user.id, challenge['id']])
+    solved = cur.fetchone() is not None
 
-    return render_template('challenge.html', form=form, challenge=challenge)
+    # get the challenge writeup, if any
+    writeup = None
+    writeup_form = ctforge.forms.ChallengeWriteupForm()
+    if solved and challenge['writeup']:
+            cur.execute(('SELECT W.text_data, W.grade, W.feedback '
+                         'FROM writeups AS W JOIN challenge_writeups AS CW '
+                         'ON W.id = CW.writeup_id'))
+            writeup = cur.fetchone()
+    # initialize the flag form
+    flag_form = ctforge.forms.ChallengeFlagForm()
+
+    # accept POST requests only if the challenge is active
+    if request.method == 'POST' and challenge['active']:
+        # process the two mutually exclusive forms
+        writeup_data = request.form.get('text_data')
+        flag = request.form.get('flag')
+
+        if writeup_data is not None:
+            if writeup_form.validate_on_submit():
+                if writeup is not None:
+                    flash('You already provided a writeup for this challenge', 'error')
+                else:
+                    writeup_data = writeup_form.text_data.data
+                    try:
+                        # save this writeup into the db
+                        cur.execute('INSERT INTO writeups (text_data) VALUES (%s) RETURNING id',
+                            [writeup_data])
+                        writeup_id = cur.fetchone()['id']
+                        cur.execute((
+                            'INSERT INTO challenge_writeups (user_id, challenge_id, writeup_id) '
+                            'VALUES (%s, %s, %s)'),
+                            [current_user.id, challenge['id'], writeup_id])
+                        cur.close()
+                        db_conn.commit()
+                        flash('Writeup added', 'success')
+                    except psycopg2.Error as e:
+                        db_conn.rollback()
+                        error_msg = 'Unknown database error: {}'.format(e)
+                        flash(error_msg, 'error')
+                        app.logger.error(error_msg)
+            else:
+                flash_errors(writeup_form)
+        else:
+            if cur is None:
+                cur = db_conn.cursor()
+            if flag is not None and flag_form.validate_on_submit():
+                flag = flag_form.flag.data
+                if flag == challenge['flag']:
+                    try:
+                        # save this attack into the db
+                        cur.execute((
+                            'INSERT INTO challenge_attacks (user_id, challenge_id) '
+                            'VALUES (%s, %s)'),
+                            [current_user.id, challenge['id']])
+                        cur.close()
+                        db_conn.commit()
+                        flash('Flag accepted!', 'success')
+                    except psycopg2.IntegrityError:
+                        # this exception is raised not only on duplicated entry,
+                        # but also when key constraint fails
+                        db_conn.rollback()
+                        flash('You already solved this challenge')
+                    except psycopg2.Error as e:
+                        db_conn.rollback()
+                        error_msg = 'Unknown database error: {}'.format(e)
+                        flash(error_msg, 'error')
+                        app.logger.error(error_msg)
+                else:
+                    flash('Invalid flag', 'error')
+            else:
+                flash_errors(flag_form)
+
+    # close the pending connection to the database
+    db_conn.close()
+
+    return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
+                           challenge=challenge, solved=solved, writeup=writeup)
 
 @app.route('/service/<name>')
 @attackdefense_mode_required

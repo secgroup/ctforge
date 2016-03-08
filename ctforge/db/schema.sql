@@ -37,6 +37,8 @@ CREATE TABLE challenges (
     flag          VARCHAR(120) NOT NULL,
     points        INT NOT NULL,
     active        BOOLEAN NOT NULL DEFAULT FALSE,
+    writeup       BOOLEAN NOT NULL DEFAULT FALSE,
+    writeup_template TEXT,
     PRIMARY KEY (id),
     UNIQUE (name)
 );
@@ -48,6 +50,25 @@ CREATE TABLE challenge_attacks (
     PRIMARY KEY (user_id, challenge_id),
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (challenge_id) REFERENCES challenges (id)
+);
+
+CREATE TABLE writeups (
+    id            SERIAL,
+    text_data     TEXT NOT NULL,
+    grade         INT,
+    feedback      TEXT DEFAULT '',
+    timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE challenge_writeups (
+    user_id       INT NOT NULL,
+    challenge_id  INT NOT NULL,
+    writeup_id    INT NOT NULL,
+    PRIMARY KEY (user_id, challenge_id, writeup_id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id),
+    FOREIGN KEY (writeup_id) REFERENCES writeups (id)
 );
 
 CREATE TABLE services (
