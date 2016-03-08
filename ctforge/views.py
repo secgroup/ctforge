@@ -642,7 +642,7 @@ def challenge(name):
     if challenge is None:
         cur.close()
         abort(404)
-    
+
     # check if the current user already solved the challenge
     cur.execute(('SELECT * FROM challenge_attacks '
                  'WHERE user_id = %s AND challenge_id = %s'),
@@ -651,9 +651,9 @@ def challenge(name):
 
     # get the challenge writeup, if any
     writeup = None
-    writeup_form = ctforge.forms.ChallengeWriteupForm()
+    writeup_form = ctforge.forms.ChallengeWriteupForm(writeup=challenge['writeup_template'])
     if solved and challenge['writeup']:
-            cur.execute(('SELECT W.text_data, W.grade, W.feedback '
+            cur.execute(('SELECT W.writeup, W.grade, W.feedback '
                          'FROM challenge_writeups AS CW '
                          'JOIN writeups AS W ON CW.writeup_id = W.id '
                          'JOIN users AS U ON CW.user_id = U.id '
@@ -667,7 +667,7 @@ def challenge(name):
     # accept POST requests only if the challenge is active
     if request.method == 'POST' and challenge['active']:
         # process the two mutually exclusive forms
-        writeup_data = request.form.get('text_data')
+        writeup_data = request.form.get('writeup')
         flag = request.form.get('flag')
 
         if writeup_data is not None:
@@ -675,10 +675,10 @@ def challenge(name):
                 if writeup is not None:
                     flash('You already provided a writeup for this challenge', 'error')
                 else:
-                    writeup_data = writeup_form.text_data.data
+                    writeup_data = writeup_form.writeup.data
                     try:
                         # save this writeup into the db
-                        cur.execute('INSERT INTO writeups (text_data) VALUES (%s) RETURNING id',
+                        cur.execute('INSERT INTO writeups (writeup) VALUES (%s) RETURNING id',
                             [writeup_data])
                         writeup_id = cur.fetchone()['id']
                         cur.execute((
@@ -725,7 +725,10 @@ def challenge(name):
             else:
                 flash_errors(flag_form)
 
-    # close the pending connection to the database
+        # close the pending connection to the database
+        db_conn.close()
+        return redirect(url_for('challenge', name=challenge['name']))
+
     db_conn.close()
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,

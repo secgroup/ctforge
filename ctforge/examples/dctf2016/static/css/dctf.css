@@ -39,10 +39,11 @@ body {
 p {
 	text-indent: justify;
 }
-pre, code {
+pre, code, textarea.form-control {
 	color: #80ddff;
 	background-color: rgba(0, 0, 0, 0.8);
 	font-size: small;
+	border: 0;
 }
 kbd, samp {
 	font-family: 'VT323', monospace;

@@ -54,9 +54,9 @@ CREATE TABLE challenge_attacks (
 
 CREATE TABLE writeups (
     id            SERIAL,
-    text_data     TEXT NOT NULL,
+    writeup       TEXT NOT NULL,
     grade         INT,
-    feedback      TEXT DEFAULT '',
+    feedback      TEXT,
     timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );

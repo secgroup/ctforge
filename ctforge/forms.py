@@ -30,10 +30,10 @@ class ChallengeForm(Form):
     writeup_template = TextAreaField('writeup_template')
 
 class ChallengeWriteupForm(Form):
-    text_data = TextAreaField('text_data', validators=[validators.DataRequired()])
+    writeup = TextAreaField('writeup', validators=[validators.DataRequired()])
 
 class AdminWriteupForm(Form):
-    text_data = TextAreaField('text_data')
+    writeup = TextAreaField('writeup', render_kw={'disabled': True})
     grade = IntegerField('grade', validators=[validators.NumberRange(message='Grade should be between 0 and 10.', min=0, max=10)])
     feedback = TextAreaField('feedback')
 

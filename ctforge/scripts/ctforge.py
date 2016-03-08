@@ -96,7 +96,7 @@ def init(args):
     try:
         copy2(args.conf, confile)
     except Exception as e:
-        sys.stderr.write('Unable to copy the configuration file "{}" to "{}". Error: "{}"\n'.format(args.conf, confile, e))
+        sys.stderr.write('Error: "{}"\n'.format(args.conf, confile, e))
 
     if app.config['LOG_FILE'] is not None:
         logfile = os.path.expanduser(app.config['LOG_FILE'])

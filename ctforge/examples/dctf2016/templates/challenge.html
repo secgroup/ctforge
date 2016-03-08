@@ -18,19 +18,11 @@
             <div class="row">
                 <div class="col-md-4">
                     <h4>Feedback</h4>
-                    <pre>
-                        <code>
-                    {{ writeup.feedback }}
-                        </code>
-                    </pre>
+                    <pre><code>{{ writeup.feedback }}</code></pre>
                 </div>
                 <div class="col-md-8">
                     <h4>Your writeup</h4>
-                    <pre>
-                        <code>
-                        {{ writeup.text_data }}
-                        </code>
-                    </pre>
+                    <pre><code>{{ writeup.writeup }}</code></pre>
                 </div>
             </div>
         {% else %}
@@ -40,7 +32,7 @@
                     <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
                         {{ writeup_form.hidden_tag() }}
                         <div class="form-group">
-                            {{ writeup_form.text_data(placeholder="Writeup data", class="form-control", rows="20", required=True) }}
+                            {{ writeup_form.writeup(placeholder="Writeup data", class="form-control", rows="20", required=True) }}
                         </div>
                         <button class="btn btn-primary" type="submit">Submit</button>
                     </form>
@@ -49,7 +41,6 @@
             </div>
         {% endif %}
     {% endif %}
-
     <div class="row">
         <div class="col-md-2"></div>
         <div class="col-md-8">
@@ -64,12 +55,10 @@
         </div>
         <div class="col-md-2"></div>
     </div>
-
-
 {% else %}
-<div class="row">
-    <p class="lead">Challenge disabled</p>
-</div>
+    <div class="row">
+        <p class="lead">Challenge disabled</p>
+    </div>
 {% endif %}
 
 {% endblock %}
