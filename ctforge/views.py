@@ -42,8 +42,7 @@ def team_required(f):
     @login_required
     def decorated_function(*args, **kwargs):
         if current_user.team_id is None:
-            flash('You are not a member of any team', 'error')
-            return redirect(url_for('index'))
+            abort(404)
         return f(*args, **kwargs)
     return decorated_function
 
@@ -105,25 +104,43 @@ def logout():
 @app.route('/admin')
 @app.route('/admin/<tab>')
 @admin_required
-def admin(tab = 'users'):
+def admin(tab='users'):
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
         # get the users
         cur.execute('SELECT * FROM users')
         users = cur.fetchall()
+    with db_conn.cursor() as cur:
         # get the teams
         cur.execute('SELECT * FROM teams')
         teams = cur.fetchall()
+    with db_conn.cursor() as cur:
         # get the services
         cur.execute('SELECT * FROM services')
         services = cur.fetchall()
+    with db_conn.cursor() as cur:
         # get the challenges
         cur.execute('SELECT * FROM challenges')
         challenges = cur.fetchall()
+    with db_conn.cursor() as cur:
+        # get the challenge writeups
+        cur.execute((
+            'SELECT W.id AS id, U.mail AS mail, '
+            '       C.name AS challenge, W.timestamp AS timestamp '
+            'FROM challenge_writeups AS CW '
+            'JOIN users AS U '
+            '     ON CW.user_id = U.id '
+            'JOIN challenges AS C '
+            '     ON CW.challenge_id = C.id '
+            'JOIN writeups AS W '
+            '     ON CW.writeup_id = W.id '
+            'ORDER BY W.timestamp DESC'))
+        challenge_writeups = cur.fetchall()
 
     return render_template('admin/index.html',
                             users=users, teams=teams, services=services,
-                            challenges=challenges, tab=tab)
+                            challenges=challenges, challenge_writeups=challenge_writeups,
+                            tab=tab)
 
 @app.route('/admin/user/new', methods=['GET', 'POST'])
 @admin_required
@@ -326,6 +343,34 @@ def edit_challenge(id):
             return render_template('admin/data.html', form=form,
                                    target='challenge', action='edit')
     return redirect(url_for('admin', tab='challenges'))
+
+@app.route('/admin/writeup/<int:id>', methods=['GET', 'POST'])
+@jeopardy_mode_required
+@admin_required
+def edit_writeup(id):
+    if request.method == 'POST':
+        form = ctforge.forms.AdminWriteupForm()
+        if form.validate_on_submit():
+            query_handler((
+                'UPDATE writeups '
+                'SET grade = %s, feedback = %s '
+                'WHERE id = %s'),
+                [form.grade.data, form.feedback.data, id])
+        else:
+            flash_errors(form)
+    else:
+        db_conn = get_db_connection()
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT * FROM writeups WHERE id = %s', [id])
+            writeup = cur.fetchone()
+        if writeup is None:
+            flash('Invalid writeup!', 'error')
+        else:
+            form = ctforge.forms.AdminWriteupForm(**writeup)
+            return render_template('admin/data.html', form=form,
+                                   target='writeup', action='edit')
+    return redirect(url_for('admin', tab='challenge_writeups'))
+
  
 @app.route('/submit', methods=['GET', 'POST'])
 @attackdefense_mode_required
@@ -609,8 +654,12 @@ def challenge(name):
     writeup_form = ctforge.forms.ChallengeWriteupForm()
     if solved and challenge['writeup']:
             cur.execute(('SELECT W.text_data, W.grade, W.feedback '
-                         'FROM writeups AS W JOIN challenge_writeups AS CW '
-                         'ON W.id = CW.writeup_id'))
+                         'FROM challenge_writeups AS CW '
+                         'JOIN writeups AS W ON CW.writeup_id = W.id '
+                         'JOIN users AS U ON CW.user_id = U.id '
+                         'JOIN challenges AS C ON CW.challenge_id = C.id '
+                         'WHERE U.id = %s AND C.id = %s'),
+                         [current_user.id, challenge['id']])
             writeup = cur.fetchone()
     # initialize the flag form
     flag_form = ctforge.forms.ChallengeFlagForm()

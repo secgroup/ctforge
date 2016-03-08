@@ -9,7 +9,6 @@
 </h2>
 
 <div class="row">
-<h3>Description</h3>
 {{ challenge.description|safe }}
 </div>
 
@@ -17,19 +16,23 @@
     {% if challenge.writeup and solved %}
         {% if writeup %}
             <div class="row">
-                <h3>Writeup</h3>
                 <div class="col-md-4">
                     <h4>Feedback</h4>
-                    {{ writeup.feedback|safe }}
+                    <pre>
+                        <code>
+                    {{ writeup.feedback }}
+                        </code>
+                    </pre>
                 </div>
                 <div class="col-md-8">
                     <h4>Your writeup</h4>
                     <pre>
-                        <code class="language-markup">
+                        <code>
                         {{ writeup.text_data }}
                         </code>
                     </pre>
                 </div>
+            </div>
         {% else %}
             <div class="row">
                 <div class="col-md-2"></div>

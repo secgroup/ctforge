@@ -1,5 +1,6 @@
-{% macro tabify(data, keys, target, class = '') %}
-    <div role="tabpanel" class="tab-pane fade {{ class }}" id="{{ target }}s">
+{% macro tabify(data, keys, target, id, class='') %}
+    <div role="tabpanel" class="tab-pane fade {{ class }}" id="{{ id }}">
+    {% if target != "writeup" %}
         <div style="padding-top: 20px;">
             <p>
                 <a href="{{ url_for('add_' ~ target) }}" style="background: none">
@@ -10,6 +11,7 @@
                 </a>
             </p>
         </div>
+    {% endif %}
         <table class="table table-condensed table-hover">
             <thead>
                 <tr>
