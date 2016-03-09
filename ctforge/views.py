@@ -361,7 +361,14 @@ def edit_writeup(id):
     else:
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
-            cur.execute('SELECT * FROM writeups WHERE id = %s', [id])
+            cur.execute((
+                'SELECT W.id, W.writeup, W.grade, W.feedback, W.timestamp, '
+                '       U.mail AS user, C.name AS challenge '
+                'FROM writeups AS W '
+                'LEFT JOIN challenge_writeups AS CW ON W.id = CW.writeup_id '
+                'JOIN users AS U ON CW.user_id = U.id '
+                'JOIN challenges AS C ON CW.challenge_id = C.id '
+                'WHERE W.id = %s'), [id])
             writeup = cur.fetchone()
         if writeup is None:
             flash('Invalid writeup!', 'error')
