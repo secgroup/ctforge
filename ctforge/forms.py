@@ -24,7 +24,7 @@ class ChallengeForm(Form):
     name = StringField('name', validators=[validators.DataRequired()])
     description = TextAreaField('description', validators=[validators.DataRequired()])
     flag = StringField('flag', validators=[validators.DataRequired()])
-    points = IntegerField('points', validators=[validators.DataRequired()])
+    points = IntegerField('points', validators=[validators.NumberRange(message='Challenge points should be between 0 and 1000.', min=0, max=1000)])
     active = BooleanField('active')
     writeup = BooleanField('writeup')
     writeup_template = TextAreaField('writeup_template')
