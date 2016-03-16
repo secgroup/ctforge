@@ -490,7 +490,6 @@ def team():
     members = cur.fetchall()
     # for each service get the number of attacks suffered and inflicted the
     # user's team
-    print(current_user.team_id)
     cur.execute((
         'SELECT S.name AS service_name, '
         '       COUNT(A.flag) AS suffered, '
@@ -571,7 +570,10 @@ def _challenges():
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
-                points = cv['points'] + bonus.get((c, u), 0)
+                # only add the bonus points if the challenge score is > 0
+                points = cv['points']
+                if points > 0:
+                    points += bonus.get((c, u), 0)
                 score['points'] += points
             except KeyError:
                 timestamp = None
