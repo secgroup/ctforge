@@ -25,15 +25,16 @@ import random
 import argparse
 import logging
 import gevent
-import ConfigParser
 import mysql.connector as dbc
 from gevent import Greenlet, Timeout, subprocess, sleep
-from gevent.queue import Queue
+from Queue import Queue
+
+import ctforge
 
 __authors__     = ["Marco Squarcina <msquarci at dais.unive.it>",
                    "Mauro Tempesta <mtempest at dais.unive.it>"]
 __license__     =  "MIT"
-__copyright__   =  "Copyright 2013-15, University of Venice"
+__copyright__   =  "Copyright 2013-16, University of Venice"
 
 # global variables
 
@@ -342,44 +343,19 @@ def main():
     if not any([args.advance, args.dispatch, args.check]):
         sys.stderr.write("At least one action is required, aborting.\n")
         sys.exit(1)
-    # parse the shared configuration file. The SafeConfigParser class allows to
-    # escape format strings by doubling the % sign, while ConfigParser does
-    # not, meh...
-    config = ConfigParser.SafeConfigParser()
-    try:
-        config.read('/opt/dctf/ctf.conf')
-        db_config = {
-            'user': config.get('database', 'user'),
-            'password': config.get('database', 'password'),
-            'host': config.get('database', 'host'),
-            'database': config.get('database', 'name'),
-            'raise_on_warnings': True
-        }
-        log_file = config.get('bot', 'log_file')
-        log_format = config.get('bot', 'log_format')
-        flag_prefix = config.get('bot', 'flag_prefix')
-        flag_suffix_length = config.getint('bot', 'flag_suffix_length')
-        dispatch_script_path = config.get('bot', 'dispatch_script_path')
-        check_script_path = config.get('bot', 'check_script_path')
-    except ConfigParser.NoOptionError as e:
-        sys.stderr.write(("Malformed configuration file, aborting:\n"
-                          "{}").format(e))
-        sys.exit(1)
-    except Exception as e:
-        sys.stderr.write(("Error while parsing the configuration, aborting:\n"
-                          "{}").format(e))
-        sys.exit(1)
+ 
     # set variables
     n_workers = args.num_workers
     timeout = args.timeout
     log_level = logging.DEBUG if args.verbose else logging.INFO
+
     # set logging
     try:
-        logging.basicConfig(filename=log_file, format=log_format, 
+        logging.basicConfig(filename=ctforge.config['BOT_LOG_FILE'], format='%(asctime)s [%(levelname)s] %(message)s', 
                             level=log_level)
     except IOError:
         sys.stderr.write(("Unable to write logs to "
-                          "{}, aborting\n".format(log_file)))
+                          "{}, aborting\n".format(ctforge.config['BOT_LOG_FILE'])))
         sys.exit(1)
     if args.advance:
         # advance the round

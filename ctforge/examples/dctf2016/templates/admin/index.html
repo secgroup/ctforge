@@ -37,7 +37,7 @@
 {% endif %}
 {% if config.JEOPARDY_ACTIVE %}
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
-    {{ tabify(challenge_writeups, ['id', 'mail', 'challenge', 'timestamp'], 'writeup', 'challenge_writeups', class = 'active in' if tab == 'challenge_writeups') }}
+    {{ tabify(challenge_writeups, ['id', 'mail', 'name', 'surname', 'challenge', 'timestamp'], 'writeup', 'challenge_writeups', class = 'active in' if tab == 'challenge_writeups') }}
 {% endif %}
 </div>
 

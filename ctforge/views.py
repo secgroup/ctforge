@@ -125,7 +125,7 @@ def admin(tab='users'):
     with db_conn.cursor() as cur:
         # get the challenge writeups
         cur.execute((
-            'SELECT W.id AS id, U.mail AS mail, '
+            'SELECT W.id AS id, U.mail AS mail, U.name AS name, U.surname AS surname, '
             '       C.name AS challenge, W.timestamp AS timestamp '
             'FROM challenge_writeups AS CW '
             'JOIN users AS U '
@@ -363,7 +363,8 @@ def edit_writeup(id):
         with db_conn.cursor() as cur:
             cur.execute((
                 'SELECT W.id, W.writeup, W.grade, W.feedback, W.timestamp, '
-                '       U.mail AS user, C.name AS challenge '
+                '       U.mail AS mail, U.name AS name, U.surname AS surname, '
+                '       C.name AS challenge '
                 'FROM writeups AS W '
                 'LEFT JOIN challenge_writeups AS CW ON W.id = CW.writeup_id '
                 'JOIN users AS U ON CW.user_id = U.id '
