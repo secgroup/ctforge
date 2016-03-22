@@ -70,6 +70,7 @@
     </div>
 </div>
 <script>
+{% if rnd >= 1 %}
 $(document).ready(function() {
     var hours, minutes, seconds;
     var seconds_left = {{ time_left }};
@@ -90,6 +91,7 @@ $(document).ready(function() {
 
         countdown.innerHTML = hours + "h " + minutes + "m " + seconds + "s";
     }, 1000);
+{% endif %}
 
     {{ get_jqplot_code('attack_scores', attack_graph, labels, "label: 'Round'", "label: 'Points'", min_x, max_x, min_y, max_y, true) }}
     {{ get_jqplot_code('defense_scores', defense_graph, labels, "label: 'Round'", "label: 'Points'", min_x, max_x, min_y, max_y, true) }}
