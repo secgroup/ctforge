@@ -48,7 +48,7 @@ finding the first simple issue. Complex vulnerabilties have an higher chance of 
     <div class="col-md-7">
         <h2 class="featurette-heading">Flags. <span class="text-muted">Catch 'em all!</span></h2>
 <p>A flag is a string made up of <code>{{ config.FLAG_PREFIX }}</code>, followed by {{ config.FLAG_LENGTH }}
-random characters in the set <code>{{ config.FLAG_CHARS }}</code> and the suffix <code>{{ config.FLAG_SUFFIX }}</code>, matched by the regular expression <code>{{ config.FLAG_REGEXP }}</code>.</p>
+random characters in the set <code>{{ config.FLAG_CHARS }}</code>, matched by the regular expression <code>{{ config.FLAG_REGEXP }}</code>.</p>
 
 <p>To manually submit a flag, click on the <a href="{{ url_for('submit') }}">flag submission service</a> entry in the top-right menu and enter the flag in the provided form. During the CTF, anyway, you may want to automatically submit flags in order to keep the exploitation going while you are not connected. To do so, you can submit stolen flags by performing an HTTP POST request to <code>{{ url_for('submit') }}</code>. The request must contain the keys <code>flag</code> and <code>team_token</code>, where the values of the first entry is the stolen flag and <code>team_token</code> is a string that allows the server to identify your team. The token of your team can
 be found in the <a href="{{ url_for('team') }}">team page</a>. <strong>Important: do not perform user authentication whilst submitting flags, this is not needed and may overload our servers</strong>.</p>
