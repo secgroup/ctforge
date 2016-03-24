@@ -179,7 +179,7 @@ class Worker(threading.Thread):
                     'INSERT INTO integrity_checks (flag, successful) '
                     'VALUES (%s, %s)')
                     , [self.flag, success])
-                cur.commit()
+            db_conn.commit()
         except psycopg2.Error as e:
             # an error occurred, no recovery possible
             logger.critical(self._logalize(('Unable to insert the integrity check report: {}').format(e)))
