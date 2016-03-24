@@ -24,10 +24,10 @@ import random
 import argparse
 import logging
 import threading
-
-import psycopg2
-from queue import Queue
+import subprocess
 import os.path
+from queue import Queue
+import psycopg2
 
 from ctforge import database, utils, config
 
@@ -167,25 +167,25 @@ class Worker(threading.Thread):
         The script is killed if it takes too long to complete and the 
         service marked as corrupted."""
 
-        # execute the script using its return value to determine the service
-        # status
+        # execute the script and assume the service status by the return address
         status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name))
         if status == -1 or status > 125:
+            # our fault: we don't add anything in the integrity_checks table
             return
-        success = 1 if status == 0 else 0
-        query = ("INSERT INTO integrity_checks "
-                 "(flag, successful) "
-                 "VALUES (%s, %s)")
+        success = status == 0
         try:
-            self.cursor.execute(query, (self.flag, success))
-            self.db.cnx.commit()
-        except dbc.Error as e:
-            # another error occurred, no recovery possible
-            logger.critical(self._logalize(("Unable to insert the integrity "
-                                             "check report: {}").format(e)))
+            with db_conn.cursor() as cur:
+                cur.execute((
+                    'INSERT INTO integrity_checks (flag, successful) '
+                    'VALUES (%s, %s)')
+                    , [self.flag, success])
+                cur.commit()
+        except psycopg2.Error as e:
+            # an error occurred, no recovery possible
+            logger.critical(self._logalize(('Unable to insert the integrity check report: {}').format(e)))
         else:
             # update successful
-            logger.debug(self._logalize("Status added as {}".format(status)))
+            logger.debug(self._logalize('Status added as {}'.format(status)))
 
     def _execute(self, script_name):
         """Execute the provided script killing the process if it timeouts."""
@@ -193,39 +193,32 @@ class Worker(threading.Thread):
         # set status of the service to corrupted by default
         status = 1
         command = ' '.join([script_name, self.team.ip, self.flag])
-        timer = Timeout(timeout)
-        timer.start()
         try:
             logger.debug(self._logalize("Executing {}".format(command)))
-            process = subprocess.Popen(command, preexec_fn=os.setsid,
-                                       shell=True)
             # ignore stdout and stderr
-            process.communicate()
+            process = subprocess.Popen([script_name, self.team.ip, self.flag], preexec_fn=os.setsid,
+                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            process.communicate(timeout=timeout)
             status = process.returncode
-        except Timeout:
+        except subprocess.TimeoutExpired:
             # the remote VM could be down, this is not a critical error but we
             # should anyway give it a look 
-            logger.warning(self._logalize(("Timeout exceeded while executing "
-                                            "{}").format(command)))
-            # kill the process tree gently and wait a small amount of time for
+            logger.warning(self._logalize("Timeout exceeded while executing {}".format(command)))
+            # politely kill the process tree and wait a small amount of time for
             # the process to clear resources
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-                sleep(3)
-                # check if the process has terminated and in this case try to
-                # kill it with a SIGKILL
-                if process.poll() != None:
-                    os.killpg(process.pid, signal.SIGKILL)
-            except OSError:
-                # the program already terminated 
-                pass
+            process.terminate()
+            time_tmp = time.time()
+            while process.poll() is None and time.time() < (time_tmp + 3):
+                time.sleep(0.1)
+            if process.poll() is None:
+                process.kill()
+        except subprocess.ProcessLookupError:
+            # we tried to kill an already terminated program
+            pass
         except Exception as e:
             # wtf happened? this is an unknown error. Assume it's our fault
             status = -1
-            logger.critical(self._logalize(("Error while executing "
-                                             "{}: {}").format(command, e)))
-        finally:
-            timer.cancel()
+            logger.critical(self._logalize('Error while executing {}: {}'.format(command, e)))
 
         return status
 
@@ -291,7 +284,6 @@ def advance_round(teams, services):
                     logger.debug(('New flag just added to the database: {}').format(flag))
     db_conn.commit()
     cur.close()
-
 
 def main():
     global logger, timeout, db_conn
