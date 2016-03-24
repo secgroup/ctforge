@@ -19,6 +19,7 @@ being used later during the score computation phase.
 
 import os
 import sys
+import time
 import signal
 import random
 import argparse
@@ -26,7 +27,7 @@ import logging
 import threading
 import subprocess
 import os.path
-from queue import Queue
+from queue import Queue, Empty
 import psycopg2
 
 from ctforge import database, utils, config
@@ -43,18 +44,28 @@ __copyright__   =  "Copyright 2013-16, University of Venice"
 logger = logging.getLogger('bot')
 # queue of tasks: each task is a pair (i_team, i_service)
 tasks = Queue()
-# seconds to wait before killing a spawned script
-timeout = None
 # just one connection to the database for all the threads
 db_conn = None
 
 def abort():
     """Terminate the program after if it is not possible to proceed."""
 
-    # close the database connection
     if db_conn is not None:
         db_conn.close()
     sys.exit(1)
+
+def interrupt(signal=None, frame=None):
+    """Instruct the threads to terminate and quit."""
+
+    logger.error('Ctrl-C received, stopping the execution')
+    # empty the tasks queue
+    try:
+        while True:
+            tasks.get_nowait()
+    except Empty:
+        pass
+    # set the killing event
+    Worker.killing_time.set()
 
 class Team:
     """Simple class for representing a team entity, storing the id ip
@@ -89,7 +100,9 @@ class Service:
 class Worker(threading.Thread):
     """The main execution unit while in dispatch/check mode."""
 
-    def __init__(self, n, dispatch, check):
+    killing_time = threading.Event()
+
+    def __init__(self, n, dispatch, check, timeout=10):
         super(Worker, self).__init__()
         # numeric identifier of the worker
         self.n = n
@@ -102,25 +115,33 @@ class Worker(threading.Thread):
         # worker modalities 
         self.dispatch = dispatch
         self.check = check
+        # seconds to wait before killing a spawned script
+        self.timeout = timeout
+        # make it a daemon thread
+        self.daemon = True
 
     def run(self):
         """Extract and execute jobs from the tasks queue until there is
         nothing left to do."""
 
         # fetch tasks from the queue
-        while not tasks.empty():
-            self.team, self.service = tasks.get()
-            # get the active flag for this team/service
-            self._get_flag()
-            # check whether we need to dispatch the flag or check the service
-            # status and proceed according to the given mode. The program logic
-            # is not f*cked if we execute both actions. Theoretically, one
-            # could advance the round, dispatch new flags and check services
-            # with a single execution of this script
-            if self.dispatch:
-                self._dispatch_flag()
-            if self.check:
-                self._check_service()
+        while not Worker.killing_time.is_set():
+            try:
+                self.team, self.service = tasks.get()
+                # get the active flag for this team/service
+                self._get_flag()
+                # check whether we need to dispatch the flag or check the service
+                # status and proceed according to the given mode. The program logic
+                # is not f*cked if we execute both actions. Theoretically, one
+                # could advance the round, dispatch new flags and check services
+                # with a single execution of this script
+                if self.dispatch:
+                    self._dispatch_flag()
+                if self.check:
+                    self._check_service()
+            except Empty:
+                # terminate if the queue is empty 
+                break
 
     def _get_flag(self):
         """Retrieve the active flag for the current (team, service) pair by
@@ -198,7 +219,7 @@ class Worker(threading.Thread):
             # ignore stdout and stderr
             process = subprocess.Popen([script_name, self.team.ip, self.flag], preexec_fn=os.setsid,
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            process.communicate(timeout=timeout)
+            process.communicate(timeout=self.timeout)
             status = process.returncode
         except subprocess.TimeoutExpired:
             # the remote VM could be down, this is not a critical error but we
@@ -288,7 +309,7 @@ def advance_round(teams, services):
     cur.close()
 
 def main():
-    global logger, timeout, db_conn
+    global logger, db_conn
 
     # parse command line options, the round parameter is required
     parser = argparse.ArgumentParser(description='Flag dispatcher and checker')
@@ -309,9 +330,11 @@ def main():
         sys.stderr.write("At least one action is required, aborting.\n")
         abort()
 
+    # register the killer handler        
+    signal.signal(signal.SIGINT, interrupt)
+
     # set variables
     n_workers = args.num_workers
-    timeout = args.timeout
     log_level = logging.DEBUG if args.verbose else logging.INFO
 
     # set logging
@@ -343,9 +366,13 @@ def main():
         # create the list of workers
         workers = []
         for i in range(n_workers):
-            worker = Worker(i, args.dispatch, args.check)
+            worker = Worker(i, args.dispatch, args.check, args.timeout)
             workers.append(worker)
             worker.start()
+
+        # wait responsively until the queue is empty or an event is thrown
+        while not tasks.empty():
+            Worker.killing_time.wait(1)
 
         # join all workers
         for worker in workers:
