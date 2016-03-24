@@ -15,7 +15,10 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points = {
-        'console_scripts': ['ctforge = ctforge.scripts.ctforge:main']
+        'console_scripts': [
+            'ctforge = ctforge.scripts.ctforge:main',
+            'ctfbot = ctforge.scripts.ctfbot:main'
+        ]
     },
     install_requires=[
         'Flask>=0.10.1',

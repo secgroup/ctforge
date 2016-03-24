@@ -20,16 +20,17 @@ being used later during the score computation phase.
 import os
 import sys
 import signal
-import string
 import random
 import argparse
 import logging
-import gevent
-import mysql.connector as dbc
-from gevent import Greenlet, Timeout, subprocess, sleep
-from Queue import Queue
+import threading
 
-import ctforge
+import psycopg2
+from queue import Queue
+import os.path
+
+from ctforge import database, utils, config
+
 
 __authors__     = ["Marco Squarcina <msquarci at dais.unive.it>",
                    "Mauro Tempesta <mtempest at dais.unive.it>"]
@@ -38,47 +39,58 @@ __copyright__   =  "Copyright 2013-16, University of Venice"
 
 # global variables
 
+# custom logger
+logger = logging.getLogger('bot')
 # queue of tasks: each task is a pair (i_team, i_service)
 tasks = Queue()
 # seconds to wait before killing a spawned script
 timeout = None
-# flag format
-flag_prefix = ''
-flag_suffix_length = ''
-# parameters for connecting to the database
-db_config = {}
-dispatch_script_path = ''
-check_script_path = ''
+# just one connection to the database for all the threads
+db_conn = None
+
+def abort():
+    """Terminate the program after if it is not possible to proceed."""
+
+    # close the database connection
+    if db_conn is not None:
+        db_conn.close()
+    sys.exit(1)
 
 class Team:
-    """Simple class for representing a team entity, storing the id (idt), ip
+    """Simple class for representing a team entity, storing the id ip
     and team name (name)."""
 
-    def __init__(self, idt, ip, name):
+    def __init__(self, id, ip, name):
         # team id
-        self.idt = idt
+        self.id = id
         # ip of the vulnerable machine of the team
         self.ip = ip
         # gang name for the team
         self.name = name
 
+    def __repr__(self):
+        return 'Team: {}, {}, {}'.format(self.id, self.ip, self.name)
+
 class Service:
-    """Simple class for representing a service entity, storing the id (ids) and
+    """Simple class for representing a service entity, storing the id and
     service name (name)."""
 
-    def __init__(self, ids, name, active):
+    def __init__(self, id, name, active):
         # service id
-        self.ids = ids
+        self.id = id
         # name of the service
         self.name = name
         # whether the service is active or not
         self.active = active
 
-class Worker(Greenlet):
+    def __repr__(self):
+        return 'Service: {}, {}, {}'.format(self.id, self.name, self.active)
+
+class Worker(threading.Thread):
     """The main execution unit while in dispatch/check mode."""
 
     def __init__(self, n, dispatch, check):
-        Greenlet.__init__(self)
+        super(Worker, self).__init__()
         # numeric identifier of the worker
         self.n = n
         # team instance being processed
@@ -86,7 +98,7 @@ class Worker(Greenlet):
         # service instance processed
         self.service = None
         # current flag for the pair (team, service)
-        self.flag = ''
+        self.flag = None
         # worker modalities 
         self.dispatch = dispatch
         self.check = check
@@ -95,13 +107,9 @@ class Worker(Greenlet):
         """Extract and execute jobs from the tasks queue until there is
         nothing left to do."""
 
-        # initialize the connection to the DB
-        self.db = Database(db_config)
-        self.cursor = self.db.cnx.cursor()
-
         # fetch tasks from the queue
         while not tasks.empty():
-            (self.team, self.service) = tasks.get()
+            self.team, self.service = tasks.get()
             # get the active flag for this team/service
             self._get_flag()
             # check whether we need to dispatch the flag or check the service
@@ -113,25 +121,28 @@ class Worker(Greenlet):
                 self._dispatch_flag()
             if self.check:
                 self._check_service()
-        # close the DB connection
-        self.cursor.close()
-        self.db.close()
 
     def _get_flag(self):
         """Retrieve the active flag for the current (team, service) pair by
         querying the active_flags table."""
 
-        query = ('SELECT flag '
-                 'FROM active_flags '
-                 'WHERE team_id = %s AND service_id = %s')
         try:
-            self.cursor.execute(query, (self.team.idt, self.service.ids))
-            self.flag = self.cursor.fetchone()[0]
-        except:
-            # no flag in the database? This is weird
-            logging.critical(self._logalize("Error while getting the flag, "
-                                            "aborting."))
-            sys.exit(1)
+            with db_conn.cursor() as cur:
+                cur.execute((
+                    'SELECT flag FROM active_flags '
+                    'WHERE team_id = %s AND service_id = %s')
+                    , [self.team.idt, self.service.ids])
+                res = cur.fetchone()
+        except psycopg2.Error as e:
+            logger.critical(self._logalize('Error while accessing the active flag table, aborting: {}'.format(e)))
+            abort()
+
+        if res is None:
+            # the active_flags table must be empty, this should never happend
+            logger.critical(self._logalize('The active_flags table did not return a flag for the current team/service, aborting'))
+            abort()
+
+        self.flag = res['flag']
 
     def _dispatch_flag(self):
         """Send the flag to a given team for a given service by executing an
@@ -139,7 +150,7 @@ class Worker(Greenlet):
         complete."""
 
         # execute the script ignoring its return status
-        self._execute(dispatch_script_path + '/' + self.service.name)
+        self._execute(os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name))
 
     def _check_service(self):
         """Check if a given service on a given host is working as expected by
@@ -158,7 +169,7 @@ class Worker(Greenlet):
 
         # execute the script using its return value to determine the service
         # status
-        status = self._execute(check_script_path + '/' +  self.service.name)
+        status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name))
         if status == -1 or status > 125:
             return
         success = 1 if status == 0 else 0
@@ -170,11 +181,11 @@ class Worker(Greenlet):
             self.db.cnx.commit()
         except dbc.Error as e:
             # another error occurred, no recovery possible
-            logging.critical(self._logalize(("Unable to insert the integrity "
+            logger.critical(self._logalize(("Unable to insert the integrity "
                                              "check report: {}").format(e)))
         else:
             # update successful
-            logging.debug(self._logalize("Status added as {}".format(status)))
+            logger.debug(self._logalize("Status added as {}".format(status)))
 
     def _execute(self, script_name):
         """Execute the provided script killing the process if it timeouts."""
@@ -185,7 +196,7 @@ class Worker(Greenlet):
         timer = Timeout(timeout)
         timer.start()
         try:
-            logging.debug(self._logalize("Executing {}".format(command)))
+            logger.debug(self._logalize("Executing {}".format(command)))
             process = subprocess.Popen(command, preexec_fn=os.setsid,
                                        shell=True)
             # ignore stdout and stderr
@@ -194,7 +205,7 @@ class Worker(Greenlet):
         except Timeout:
             # the remote VM could be down, this is not a critical error but we
             # should anyway give it a look 
-            logging.warning(self._logalize(("Timeout exceeded while executing "
+            logger.warning(self._logalize(("Timeout exceeded while executing "
                                             "{}").format(command)))
             # kill the process tree gently and wait a small amount of time for
             # the process to clear resources
@@ -211,7 +222,7 @@ class Worker(Greenlet):
         except Exception as e:
             # wtf happened? this is an unknown error. Assume it's our fault
             status = -1
-            logging.critical(self._logalize(("Error while executing "
+            logger.critical(self._logalize(("Error while executing "
                                              "{}: {}").format(command, e)))
         finally:
             timer.cancel()
@@ -224,106 +235,66 @@ class Worker(Greenlet):
         return 'Worker-{} ({}, {}): {}'.format(self.n, self.team.ip, 
                                                self.service.name, message)
 
-class Database:
-    def __init__(self, config):
-        try:
-            self.cnx = dbc.connect(**config)
-        except dbc.Error as e:
-            if e.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-                logging.critical(("Wrong username or password during database "
-                                  "connection, aborting"))
-            elif err.errno == errorcode.ER_BAD_DB_ERROR:
-                logging.critical("Database does not exist, aborting")
-            else:
-                logging.critical(("Error while connecting to the database, "
-                                  "aborting: {}").format(e))
-            sys.exit(1)
-
-    def close(self):
-        try:
-            self.cnx.close()
-        except dbc.Error as e:
-            logging.critical("Error while closing the database connection")
-
-
 def get_teams_services():
     """Retrieve the lists of team and service instances."""
 
-    db = Database(db_config)
-    query_teams = ("SELECT id, ip, name FROM teams")
-    query_services = ("SELECT id, name, active FROM services")
-    try:
-        cursor = db.cnx.cursor()
-        cursor.execute(query_teams)
-        teams = [Team(*t) for t in cursor.fetchall()]
-        cursor.execute(query_services)
-        services = [Service(*s) for s in cursor.fetchall() if s[2] == 1]
-    except dbc.Error as e:
-        logging.critical(("Error while quering the database, "
-                          "aborting: {}").format(e))
-        sys.exit(1)
-    finally:
+    with db_conn.cursor() as cur:
         try:
-            cursor.close()
-        except:
-            logging.critical("Unable to close the database cursor")
-    db.close()
+            cur.execute('SELECT id, ip, name FROM teams')
+            teams = [Team(**t) for t in cur.fetchall()]
+            cur.execute('SELECT id, name, active FROM services')
+            services = [Service(**s) for s in cur.fetchall() if s['active']]
+        except psycopg2.Error as e:
+            logger.critical("Error while quering the database, aborting: {}".format(e))
+            abort()
 
     return (teams, services)
 
-def advance_round():
+def advance_round(teams, services):
     """Advance the round: update results, truncate the active_flags table and
     store new flags in the database for each team and service."""
 
-    (teams, services) = get_teams_services()
-    
-    db = Database(db_config)
-    cursor = db.cnx.cursor()
-    # advance the round and clear the flag tables
-    try:
-        rnd = cursor.callproc('switch_round', (0, ))[0]
-    except dbc.Error as e:
-        logging.critical(("Error while incrementing the round, "
-                          "aborting: {}").format(e))
-        sys.exit(1)
-    db.cnx.commit()
-    if not rnd: rnd = 1
-    logging.info("Round {} started".format(rnd))
+    with db_conn.cursor() as cur:
+        # advance the round and clear the flag tables
+        try:
+            cur.execute('SELECT * FROM switch_round()')
+            rnd = cur.fetchone()['switch_round']
+        except psycopg2.Error as e:
+            logger.critical(("Error while incrementing the round, "
+                              "aborting: {}").format(e))
+            abort()
+    # commit the stored procedure operations (probably not needed)
+    db_conn.commit()
+    logger.info("Round {} started".format(rnd))
+
     # generate and insert the new flags to the database
-    query = ('INSERT INTO flags '
-             '(flag, team_id, service_id, round) '
-             'VALUES (%s, %s, %s, %s)')
+    cur = db_conn.cursor()
     for service in services:
         for team in teams:
             inserted = False
             while not inserted:
-                flag = generate_flag()
+                flag = utils.generate_flag(config['FLAG_PREFIX'], config['FLAG_SUFFIX'],
+                                           config['FLAG_CHARS'], config['FLAG_LENGTH'])
                 try:
-                    cursor.execute(query, (flag, team.idt, service.ids, rnd))
-                except dbc.IntegrityError:
-                    logging.warning("Duplicate flag, generating a new one")
-                except Exception as e:
-                    logging.critical(("Error while adding a new flag to the "
-                                      "database, aborting: {}").format(e))
-                    sys.exit(1)
+                    cur.execute((
+                        'INSERT INTO flags (flag, team_id, service_id, round) '
+                        'VALUES (%s, %s, %s, %s)'),
+                        (flag, team.id, service.id, rnd))
+                except psycopg2.IntegrityError:
+                    logger.warning('Duplicate flag, generating a new one')
+                except psycopg2.Error as e:
+                    logger.critical(('Error while adding a new flag to the '
+                                      'database, aborting: {}').format(e))
+                    abort()
                 else:
                     inserted = True
-                    logging.debug(("New flag just added to the "
-                                   "database: {}").format(flag))
-    # committing all the new INSERTs
-    db.cnx.commit()
-    cursor.close()
-    db.close()
+                    logger.debug(('New flag just added to the database: {}').format(flag))
+    db_conn.commit()
+    cur.close()
 
-def generate_flag():
-    """Generate a random flag according to the provided config."""
-
-    return flag_prefix + ''.join(random.choice(string.letters + string.digits)
-                                 for _ in range(flag_suffix_length))
 
 def main():
-    global timeout, db_config, flag_prefix, flag_suffix_length, \
-           dispatch_script_path, check_script_path
+    global logger, timeout, db_conn
 
     # parse command line options, the round parameter is required
     parser = argparse.ArgumentParser(description='Flag dispatcher and checker')
@@ -342,38 +313,49 @@ def main():
     args = parser.parse_args()
     if not any([args.advance, args.dispatch, args.check]):
         sys.stderr.write("At least one action is required, aborting.\n")
-        sys.exit(1)
- 
+        abort()
+
     # set variables
     n_workers = args.num_workers
     timeout = args.timeout
     log_level = logging.DEBUG if args.verbose else logging.INFO
 
     # set logging
-    try:
-        logging.basicConfig(filename=ctforge.config['BOT_LOG_FILE'], format='%(asctime)s [%(levelname)s] %(message)s', 
-                            level=log_level)
-    except IOError:
-        sys.stderr.write(("Unable to write logs to "
-                          "{}, aborting\n".format(ctforge.config['BOT_LOG_FILE'])))
-        sys.exit(1)
+    logger.setLevel(log_level)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+    fh = logging.FileHandler(config['BOT_LOG_FILE'])
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    # if the verbose mode is selected, log also on the console
+    if args.verbose:
+        ch = logging.StreamHandler()
+        ch.setFormatter(formatter)
+        logger.addHandler(ch)
+
+    # start the global db connection
+    db_conn = database.db_connect(logger=logger)
+
+    # retrieve the list of teams and services
+    teams, services = get_teams_services()
     if args.advance:
         # advance the round
-        advance_round()
+        advance_round(teams, services)
     if args.check or args.dispatch:
-        # retrieve the list of teams and services
-        (teams, services) = get_teams_services()
         # fill the queue of tasks, choosing the team order randomly :)
         for service in services:
             for team in random.sample(teams, len(teams)):
                 tasks.put_nowait((team, service))
+
         # create the list of workers
         workers = []
         for i in range(n_workers):
-            workers.append(Worker(i, args.dispatch, args.check))
-            workers[-1].start()
+            worker = Worker(i, args.dispatch, args.check)
+            workers.append(worker)
+            worker.start()
+
         # join all workers
-        gevent.joinall(workers)
+        for worker in workers:
+            worker.join()
 
     # exit gracefully
     sys.exit(0)

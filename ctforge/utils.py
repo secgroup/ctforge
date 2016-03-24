@@ -3,7 +3,9 @@
 
 import sys
 import string
+import random
 import configparser
+import os.path
 
 from flask import flash
 
@@ -13,7 +15,7 @@ def parse_conf(fname):
         # parse the configuration file
         config = configparser.ConfigParser()
         config.read(fname)
-        return dict(
+        conf = dict(
             DB_HOST = config.get('database', 'host', fallback='127.0.0.1'),
             DB_PORT = config.getint('database', 'port', fallback=5432),
             DB_NAME = config.get('database', 'name', fallback='ctforge'),
@@ -46,6 +48,12 @@ def parse_conf(fname):
     except (configparser.NoOptionError, configparser.NoSectionError) as e:
         sys.stderr.write('Malformed configuration file, aborting: {}\n'.format(e))
         sys.exit(1)
+    # expand home
+    for k in ['LOG_FILE', 'BOT_LOG_FILE', 'DISPATCH_SCRIPT_PATH', 'CHECK_SCRIPT_PATH']:
+        if conf[k] is not None:
+            conf[k] = os.path.expanduser(conf[k])
+
+    return conf
 
 def flash_errors(form):
     """Handle form errors via flash messages."""
@@ -55,3 +63,8 @@ def flash_errors(form):
             msg = 'Error in the {} field: {}'.format(
                   getattr(form, field).label.text, error)
             flash(msg, 'error')
+
+def generate_flag(prefix, suffix, charset, length):
+    """Generate a random flag according to the provided config."""
+
+    return prefix + ''.join(random.choice(charset) for _ in range(length)) + suffix

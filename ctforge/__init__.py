@@ -28,7 +28,7 @@ except Exception:
     pass
 
 app = Flask(__name__, static_folder=config['STATIC_FOLDER'], 
-    template_folder=config['TEMPLATE_FOLDER'])
+                     template_folder=config['TEMPLATE_FOLDER'])
 app.config.update(config)
 
 login_manager = LoginManager()
@@ -42,7 +42,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 # initialize the logging system
 if app.config['LOG_FILE'] is not None:
     try:
-        logfile = os.path.expanduser(app.config['LOG_FILE'])
+        logfile = app.config['LOG_FILE']
         file_handler = logging.FileHandler(logfile)
         file_handler.setFormatter(logging.Formatter((
             '-'*90,

@@ -99,7 +99,7 @@ def init(args):
         sys.stderr.write('Error: "{}"\n'.format(args.conf, confile, e))
 
     if app.config['LOG_FILE'] is not None:
-        logfile = os.path.expanduser(app.config['LOG_FILE'])
+        logfile = app.config['LOG_FILE']
         if not os.path.exists(logfile):
             logdir = os.path.dirname(logfile)
             resp = ask('Create log dir {} ? (y/n)'.format(logdir), 'y' if args.yes else None)

@@ -22,7 +22,7 @@ def get_db_connection():
             sys.exit(1)
     return db_conn
 
-def db_connect(database=None):
+def db_connect(database=None, logger=app.logger):
     try:
         db_conn = psycopg2.connect(
             host=app.config['DB_HOST'],
@@ -32,12 +32,12 @@ def db_connect(database=None):
             port=app.config['DB_PORT'],
             cursor_factory=psycopg2.extras.RealDictCursor)
     except psycopg2.Error as e:
-        app.logger.critical('Unable to connect to the database: {}'.format(e))
+        logger.critical('Unable to connect to the database: {}'.format(e))
         sys.exit(1)
     return db_conn
 
 @app.teardown_appcontext
-def db_disconnect(exception=None):
+def db_disconnect(exception=None, logger=app.logger):
     """Disconnect from the database."""
 
     try:
@@ -45,7 +45,7 @@ def db_disconnect(exception=None):
         if db_conn is not None:
             db_conn.close()
     except Exception as e:
-        app.logger.critical('Unable to close the database connection: {}'.format(e))
+        logger.critical('Unable to close the database connection: {}'.format(e))
         sys.exit(1)
 
 def query_handler(query, data):
