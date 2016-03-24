@@ -103,7 +103,7 @@ class Worker(threading.Thread):
         self.dispatch = dispatch
         self.check = check
 
-    def _run(self):
+    def run(self):
         """Extract and execute jobs from the tasks queue until there is
         nothing left to do."""
 
@@ -131,7 +131,7 @@ class Worker(threading.Thread):
                 cur.execute((
                     'SELECT flag FROM active_flags '
                     'WHERE team_id = %s AND service_id = %s')
-                    , [self.team.idt, self.service.ids])
+                    , [self.team.id, self.service.id])
                 res = cur.fetchone()
         except psycopg2.Error as e:
             logger.critical(self._logalize('Error while accessing the active flag table, aborting: {}'.format(e)))
@@ -212,8 +212,10 @@ class Worker(threading.Thread):
                 time.sleep(0.1)
             if process.poll() is None:
                 process.kill()
-        except subprocess.ProcessLookupError:
-            # we tried to kill an already terminated program
+        except FileNotFoundError as e:
+            logger.error(self._logalize('Script not found: {}'.format(e)))
+        except ProcessLookupError:
+            # we tried to kill an already terminated program or the script is not found
             pass
         except Exception as e:
             # wtf happened? this is an unknown error. Assume it's our fault
