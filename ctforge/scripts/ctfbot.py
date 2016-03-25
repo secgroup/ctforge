@@ -127,7 +127,7 @@ class Worker(threading.Thread):
         # fetch tasks from the queue
         while not Worker.killing_time.is_set():
             try:
-                self.team, self.service = tasks.get()
+                self.team, self.service = tasks.get_nowait()
                 # get the active flag for this team/service
                 self._get_flag()
                 # check whether we need to dispatch the flag or check the service
@@ -377,6 +377,9 @@ def main():
         # join all workers
         for worker in workers:
             worker.join()
+
+    # close the connection to the db
+    db_conn.close()
 
     # exit gracefully
     sys.exit(0)
