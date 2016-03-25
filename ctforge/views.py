@@ -410,17 +410,19 @@ def submit():
                 cur = db_conn.cursor()
                 # get the team associated with the retrieved token
                 cur.execute('SELECT id FROM teams WHERE token = %s', [team_token])
-                team_id = cur.fetchone()
-                if team_id is None:
+                res = cur.fetchone()
+                if res is None:
                     raise ctforge.exceptions.InvalidToken()
+                team_id = res['id']
                 # get the flag that the user is trying to submit, if valid
                 # (i.e. active and not one of the flags of his team)
                 cur.execute(('SELECT service_id FROM active_flags '
                              'WHERE flag = %s AND team_id != %s'),
                              [flag, team_id])
-                service_id = cur.fetchone()
-                if service_id is None:
+                res = cur.fetchone()
+                if res is None:
                     raise ctforge.exceptions.InvalidFlag()
+                service_id = res['service_id']
                 # check whether the team's service is well-functioning or not
                 cur.execute(('SELECT I.successful, I.timestamp '
                              'FROM active_flags AS A '
