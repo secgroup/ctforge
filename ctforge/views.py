@@ -393,7 +393,8 @@ def submit():
         with db_conn.cursor() as cur:
             cur.execute('SELECT token FROM teams WHERE id = %s',
                         [current_user.team_id])
-            team_token = cur.fetchone()
+            res = cur.fetchone()
+        team_token = res['token'] if res is not None else None
     
     # initialize the flag form
     form = ctforge.forms.ServiceFlagForm(csrf_enabled=False)
