@@ -798,7 +798,7 @@ def scoreboard():
     
     return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, **scoreboard_data)
 
-@cache.cached(timeout=60)
+#@cache.cached(timeout=60)
 def _scoreboard(rnd):
     db_conn = get_db_connection()
     cur = db_conn.cursor()
