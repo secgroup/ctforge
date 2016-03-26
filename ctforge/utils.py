@@ -42,8 +42,8 @@ def parse_conf(fname):
             SECRET_KEY = config.get('website', 'secret_key', fallback='ChengeMeWithRandomStuffASAP'),
 
             BOT_LOG_FILE = config.get('flagbot', 'log_file', fallback=None),
-            DISPATCH_SCRIPT_PATH = config.get('flagbot', 'dispatch_script_path', fallback=None),
-            CHECK_SCRIPT_PATH = config.get('flagbot', 'check_script_path', fallback=None)
+            DISPATCH_SCRIPT_PATH = config.get('flagbot', 'dispatch_script_path', fallback='~/.ctforge/bot/dispatch/'),
+            CHECK_SCRIPT_PATH = config.get('flagbot', 'check_script_path', fallback='~/.ctforge/bot/check/')
         )
     except (configparser.NoOptionError, configparser.NoSectionError) as e:
         sys.stderr.write('Malformed configuration file, aborting: {}\n'.format(e))
