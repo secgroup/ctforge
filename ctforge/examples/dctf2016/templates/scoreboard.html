@@ -9,7 +9,7 @@
 {% if rnd >= 0 %}
     Scores computed at round {{ rnd }}.
     Current round {{ rnd + 1 }}.
-    Round {{ rnd + 2 }} starting in <span id="countdown">{{ time_left }} seconds</span>
+    <!-- Round {{ rnd + 2 }} starting in <span id="countdown">{{ time_left }} seconds</span> -->
 {% else %}
     Attack/defense CTF is coming soon
 {% endif %}
@@ -71,7 +71,7 @@
 </div>
 <script>
 $(document).ready(function() {
-    {% if rnd >= 0 %}
+    {% if rnd >= 1 %}
     var hours, minutes, seconds;
     var seconds_left = {{ time_left }};
     var countdown = document.getElementById("countdown");
