@@ -71,7 +71,7 @@
 </div>
 <script>
 $(document).ready(function() {
-    {% if rnd >= 1 %}
+    {% if rnd >= 0 %}
     var hours, minutes, seconds;
     var seconds_left = {{ time_left }};
     var countdown = document.getElementById("countdown");
