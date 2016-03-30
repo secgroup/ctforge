@@ -80,7 +80,7 @@ BEGIN
           GROUP BY AF.team_id, AF.service_id
         ) AS AR, (
           /* Retrieve integrity information computed before from flags table. */
-          SELECT AF.team_id, AF.service_id, (CASE WHEN F.n_checks > 0 THEN F.n_up_checks / F.n_checks ELSE 0 END) AS integrity
+          SELECT AF.team_id, AF.service_id, (CASE WHEN F.n_checks > 0 THEN F.n_up_checks::float / F.n_checks ELSE 0 END) AS integrity
           FROM active_flags AF, flags F
           WHERE AF.flag = F.flag
         ) AS IC
