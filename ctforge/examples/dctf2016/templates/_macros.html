@@ -111,7 +111,7 @@
             ],
           {% if integer_only %}
             axesDefaults: {
-              tickInterval: 1, 
+              //tickInterval: 1, 
               tickOptions: { 
                 formatString: '%d' 
               }
@@ -121,10 +121,18 @@
               xaxis: {
                 {{ label_x|safe }},
               {% if min_x is not none %}
-                min: '{{ min_x }}',
+			    {% if integer_only %}
+                  min: {{ min_x }},
+				{% else %}
+                  min: '{{ min_x }}',
+				{% endif %}
               {% endif %}
               {% if max_x is not none %}
-                max: '{{ max_x }}',
+			    {% if integer_only %}
+                  max: {{ max_x }},
+				{% else %}
+                  max: '{{ max_x }}',
+				{% endif %}
               {% endif %}
               },
               yaxis: {
