@@ -15,19 +15,17 @@
     </a>
 </div>
 <div class="row">
-    <div class="col-md-2"></div>
-    <div class="col-md-8">
+    <div class="col-md-10">
         <form class="form-horizontal" action="{{ request.path }}" method="post">
             {{ form.hidden_tag() }}
             {{ render_inline_fields(form) }}
             <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
-                    <button class="btn btn-primary" type="submit">Save</button>
-                </div>
+                <button class="btn btn-primary" type="submit">Save</button>
             </div>
         </form>
     </div>
-    <div class="col-md-2"></div>
+    <div class="col-md-2">
+    </div>
 </div>
 
 {% endblock %}

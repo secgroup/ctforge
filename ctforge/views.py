@@ -126,7 +126,7 @@ def admin(tab='users'):
         # get the challenge writeups
         cur.execute((
             'SELECT W.id AS id, U.mail AS mail, U.name AS name, U.surname AS surname, '
-            '       C.name AS challenge, W.timestamp AS timestamp '
+            '       C.name AS challenge, W.timestamp AS timestamp, W.grade AS grade '
             'FROM challenge_writeups AS CW '
             'JOIN users AS U '
             '     ON CW.user_id = U.id '
@@ -686,6 +686,8 @@ def challenge(name):
         if writeup_data is not None:
             if writeup_form.validate_on_submit():
                 if writeup is not None:
+                    # writeup already submitted, resubmission allowed only if there's no grade
+                    print(writeup)
                     flash('You already provided a writeup for this challenge', 'error')
                 else:
                     writeup_data = writeup_form.writeup.data

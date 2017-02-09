@@ -15,7 +15,7 @@
         <table class="table table-condensed table-hover">
             <thead>
                 <tr>
-                    <td></td>
+                    <td>&nbsp;</td>
                 {% for k in keys %}
                     <td>{{ k }}</td>
                 {% endfor %}
@@ -48,7 +48,7 @@
         {% if field.type == 'CSRFTokenField' %}
         {% elif field.type == 'BooleanField' %}
              <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
+                <div class="col-md-offset-2 col-md-10">
                     <div class="checkbox">
                         <label>
                             {{ field }} {{ field.name }}
@@ -64,7 +64,7 @@
                 <div class="form-group">
             {% endif %}
                     {{ field.label(class="col-sm-2 control-label") }}
-                    <div class="col-sm-10" >
+                    <div class="col-md-10" >
                         {{ field(class="form-control") }}
                     </div>
                 </div>
