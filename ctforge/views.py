@@ -759,9 +759,25 @@ def challenge(name):
 @jeopardy_mode_required
 @login_required
 def writeup(id):
-    """Display the provided writeup.""" 
+    """Display the provided writeup."""
 
-    pass
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        # get the writeup data if it exists
+        cur.execute((
+            'SELECT W.writeup AS writeup, W.timestamp AS timestamp, '
+            '       U.id AS user_id, U.name AS user_name, U.surname AS user_surname, '
+            '       C.name AS challenge_name, C.points AS challenge_points '
+            'FROM writeups AS W '
+            'JOIN users AS U ON W.user_id = U.id '
+            'JOIN challenges AS C ON W.challenge_id = C.id '
+            'WHERE W.id = %s'), [id])
+        writeup = cur.fetchone()
+    # grant access to the author or admin
+    if writeup is not None and (writeup['user_id'] == current_user.id or current_user.admin):
+        return render_template('writeup.html', writeup=writeup)
+    abort(404)
+
 
 @app.route('/service/<name>')
 @attackdefense_mode_required
