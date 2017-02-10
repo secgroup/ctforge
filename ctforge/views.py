@@ -795,6 +795,7 @@ def service(name):
         abort(404)
     return render_template('service.html', service=service)
 
+
 @app.route('/teams')
 @attackdefense_mode_required
 def teams():

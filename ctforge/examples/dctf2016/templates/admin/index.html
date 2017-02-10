@@ -39,11 +39,12 @@
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
 
 
-    {% set ce_keys = ['id', 'mail', 'name', 'surname', 'challenge', 'timestamp', 'grade'] %}
+    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'grade'] %}
     <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'challenges_evaluations' }}" id="challenges_evaluations">
         <table class="table table-condensed table-hover sortable">
             <thead>
                 <tr>
+                    <td>&nbsp;</td>
                     <td>&nbsp;</td>
                 {% for ce_k in ce_keys %}
                     <td>{{ ce_k }}</td>
@@ -62,6 +63,11 @@
                             <span class="glyphicon glyphicon-pencil"></span>
                         </a>
                     </td>
+                    <td>
+                        <a href="{{ url_for('writeup', id=ce['id']) }}" style="background: none">
+                            <span class="glyphicon glyphicon-eye-open"></span>
+                        </a>
+                    </td>
                 {% for ce_k in ce_keys %}
                     <td>{{ ce[ce_k] }}</td>
                 {% endfor %}
@@ -70,10 +76,6 @@
             </tbody>
         </table>
     </div>
-
-
-
-    {# tabify(challenges_evaluations, ['id', 'mail', 'name', 'surname', 'challenge', 'timestamp', 'grade'], 'writeup', 'challenges_evaluations', class = 'active in' if tab == 'challenges_evaluations') #}
 {% endif %}
 </div>
 
