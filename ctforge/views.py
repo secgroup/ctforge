@@ -125,20 +125,20 @@ def admin(tab='users'):
     with db_conn.cursor() as cur:
         # get the challenge writeups
         cur.execute((
-            'SELECT W.id AS id, U.mail AS mail, U.name AS name, U.surname AS surname, '
-            '       C.name AS challenge, W.timestamp AS timestamp, E.feedback IS NULL, '
-            '       E.grade AS grade '
+            'SELECT W.id AS id, C.id AS challenge_id, U.id AS user_id, U.mail AS mail, '
+            '       U.name AS name, U.surname AS surname, C.name AS challenge, '
+            '       W.timestamp AS timestamp, E.feedback IS NULL, grade AS grade '
             'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
             '      FROM writeups GROUP BY user_id, challenge_id) AS WT '
             'JOIN writeups AS W ON WT.id = W.id '
             'JOIN users AS U ON W.user_id = U.id '
             'JOIN challenges AS C ON W.challenge_id = C.id '
             'LEFT JOIN challenges_evaluations AS E ON U.id = E.user_id AND C.id = E.challenge_id'))
-        challenge_writeups = cur.fetchall()
+        challenges_evaluations = cur.fetchall()
 
     return render_template('admin/index.html',
                             users=users, teams=teams, services=services,
-                            challenges=challenges, challenge_writeups=challenge_writeups,
+                            challenges=challenges, challenges_evaluations=challenges_evaluations,
                             tab=tab)
 
 @app.route('/admin/user/new', methods=['GET', 'POST'])
@@ -343,10 +343,11 @@ def edit_challenge(id):
                                    target='challenge', action='edit')
     return redirect(url_for('admin', tab='challenges'))
 
+
 @app.route('/admin/writeup/<int:challenge_id>/<int:user_id>', methods=['GET', 'POST'])
 @jeopardy_mode_required
 @admin_required
-def edit_writeup(challenge_id, user_id):
+def edit_evaluation(challenge_id, user_id):
     if request.method == 'POST':
         form = ctforge.forms.AdminWriteupForm()
         if form.validate_on_submit():
@@ -361,14 +362,17 @@ def edit_writeup(challenge_id, user_id):
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
             cur.execute((
-                'SELECT W.id, W.writeup, W.grade, W.feedback, W.timestamp, '
-                '       U.mail AS mail, U.name AS name, U.surname AS surname, '
-                '       C.name AS challenge '
-                'FROM writeups AS W '
-                'LEFT JOIN challenge_writeups AS CW ON W.id = CW.writeup_id '
-                'JOIN users AS U ON CW.user_id = U.id '
-                'JOIN challenges AS C ON CW.challenge_id = C.id '
-                'WHERE W.id = %s'), [id])
+                'SELECT W.writeup AS writeup, U.mail AS mail, '
+                '       U.name AS name, U.surname AS surname, C.name AS challenge, '
+                '       W.timestamp AS timestamp, E.feedback AS feedback, grade AS grade '
+                'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
+                '      FROM writeups GROUP BY user_id, challenge_id) AS WT '
+                'JOIN writeups AS W ON WT.id = W.id '
+                'JOIN users AS U ON W.user_id = U.id '
+                'JOIN challenges AS C ON W.challenge_id = C.id '
+                'RIGHT JOIN challenges_evaluations AS E ON U.id = E.user_id AND C.id = E.challenge_id '
+                'WHERE E.challenge_id = %s AND E.user_id = %s'),
+                [challenge_id, user_id])
             writeup = cur.fetchone()
         if writeup is None:
             flash('Invalid writeup!', 'error')
@@ -376,7 +380,7 @@ def edit_writeup(challenge_id, user_id):
             form = ctforge.forms.AdminWriteupForm(**writeup)
             return render_template('admin/data.html', form=form,
                                    target='writeup', action='edit')
-    return redirect(url_for('admin', tab='challenge_writeups'))
+    return redirect(url_for('admin', tab='challenges_evaluations'))
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -668,8 +672,8 @@ def challenge(name):
     writeups = cur.fetchall()
     # get the evaluation for this challenge
     evaluation = None
-    if len(writeups):
-        cur.execute(('SELECT * FROM challenges_evaluations '
+    if writeups:
+        cur.execute(('SELECT feedback, grade, timestamp FROM challenges_evaluations '
                      'WHERE user_id = %s AND challenge_id = %s '),
                      [current_user.id, challenge['id']])
         evaluation = cur.fetchone()
@@ -747,14 +751,14 @@ def challenge(name):
     db_conn.close()
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
-                           challenge=challenge, solved=solved, grade_assigned=grade_assigned,
-                           writeups=writeups)
+                           challenge=challenge, evaluation=evaluation, solved=solved, 
+                           grade_assigned=grade_assigned, writeups=writeups)
 
 
 @app.route('/writeup/<int:id>')
 @jeopardy_mode_required
 @login_required
-def writeup():
+def writeup(id):
     """Display the provided writeup.""" 
 
     pass
