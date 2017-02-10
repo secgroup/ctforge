@@ -6,7 +6,7 @@ import datetime
 import psycopg2
 import psycopg2.extras
 from flask import request, render_template, redirect, url_for, flash, abort
-from flask.ext.login import current_user, login_required, login_user, logout_user
+from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
 
 from ctforge import app, csrf, login_manager, cache
@@ -126,15 +126,14 @@ def admin(tab='users'):
         # get the challenge writeups
         cur.execute((
             'SELECT W.id AS id, U.mail AS mail, U.name AS name, U.surname AS surname, '
-            '       C.name AS challenge, W.timestamp AS timestamp, W.grade AS grade '
-            'FROM challenge_writeups AS CW '
-            'JOIN users AS U '
-            '     ON CW.user_id = U.id '
-            'JOIN challenges AS C '
-            '     ON CW.challenge_id = C.id '
-            'JOIN writeups AS W '
-            '     ON CW.writeup_id = W.id '
-            'ORDER BY W.timestamp DESC'))
+            '       C.name AS challenge, W.timestamp AS timestamp, E.feedback IS NULL, '
+            '       E.grade AS grade '
+            'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
+            '      FROM writeups GROUP BY user_id, challenge_id) AS WT '
+            'JOIN writeups AS W ON WT.id = W.id '
+            'JOIN users AS U ON W.user_id = U.id '
+            'JOIN challenges AS C ON W.challenge_id = C.id '
+            'LEFT JOIN challenges_evaluations AS E ON U.id = E.user_id AND C.id = E.challenge_id'))
         challenge_writeups = cur.fetchall()
 
     return render_template('admin/index.html',
@@ -344,18 +343,18 @@ def edit_challenge(id):
                                    target='challenge', action='edit')
     return redirect(url_for('admin', tab='challenges'))
 
-@app.route('/admin/writeup/<int:id>', methods=['GET', 'POST'])
+@app.route('/admin/writeup/<int:challenge_id>/<int:user_id>', methods=['GET', 'POST'])
 @jeopardy_mode_required
 @admin_required
-def edit_writeup(id):
+def edit_writeup(challenge_id, user_id):
     if request.method == 'POST':
         form = ctforge.forms.AdminWriteupForm()
         if form.validate_on_submit():
             query_handler((
-                'UPDATE writeups '
+                'UPDATE challenges_evaluations '
                 'SET grade = %s, feedback = %s '
-                'WHERE id = %s'),
-                [form.grade.data, form.feedback.data, id])
+                'WHERE challenge_id = %s AND user_id = %s'),
+                [form.grade.data, form.feedback.data, challenge_id, user_id])
         else:
             flash_errors(form)
     else:
@@ -379,7 +378,7 @@ def edit_writeup(id):
                                    target='writeup', action='edit')
     return redirect(url_for('admin', tab='challenge_writeups'))
 
- 
+
 @app.route('/submit', methods=['GET', 'POST'])
 @attackdefense_mode_required
 @csrf.exempt
@@ -661,20 +660,24 @@ def challenge(name):
                  'WHERE user_id = %s AND challenge_id = %s'),
                  [current_user.id, challenge['id']])
     solved = cur.fetchone() is not None
+    # get the list of all the writeups submitted by this user for this challenge
+    cur.execute(('SELECT id, timestamp FROM writeups '
+                 'WHERE user_id = %s AND challenge_id = %s '
+                 'ORDER BY id DESC'),
+                 [current_user.id, challenge['id']])
+    writeups = cur.fetchall()
+    # get the evaluation for this challenge
+    evaluation = None
+    if len(writeups):
+        cur.execute(('SELECT * FROM challenges_evaluations '
+                     'WHERE user_id = %s AND challenge_id = %s '),
+                     [current_user.id, challenge['id']])
+        evaluation = cur.fetchone()
+    grade_assigned = evaluation is not None and evaluation['grade'] is not None
 
-    # get the challenge writeup, if any
-    writeup = None
+    # retrieve the writeup form, if any
     writeup_form = ctforge.forms.ChallengeWriteupForm(writeup=challenge['writeup_template'])
-    if solved and challenge['writeup']:
-            cur.execute(('SELECT W.writeup, W.grade, W.feedback '
-                         'FROM challenge_writeups AS CW '
-                         'JOIN writeups AS W ON CW.writeup_id = W.id '
-                         'JOIN users AS U ON CW.user_id = U.id '
-                         'JOIN challenges AS C ON CW.challenge_id = C.id '
-                         'WHERE U.id = %s AND C.id = %s'),
-                         [current_user.id, challenge['id']])
-            writeup = cur.fetchone()
-    # initialize the flag form
+    # retrive the flag form
     flag_form = ctforge.forms.ChallengeFlagForm()
 
     # accept POST requests only if the challenge is active
@@ -684,22 +687,19 @@ def challenge(name):
         flag = request.form.get('flag')
 
         if writeup_data is not None:
-            if writeup_form.validate_on_submit():
-                if writeup is not None:
+            # only allow writeup submission if writeup support is enabled for this chal
+            if challenge['writeup'] and writeup_form.validate_on_submit():
+                if grade_assigned:
                     # writeup already submitted, resubmission allowed only if there's no grade
-                    print(writeup)
-                    flash('You already provided a writeup for this challenge', 'error')
+                    flash('Your submission has already been graded, you cannot modify it', 'error')
                 else:
                     writeup_data = writeup_form.writeup.data
                     try:
                         # save this writeup into the db
-                        cur.execute('INSERT INTO writeups (writeup) VALUES (%s) RETURNING id',
-                            [writeup_data])
+                        cur.execute(('INSERT INTO writeups (user_id, challenge_id, writeup) '
+                                    'VALUES (%s, %s, %s) RETURNING id'),
+                                    [current_user.id, challenge['id'], writeup_data])
                         writeup_id = cur.fetchone()['id']
-                        cur.execute((
-                            'INSERT INTO challenge_writeups (user_id, challenge_id, writeup_id) '
-                            'VALUES (%s, %s, %s)'),
-                            [current_user.id, challenge['id'], writeup_id])
                         cur.close()
                         db_conn.commit()
                         flash('Writeup added', 'success')
@@ -747,7 +747,17 @@ def challenge(name):
     db_conn.close()
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
-                           challenge=challenge, solved=solved, writeup=writeup)
+                           challenge=challenge, solved=solved, grade_assigned=grade_assigned,
+                           writeups=writeups)
+
+
+@app.route('/writeup/<int:id>')
+@jeopardy_mode_required
+@login_required
+def writeup():
+    """Display the provided writeup.""" 
+
+    pass
 
 @app.route('/service/<name>')
 @attackdefense_mode_required

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask.ext.login import UserMixin
+from flask_login import UserMixin
 
 from ctforge.database import get_db_connection
 

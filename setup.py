@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='CTForge',
-    version='0.1',
+    version='0.8',
     description='Forge you own CTF',
     long_description=__doc__,
     license='MIT',

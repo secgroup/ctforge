@@ -5,9 +5,9 @@ import os
 import sys
 import logging
 from flask import Flask
-from flask.ext.login import LoginManager
-from flask_wtf.csrf import CsrfProtect
-from flask.ext.cache import Cache
+from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
+from flask_cache import Cache
 
 from ctforge import utils
 
@@ -34,7 +34,7 @@ app.config.update(config)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-csrf = CsrfProtect()
+csrf = CSRFProtect()
 csrf.init_app(app)
 
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})

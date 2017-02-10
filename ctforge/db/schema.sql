@@ -54,21 +54,24 @@ CREATE TABLE challenge_attacks (
 
 CREATE TABLE writeups (
     id            SERIAL,
+    user_id       INT NOT NULL,
+    challenge_id  INT NOT NULL,
     writeup       TEXT NOT NULL,
+    timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id)
+);
+
+CREATE TABLE challenges_evaluations (
+    user_id       INT NOT NULL,
+    challenge_id  INT NOT NULL,
     grade         INT,
     feedback      TEXT,
     timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE challenge_writeups (
-    user_id       INT NOT NULL,
-    challenge_id  INT NOT NULL,
-    writeup_id    INT NOT NULL,
-    PRIMARY KEY (user_id, challenge_id, writeup_id),
+    PRIMARY KEY (user_id, challenge_id),
     FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (challenge_id) REFERENCES challenges (id),
-    FOREIGN KEY (writeup_id) REFERENCES writeups (id)
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id)
 );
 
 CREATE TABLE services (

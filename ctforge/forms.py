@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, HiddenField, IntegerField, BooleanField, TextAreaField, validators
 
-class LoginForm(Form):
+class LoginForm(FlaskForm):
     mail = StringField('mail', validators=[validators.DataRequired()])
     password = PasswordField('Password', validators=[validators.DataRequired()])
 
-class ServiceFlagForm(Form):
+class ServiceFlagForm(FlaskForm):
     team_token = HiddenField('team_token', validators=[validators.DataRequired()])
     flag = StringField('flag', validators=[validators.DataRequired()])
 
-class ChallengeFlagForm(Form):
+class ChallengeFlagForm(FlaskForm):
     flag = StringField('flag', validators=[validators.DataRequired()])
 
-class ServiceForm(Form):
+class ServiceForm(FlaskForm):
     name = StringField('name', validators=[validators.DataRequired()])
     description = TextAreaField('description', validators=[validators.DataRequired()])
     active = BooleanField('active')
 
-class ChallengeForm(Form):
+class ChallengeForm(FlaskForm):
     name = StringField('name', validators=[validators.DataRequired()])
     description = TextAreaField('description', validators=[validators.DataRequired()])
     flag = StringField('flag', validators=[validators.DataRequired()])
@@ -29,10 +29,10 @@ class ChallengeForm(Form):
     writeup = BooleanField('writeup')
     writeup_template = TextAreaField('writeup_template')
 
-class ChallengeWriteupForm(Form):
+class ChallengeWriteupForm(FlaskForm):
     writeup = TextAreaField('writeup', validators=[validators.DataRequired()])
 
-class AdminWriteupForm(Form):
+class AdminWriteupForm(FlaskForm):
     mail = StringField('mail', render_kw={'disabled': True})
     name = StringField('name', render_kw={'disabled': True})
     surname = StringField('surname', render_kw={'disabled': True})
@@ -42,7 +42,7 @@ class AdminWriteupForm(Form):
     grade = IntegerField('grade', validators=[validators.NumberRange(message='Grade should be between 0 and 10.', min=0, max=10)])
     feedback = TextAreaField('feedback')
 
-class UserForm(Form):
+class UserForm(FlaskForm):
     team_id = IntegerField('team_id', validators=[validators.Optional()])
     name = StringField('name', validators=[validators.DataRequired()])
     surname = StringField('surname', validators=[validators.DataRequired()])
@@ -51,7 +51,7 @@ class UserForm(Form):
     admin = BooleanField('admin')
     hidden = BooleanField('hidden')
 
-class TeamForm(Form):
+class TeamForm(FlaskForm):
     ip = StringField('ip', validators=[validators.DataRequired()])
     name = StringField('name', validators=[validators.DataRequired()])
     token = StringField('token', validators=[validators.DataRequired()])

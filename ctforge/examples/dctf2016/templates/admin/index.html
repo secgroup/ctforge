@@ -23,8 +23,8 @@
     <li role="presentation" {% if tab == 'challenges' %}class="active"{% endif %}>
         <a href="#challenges" aria-controls="challenges" role="tab" data-toggle="tab">Challenges</a>
     </li>
-    <li role="presentation" {% if tab == 'challenge_writeups' %}class="active"{% endif %}>
-        <a href="#challenge_writeups" aria-controls="challenge_writeups" role="tab" data-toggle="tab">Challenge Writeups</a>
+    <li role="presentation" {% if tab == 'challenges_evaluations' %}class="active"{% endif %}>
+        <a href="#challenges_evaluations" aria-controls="challenges_evaluations" role="tab" data-toggle="tab">Challenge Writeups</a>
     </li>
     {% endif %}
 </ul>
@@ -37,7 +37,42 @@
 {% endif %}
 {% if config.JEOPARDY_ACTIVE %}
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
-    {{ tabify(challenge_writeups, ['id', 'mail', 'name', 'surname', 'challenge', 'timestamp', 'grade'], 'writeup', 'challenge_writeups', class = 'active in' if tab == 'challenge_writeups') }}
+
+
+    <div role="tabpanel" class="tab-pane fade {{ class }}" id="{{ id }}">
+        <table class="table table-condensed table-hover">
+            <thead>
+                <tr>
+                    <td>&nbsp;</td>
+                {% for k in keys %}
+                    <td>{{ k }}</td>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+        {% for d in data %}
+            {% if d.active == 0 %}
+                <tr class="text-muted danger">
+            {% else %}
+                <tr>
+            {% endif %}
+                    <td>
+                        <a href="" style="background: none">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </a>
+                    </td>
+                {% for k in keys %}
+                    <td>{{ d[k] }}</td>
+                {% endfor %}
+                <tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+
+    {# tabify(challenges_evaluations, ['id', 'mail', 'name', 'surname', 'challenge', 'timestamp', 'grade'], 'writeup', 'challenges_evaluations', class = 'active in' if tab == 'challenges_evaluations') #}
 {% endif %}
 </div>
 
