@@ -14,38 +14,35 @@
 
 {% if challenge.active %}
     {% if challenge.writeup and solved %}
+            <hr>
         {% if writeups %}
             <div class="row">
-                <h3>Your writeup submissions</h3>
-                <ul>
-                {% for writeup in writeups %}
-                    <li><a href="{{ url_for('writeup', id=writeup.id) }}">{{ writeup.timestamp }}</a></li>
-                {% endfor %}
-                </ul>
-            </div>
             {% if evaluation %}
-                <div class="row">
+                <div class="col-md-8">
                     <h3>Evaluation</h3>
-                    <div class="col-md-8">
-                        <h4>Feedback</h4>
+                        <p>Feedback</p>
                         <pre><code>{{ evaluation.feedback }}</code></pre>
-                    </div>
-                    <div class="col-md-4">
                     {% if graded %}
-                        <h4>Grade</h4>
-                        <pre><code>{{ evaluation.grade }}</code></pre>
+                        <p>Grade <span class="big">{{ evaluation.grade }}</span>/10</p>
                     {% endif %}
-                        <p>{{ evaluation.timestamp }}</p>
-                    </div>
+                        <p>Evaluated at {{ evaluation.timestamp }}</p>
                 </div>
             {% endif %}
+                <div class="col-md-4">
+                    <h3>Writeup submission history</h3>
+                    <div class="list-group">
+                    {% for writeup in writeups %}
+                        <a href="{{ url_for('writeup', id=writeup.id) }}" class="list-group-item">{{ writeup.timestamp }}</a>
+                    {% endfor %}
+                    </div>
+                </div>
+            </div>
         {% endif %}
         {% if not graded %}
             <div class="row">
                 <h3>Submit a writeup</h3>
                 <p>Writeup submission can be performed until a grade is assigned</p>
-                <div class="col-md-2"></div>
-                <div class="col-md-8">
+                <div class="col-md-12">
                     <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
                         {{ writeup_form.hidden_tag() }}
                         <div class="form-group">
@@ -54,10 +51,10 @@
                         <button class="btn btn-primary" type="submit">Submit</button>
                     </form>
                 </div>
-                <div class="col-md-2"></div>
             </div>
         {% endif %}
     {% endif %}
+    {% if not solved %}
     <div class="row">
         <div class="col-md-2"></div>
         <div class="col-md-8">
@@ -72,6 +69,7 @@
         </div>
         <div class="col-md-2"></div>
     </div>
+    {% endif %}
 {% else %}
     <div class="row">
         <p class="lead">Challenge disabled</p>

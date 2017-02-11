@@ -40,7 +40,7 @@ p {
 	text-indent: justify;
 }
 pre, code, textarea.form-control {
-	font-family: Monospace;
+	font-family: monospace;
 	color: #80ddff;
 	background-color: rgba(0, 0, 0, 0.8);
 	font-size: small;
@@ -208,10 +208,16 @@ table.jqplot-table-legend {
 
 .form-signin input,
 .form-submit input,
-.input-group-addon {
+.input-group-addon,
+a.list-group-item {
 	background-color: rgba(0, 0, 0, 0.6);
 	border: 1px solid rgba(100, 100, 100, 0.3);
 	color: #fafafa;
+}
+
+a.list-group-item:hover {
+	background-color: rgba(50, 10, 50, 0.5);
+	color: #ffffff;
 }
 
 .form-signin .form-signin-heading, .form-signin .checkbox {

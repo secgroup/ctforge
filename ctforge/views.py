@@ -136,7 +136,6 @@ def admin(tab='users'):
             'JOIN challenges AS C ON W.challenge_id = C.id '
             'LEFT JOIN challenges_evaluations AS E ON U.id = E.user_id AND C.id = E.challenge_id'))
         evaluations = cur.fetchall()
-        print(evaluations)
 
     return render_template('admin/index.html',
                             users=users, teams=teams, services=services,
@@ -390,7 +389,7 @@ def edit_evaluation(challenge_id, user_id):
                         'WHERE user_id = %s AND challenge_id = %s'),
                         [form.grade.data, form.feedback.data, user_id, challenge_id])
                 else:
-                    flash('Cannot modify a challenge evaluation once the grade has been set!',
+                    flash('Cannot modify a writeup evaluation once a grade has been set!',
                           'error')
         else:
             flash_errors(form)
