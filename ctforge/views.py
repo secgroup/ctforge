@@ -127,19 +127,22 @@ def admin(tab='users'):
         cur.execute((
             'SELECT W.id AS id, C.id AS challenge_id, U.id AS user_id, U.mail AS mail, '
             '       U.name AS name, U.surname AS surname, C.name AS challenge, '
-            '       W.timestamp AS timestamp, E.feedback IS NULL, grade AS grade '
+            '       W.timestamp AS timestamp, E.feedback IS NOT NULL AS feedback, '
+            '       E.grade AS grade '
             'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
             '      FROM writeups GROUP BY user_id, challenge_id) AS WT '
             'JOIN writeups AS W ON WT.id = W.id '
             'JOIN users AS U ON W.user_id = U.id '
             'JOIN challenges AS C ON W.challenge_id = C.id '
             'LEFT JOIN challenges_evaluations AS E ON U.id = E.user_id AND C.id = E.challenge_id'))
-        challenges_evaluations = cur.fetchall()
+        evaluations = cur.fetchall()
+        print(evaluations)
 
     return render_template('admin/index.html',
                             users=users, teams=teams, services=services,
-                            challenges=challenges, challenges_evaluations=challenges_evaluations,
+                            challenges=challenges, evaluations=evaluations,
                             tab=tab)
+
 
 @app.route('/admin/user/new', methods=['GET', 'POST'])
 @admin_required
@@ -344,43 +347,58 @@ def edit_challenge(id):
     return redirect(url_for('admin', tab='challenges'))
 
 
-@app.route('/admin/writeup/<int:challenge_id>/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/admin/evaluation/<int:challenge_id>/<int:user_id>', methods=['GET', 'POST'])
 @jeopardy_mode_required
 @admin_required
 def edit_evaluation(challenge_id, user_id):
+    # check if an evaluation has already been performed or not
+    db_conn = db_connect()
+    with db_conn.cursor() as cur:
+        cur.execute((
+            'SELECT U.mail AS mail, U.name, U.surname, C.name AS challenge, '
+            '       W.timestamp AS timestamp, W.writeup AS writeup, E.grade, E.feedback '
+            'FROM writeups AS W '
+            'JOIN challenges AS C ON W.challenge_id = C.id '
+            'JOIN users AS U ON W.user_id = U.id '
+            'LEFT JOIN challenges_evaluations AS E '
+            '     ON W.user_id = E.user_id AND W.challenge_id = E.challenge_id '
+            'WHERE W.challenge_id = %s AND W.user_id = %s '
+            'ORDER BY W.id DESC'),
+            [challenge_id, user_id])
+        evaluation = cur.fetchone()
+    if evaluation is None:
+        flash('Writeup not submitted, cannot evaluate!', 'error')
+        return redirect(url_for('admin', tab='evaluations'))
+
     if request.method == 'POST':
         form = ctforge.forms.AdminWriteupForm()
         if form.validate_on_submit():
-            query_handler((
-                'UPDATE challenges_evaluations '
-                'SET grade = %s, feedback = %s '
-                'WHERE challenge_id = %s AND user_id = %s'),
-                [form.grade.data, form.feedback.data, challenge_id, user_id])
+            if evaluation['feedback'] is None:
+                # do a fresh insert
+                query_handler((
+                    'INSERT INTO challenges_evaluations '
+                    '    (user_id, challenge_id, grade, feedback) '
+                    'VALUES (%s, %s, %s, %s) '),
+                    [user_id, challenge_id, form.grade.data, form.feedback.data])
+            else:
+                # only allow if not yet graded
+                if evaluation['grade'] is None:
+                    print('doing an update')
+                    query_handler((
+                        'UPDATE challenges_evaluations '
+                        'SET grade = %s, feedback = %s '
+                        'WHERE user_id = %s AND challenge_id = %s'),
+                        [form.grade.data, form.feedback.data, user_id, challenge_id])
+                else:
+                    flash('Cannot modify a challenge evaluation once the grade has been set!',
+                          'error')
         else:
             flash_errors(form)
     else:
-        db_conn = get_db_connection()
-        with db_conn.cursor() as cur:
-            cur.execute((
-                'SELECT W.writeup AS writeup, U.mail AS mail, '
-                '       U.name AS name, U.surname AS surname, C.name AS challenge, '
-                '       W.timestamp AS timestamp, E.feedback AS feedback, grade AS grade '
-                'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
-                '      FROM writeups GROUP BY user_id, challenge_id) AS WT '
-                'JOIN writeups AS W ON WT.id = W.id '
-                'JOIN users AS U ON W.user_id = U.id '
-                'JOIN challenges AS C ON W.challenge_id = C.id '
-                'RIGHT JOIN challenges_evaluations AS E ON U.id = E.user_id AND C.id = E.challenge_id '
-                'WHERE E.challenge_id = %s AND E.user_id = %s'),
-                [challenge_id, user_id])
-            writeup = cur.fetchone()
-        if writeup is None:
-            flash('Invalid writeup!', 'error')
-        else:
-            form = ctforge.forms.AdminWriteupForm(**writeup)
-            return render_template('admin/data.html', form=form,
-                                   target='writeup', action='edit')
-    return redirect(url_for('admin', tab='challenges_evaluations'))
+        form = ctforge.forms.AdminWriteupForm(**evaluation)
+        return render_template('admin/data.html', form=form, target='evaluation', action='edit')
+
+    return redirect(url_for('admin', tab='evaluations'))
 
 
 @app.route('/submit', methods=['GET', 'POST'])
@@ -398,7 +416,7 @@ def submit():
                         [current_user.team_id])
             res = cur.fetchone()
         team_token = res['token'] if res is not None else None
-    
+
     # initialize the flag form
     form = ctforge.forms.ServiceFlagForm(csrf_enabled=False)
 
@@ -677,7 +695,7 @@ def challenge(name):
                      'WHERE user_id = %s AND challenge_id = %s '),
                      [current_user.id, challenge['id']])
         evaluation = cur.fetchone()
-    grade_assigned = evaluation is not None and evaluation['grade'] is not None
+    graded = evaluation is not None and evaluation['grade'] is not None
 
     # retrieve the writeup form, if any
     writeup_form = ctforge.forms.ChallengeWriteupForm(writeup=challenge['writeup_template'])
@@ -693,7 +711,7 @@ def challenge(name):
         if writeup_data is not None:
             # only allow writeup submission if writeup support is enabled for this chal
             if challenge['writeup'] and writeup_form.validate_on_submit():
-                if grade_assigned:
+                if graded:
                     # writeup already submitted, resubmission allowed only if there's no grade
                     flash('Your submission has already been graded, you cannot modify it', 'error')
                 else:
@@ -752,7 +770,7 @@ def challenge(name):
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
                            challenge=challenge, evaluation=evaluation, solved=solved, 
-                           grade_assigned=grade_assigned, writeups=writeups)
+                           graded=graded, writeups=writeups)
 
 
 @app.route('/writeup/<int:id>')
@@ -765,9 +783,9 @@ def writeup(id):
     with db_conn.cursor() as cur:
         # get the writeup data if it exists
         cur.execute((
-            'SELECT W.writeup AS writeup, W.timestamp AS timestamp, '
+            'SELECT W.id AS id, W.writeup AS writeup, W.timestamp AS timestamp, '
             '       U.id AS user_id, U.name AS user_name, U.surname AS user_surname, '
-            '       C.name AS challenge_name, C.points AS challenge_points '
+            '       C.id AS challenge_id, C.name AS challenge_name, C.points AS challenge_points '
             'FROM writeups AS W '
             'JOIN users AS U ON W.user_id = U.id '
             'JOIN challenges AS C ON W.challenge_id = C.id '
@@ -775,7 +793,14 @@ def writeup(id):
         writeup = cur.fetchone()
     # grant access to the author or admin
     if writeup is not None and (writeup['user_id'] == current_user.id or current_user.admin):
-        return render_template('writeup.html', writeup=writeup)
+        with db_conn.cursor() as cur:
+            cur.execute((
+                'SELECT id, timestamp FROM writeups '
+                'WHERE user_id = %s AND challenge_id = %s'
+                'ORDER BY timestamp DESC'),
+                [writeup['user_id'], writeup['challenge_id']])
+            writeups = cur.fetchall()
+        return render_template('writeup.html', writeup=writeup, writeups=writeups)
     abort(404)
 
 

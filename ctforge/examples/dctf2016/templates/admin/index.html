@@ -23,8 +23,8 @@
     <li role="presentation" {% if tab == 'challenges' %}class="active"{% endif %}>
         <a href="#challenges" aria-controls="challenges" role="tab" data-toggle="tab">Challenges</a>
     </li>
-    <li role="presentation" {% if tab == 'challenges_evaluations' %}class="active"{% endif %}>
-        <a href="#challenges_evaluations" aria-controls="challenges_evaluations" role="tab" data-toggle="tab">Challenges Evaluations</a>
+    <li role="presentation" {% if tab == 'evaluations' %}class="active"{% endif %}>
+        <a href="#evaluations" aria-controls="evaluations" role="tab" data-toggle="tab">Writeups</a>
     </li>
     {% endif %}
 </ul>
@@ -39,8 +39,8 @@
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
 
 
-    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'grade'] %}
-    <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'challenges_evaluations' }}" id="challenges_evaluations">
+    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade'] %}
+    <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'evaluations' }}" id="evaluations">
         <table class="table table-condensed table-hover sortable">
             <thead>
                 <tr>
@@ -52,7 +52,7 @@
                 </tr>
             </thead>
             <tbody>
-        {% for ce in challenges_evaluations %}
+        {% for ce in evaluations %}
             {% if ce.active == 0 %}
                 <tr class="text-muted danger">
             {% else %}

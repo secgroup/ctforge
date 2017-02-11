@@ -15,18 +15,14 @@
     {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/dctf-admin.css') }}">
     {% else %}
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/dctf.css') }}">
+        <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/dctf.css') }}"> -->
     {% endif %}
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.0.3.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery.jqplot.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jqplot.dateAxisRenderer.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery.tablesorter.min.js') }}"></script>
-		<script>
-$(document).ready(function(){
-    $('.sortable').tablesorter()
-});
-		</script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/dctf.js') }}"></script>
         {% endblock %}
     </head>
     <body>
@@ -85,7 +81,7 @@ $(document).ready(function(){
             {% block footer %}
             <hr>
             <footer>
-                <p class="muted credit">A <a href="http://secgroup.github.io/">c00kies@venice</a> production | IRC: <a href="irc://chat.freenode.net/dctf">#dctf @ FreeNode</a>: <a href="https://uni.minimalblue.com/irc.log">logs</a>, <a href="https://uni.minimalblue.com/irc.html">stats</a></p>
+                <p class="muted credit">A <a href="http://secgroup.github.io/">c00kies@venice</a> production | Join us on <a href="https://seclabunive.slack.com/messages">Slack</a></p>
             </footer><!-- /footer -->
             {% endblock %}
         </div> <!-- /container -->

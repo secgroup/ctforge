@@ -8,8 +8,7 @@ Setup
 -----
 Depending on the desired game mode, requirements and setup may change.
 
-### Jeopardy (aka challenge based)
-Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, a webserver like [nginx](http://nginx.org/) and [PostgreSQL](http://www.postgresql.org/) are needed to deploy the infrastructure. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 15.10, although we use [Gentoo](https://wiki.gentoo.org/wiki/Hardened_Gentoo) on production hosts).
+Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, a webserver like [nginx](http://nginx.org/) and [PostgreSQL](http://www.postgresql.org/) are needed to deploy the infrastructure. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 16.04, although we use [Gentoo](https://wiki.gentoo.org/wiki/Hardened_Gentoo) on production hosts).
 
 Install the aforementioned packages
 
@@ -67,9 +66,6 @@ When you are done editing the template, install the package using
 
     (ctforge)$ ./setup.py install
 
-
-### Attack-defense
-Todo.
 
 Deployment using Nginx and Uwsgi
 --------------------------------
