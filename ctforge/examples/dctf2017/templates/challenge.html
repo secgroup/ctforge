@@ -17,8 +17,8 @@
             <hr>
         {% if writeups %}
             <div class="row">
-            {% if evaluation %}
                 <div class="col-md-8">
+                {% if evaluation %}
                     <h3>Evaluation</h3>
                         <p>Feedback</p>
                         <pre><code>{{ evaluation.feedback }}</code></pre>
@@ -26,8 +26,8 @@
                         <p>Grade <span class="big">{{ evaluation.grade }}</span>/10</p>
                     {% endif %}
                         <p>Evaluated at {{ evaluation.timestamp }}</p>
+                {% endif %}
                 </div>
-            {% endif %}
                 <div class="col-md-4">
                     <h3>Writeup submission history</h3>
                     <div class="list-group">
