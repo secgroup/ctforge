@@ -225,6 +225,9 @@ table.jqplot-table-legend {
 	margin: 20px 0 0 0;
 }
 
+.list-group {
+	font-size: small;
+}
 .form-signin input,
 .form-submit input,
 .input-group-addon,
@@ -233,7 +236,12 @@ a.list-group-item {
 	border: 1px solid rgba(100, 100, 100, 0.3);
 	color: #fafafa;
 }
-
+.list-group-item.active,
+.list-group-item.active:hover,
+.list-group-item.active:active {
+	background-color: #5bc0de;
+	background-image: none;
+}
 a.list-group-item:hover {
 	background-color: rgba(50, 10, 50, 0.5);
 	color: #dddddd;
