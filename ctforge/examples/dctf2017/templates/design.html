@@ -55,14 +55,14 @@ be found in the <a href="{{ url_for('team') }}">team page</a>. <strong>Important
 
 <p>As an example, we provide a simple python snippet that accounts for the submission of an hardcoded flag.</p>
 
-<pre>#!/usr/bin/python
+<pre><code>#!/usr/bin/python
 import requests
 
 url = 'https://10.0.254.1/submit'
 team_token = '&lt;insert your token here&gt;'
 stolen_flag = 'flg{qwertyuiop123456789asdfg}'
  
-r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag}, verify=False)</pre>
+r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag}, verify=False)</code></pre>
     </div>
     <div class="col-md-5">
         <img class="featurette-image img-responsive" src="{{ url_for('static', filename='img/flag.png') }}" alt="Attention">

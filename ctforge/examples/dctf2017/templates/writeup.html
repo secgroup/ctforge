@@ -2,26 +2,17 @@
 {% block title %}Writeup{% endblock %}
 {% block content %}
 
-<h2>Writeup</h2>
+<h2>{{ writeup.challenge_name }}</strong> ({{ writeup.challenge_points }}pts) Writeup</h2>
+<p><span class="text-muted">By {{ writeup.user_name }} {{ writeup.user_surname }}</span></p>
 <div class="row">
 	<div class="col-md-8">
-		<div class="col-md-4">
-			<h3>Challenge</h3>
-			<p><strong>{{ writeup.challenge_name }}</strong> ({{ writeup.challenge_points }}pts)</p>
+		<div class="row">
+			<div class="panel panel-default">
+      			<div class="panel-body">{{ writeup.writeup|markdown }}</div>
+    		</div>
 		</div>
-		<div class="col-md-4">
-			<h3>Author</h3>
-			<p>{{ writeup.user_name }} {{ writeup.user_surname }}</p>
-		</div>
-		<div class="col-md-4">
-			<h3>Date</h3>
-			<p>{{ writeup.timestamp }}</p>
-		</div>
-		
-		<pre><code>{{ writeup.writeup }}</code></pre>
 	</div>
 	<div class="col-md-4">
-		<h3>Previous Writeups</h3>
 		<div class="list-group">
 		{% for w in writeups %}
 			<a href="{{ url_for('writeup', id=w.id) }}" class="list-group-item{{ ' active disabled' if w.id == writeup.id else '' }}">

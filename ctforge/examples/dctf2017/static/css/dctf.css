@@ -1,8 +1,18 @@
+/* latin-ext */
 @font-face {
-  font-family: 'VT323';
+  font-family: 'Monda';
   font-style: normal;
   font-weight: 400;
-  src: local('VT323'), local('VT323-Regular'), url(/static/fonts/CfvjE7QXPaQqLo02SkpIgA.ttf) format('truetype');
+  src: local('Monda Regular'), local('Monda-Regular'), url(/static/fonts/t3vZkumW9T_w4ukdwBVHtA.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Monda';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Monda Regular'), local('Monda-Regular'), url(/static/fonts/9IGqbwlMn4Zg3as8alsdNA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
 }
 
 html, body {
@@ -11,18 +21,18 @@ html, body {
 body {
 	min-height: 500px;
 	padding-top: 70px;
-	font-family: 'VT323', cursive;
-	font-size: 190%;
+	font-family: 'Monda', sans-serif;
+	font-size: 160%;
 	background: url('/static/img/bg.jpg') no-repeat center center fixed;
 	background-size: cover;
-	color: #ffffff;
+	color: #dddddd;
 }
 
 :not(#content a.btn),
 #content a,
 #content a:active,
 #content a:hover {
-	color: #ffffff;
+	color: #dddddd;
 	background-color: rgba(66, 139, 202, 0.3);
 	border-radius: 3px;
 	padding: 2px 5px;
@@ -36,25 +46,31 @@ body {
 	opacity: 0.4;
 }
 
+a,
+a:active,
+a:hover {
+	color: #80ddff;
+}
 p {
 	text-indent: justify;
 }
 pre, code, textarea.form-control {
-	font-family: monospace;
-	color: #80ddff;
+	font-family: 'Monda', monospace;
+	color: #e9c3f2;
 	background-color: rgba(0, 0, 0, 0.8);
-	font-size: small;
+	/*font-size: small;*/
 	border: 0;
 }
 kbd, samp {
-	font-family: 'VT323', monospace;
+	font-family: 'Monda', monospace;
 }
 pre {
 	border: 0;
+	font-size: 14px;
 }
 h1, h2, h3, h4, h5, h6, 
 .h1, .h2, .h3, .h4, .h5, .h6 {
-	font-family: 'VT323', cursive;
+	font-family: 'Monda', cursive;
 }
 h2 {
 	text-transform: uppercase;
@@ -97,9 +113,12 @@ table {
 
 .panel-default > .panel-heading {
 	background-image: none;
-	background-color: transparent;
-	color: #ffffff;
-	font-weight: bold;
+	background-color: rgba(50, 10, 50, 0.5);
+	color: #dddddd;
+	font-size: larger;
+	border-color: #000;
+	border-width: 20px;
+	border: 1px solid rgba(100, 100, 100, 0.3)
 }
 
 .navbar-static-top,
@@ -163,7 +182,7 @@ div.flag input.flag {
 
 .dropdown-menu > li > a:hover,
 .dropdown-menu > li > a:focus {
-	color: #ffffff;
+	color: #dddddd;
 	background-color: transparent;
 }
 
@@ -179,16 +198,16 @@ div.flag input.flag {
 }
 
 .jqplot-target {
-	font-family: 'VT323';
+	font-family: 'Monda';
 }
 table.jqplot-table-legend {
-	font-family: 'VT323';
+	font-family: 'Monda';
 	background: none;
 	border: 0;
 	color: #dddddd;
 }
 .jqplot-axis {
-	color: #ffffff;
+	color: #dddddd;
 }
 .jqplot-table-legend-label {
 	padding-left: 5px;
@@ -217,7 +236,7 @@ a.list-group-item {
 
 a.list-group-item:hover {
 	background-color: rgba(50, 10, 50, 0.5);
-	color: #ffffff;
+	color: #dddddd;
 }
 
 .form-signin .form-signin-heading, .form-signin .checkbox {

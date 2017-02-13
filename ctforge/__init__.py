@@ -7,6 +7,7 @@ import logging
 from flask import Flask
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+from flask_misaka import Misaka
 from flask_cache import Cache
 
 from ctforge import utils
@@ -36,6 +37,9 @@ login_manager.init_app(app)
 
 csrf = CSRFProtect()
 csrf.init_app(app)
+
+md = Misaka(html=False)
+md.init_app(app)
 
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
