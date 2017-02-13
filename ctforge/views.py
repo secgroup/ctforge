@@ -773,9 +773,10 @@ def challenge(name):
 
 
 @app.route('/writeup/<int:id>')
+@app.route('/writeup/<int:id>/<int:md>')
 @jeopardy_mode_required
 @login_required
-def writeup(id):
+def writeup(id, md=0):
     """Display the provided writeup."""
 
     db_conn = get_db_connection()
@@ -799,7 +800,7 @@ def writeup(id):
                 'ORDER BY timestamp DESC'),
                 [writeup['user_id'], writeup['challenge_id']])
             writeups = cur.fetchall()
-        return render_template('writeup.html', writeup=writeup, writeups=writeups)
+        return render_template('writeup.html', writeup=writeup, writeups=writeups, md=md)
     abort(404)
 
 
