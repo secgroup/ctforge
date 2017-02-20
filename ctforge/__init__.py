@@ -38,7 +38,7 @@ login_manager.init_app(app)
 csrf = CSRFProtect()
 csrf.init_app(app)
 
-md = Misaka(html=False)
+md = Misaka(html=False, fenced_code=True)
 md.init_app(app)
 
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
