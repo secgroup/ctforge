@@ -1,6 +1,6 @@
 CTForge
 =======
-Forge you own CTF.
+Forge your own CTF.
 
 CTForge is the framework developed by the hacking team from University of Venice to easily host jeopardy and attack-defense [CTF security competitions](https://ctftime.org/ctf-wtf/). It provides the software components for running the game, namely the website and the checkbot (optional). The website is the primary interface used by players to access the game rules, the challenges/services descriptions and the scoreboard. In case of an attack-defense game mode the checkbot will, cyclically, store new flags in each team and retrieve them to ensure that everything is working properly.
 
@@ -21,7 +21,7 @@ Add a database user with the permission to create new databases
 
 Download and unpack the CTForge source code
 
-     $ git clone git@github.com:secgroup/ctforge.git
+    $ git clone git@github.com:secgroup/ctforge.git
     $ cd ctforge
 
 Now prepare the Python virtualenv
