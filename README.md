@@ -6,27 +6,22 @@ CTForge is the framework developed by the hacking team from University of Venice
 
 Setup
 -----
-Depending on the desired game mode, requirements and setup may change.
+Depending on the desired game mode, requirements and setup may change. Instructions below are for a basic install of ctforge in jeopardy mode using the built-in webserver. Remember that deploying ctforge in production requires a real webserver like [nginx](http://nginx.org/) paired with [uWSGI](https://github.com/unbit/uwsgi).
 
-Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, a webserver like [nginx](http://nginx.org/) and [PostgreSQL](http://www.postgresql.org/) are needed to deploy the infrastructure. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 16.04, although we use [Gentoo](https://wiki.gentoo.org/wiki/Hardened_Gentoo) on production hosts).
+Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, the [PostgreSQL](http://www.postgresql.org/) DBMS os needed. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 16.04, although we use [Gentoo](https://wiki.gentoo.org/wiki/Hardened_Gentoo) on production hosts).
 
 Install the aforementioned packages
 
-    $ sudo apt install nginx uwsgi python3-dev postgresql postgresql-contrib postgresql-server-dev-all
-
-Create an user for running the website instance
-
-    $ sudo useradd ctforge -m -s /bin/bash
+    $ sudo apt install python3-dev postgresql postgresql-contrib postgresql-server-dev-all
 
 Add a database user with the permission to create new databases
 
     $ sudo service postgresql start
     $ sudo -u postgres createuser -d -P ctforge
 
-Login as the `ctforge` user, download and unpack the CTForge source code
+Download and unpack the CTForge source code
 
-    $ sudo -u ctforge -i
-    $ git clone git@github.com:secgroup/ctforge.git
+     $ git clone git@github.com:secgroup/ctforge.git
     $ cd ctforge
 
 Now prepare the Python virtualenv
@@ -39,6 +34,7 @@ Install the framework in development mode for now, adjust the configuration file
 
     (ctforge)$ ./setup.py develop
     (ctforge)$ cp ctforge.conf ctforge.custom.conf
+    (ctforge)$ vim ctforge.custom.conf
     (ctforge)$ ctforge -c ctforge.custom.conf init
     [*] Reading configuration from ctforge.custom.ctforge.conf
 
@@ -55,18 +51,18 @@ Install the framework in development mode for now, adjust the configuration file
         password: *******************
         re-enter the password: *******************
     Save configuration to /home/ctforge/.ctforge/ctforge.conf ? (y/n) y
-    Create log dir /home/ctforge/.ctforge/logs ? (y/n) y
-    Create log file /home/ctforge/.ctforge/logs/site.log ? (y/n) y
 
-Now you can run the site and edit your custom template, the application will automatically reload upon file modifications. Take a look at the `dctf2017` resources in the `examples/` folder
+
+Now you can run the site and edit your custom theme, the application will automatically reload upon file modifications:
 
     (ctforge)$ ctforge run
 
-When you are done editing the template, install the package using
+Feel free to start editing your theme from the default theme `dctf2017` (under the `themes/` folder). When you are done editing the template, install the package using:
 
     (ctforge)$ ./setup.py install
 
 
-Deployment using Nginx and Uwsgi
---------------------------------
-Todo.
+Contacts
+--------
+CTForge is developed by [Marco Squarcina](https://minimalblue.com) aided by all the guys from [c00kies@venice](https://secgroup.github.io/).
+

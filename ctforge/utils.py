@@ -32,10 +32,10 @@ def parse_conf(fname):
             FLAG_LENGTH = config.getint('mode_attackdefense', 'flag_length', fallback=25),
             FLAG_REGEXP = config.get('mode_attackdefense', 'flag_regexp', fallback='flg\{[a-zA-Z0-9]{25}\}'),
 
-            STATIC_FOLDER = config.get('website', 'static_folder', fallback='static'),
-            TEMPLATE_FOLDER = config.get('website', 'template_folder', fallback='templates'),
+            STATIC_FOLDER = config.get('website', 'static_folder', fallback='themes/dctf2017/static'),
+            TEMPLATE_FOLDER = config.get('website', 'template_folder', fallback='themes/dctf2017/templates'),
             URL = config.get('website', 'url', fallback='http://localhost:5000/'),
-            DATE_START = config.get('website', 'date_start', fallback='2016-01-01 00:00:00.0'),
+            DATE_START = config.get('website', 'date_start', fallback='2017-01-01 00:00:00.0'),
             DEBUG = config.getboolean('website', 'debug', fallback=False),
             SESSION_COOKIE_SECURE = config.getboolean('website', 'secure_cookie', fallback=False),
             LOG_FILE = config.get('website', 'log_file', fallback=None),

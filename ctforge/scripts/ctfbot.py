@@ -36,7 +36,7 @@ from ctforge import database, utils, config
 __authors__     = ["Marco Squarcina <msquarci at dais.unive.it>",
                    "Mauro Tempesta <mtempest at dais.unive.it>"]
 __license__     =  "MIT"
-__copyright__   =  "Copyright 2013-16, University of Venice"
+__copyright__   =  "Copyright 2013-17, University of Venice"
 
 # global variables
 
