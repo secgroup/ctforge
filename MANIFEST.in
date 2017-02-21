@@ -1,5 +1,3 @@
-recursive-include ctforge/templates *
-recursive-include ctforge/static *
+recursive-include ctforge/themes *
 recursive-include ctforge/db *
-recursive-include ctforge/examples *
 recursive-include ctforge/scripts *
