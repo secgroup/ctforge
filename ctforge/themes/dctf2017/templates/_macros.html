@@ -1,3 +1,16 @@
+
+{% macro render_pretty_bools(data) %}
+	{% if data is none %}
+	    <span class="glyphicon glyphicon-minus" alt="none"></span><span class="hidden">none</span>
+	{% elif data == true %}
+	    <span class="glyphicon glyphicon-ok" alt="yes"></span><span class="hidden">yes</span>
+	{% elif data == false %}
+	    <span class="glyphicon glyphicon-remove" alt="no"></span><span class="hidden">no</span>
+	{% else %}
+	    {{ data }}
+	{% endif %}
+{% endmacro %}
+
 {% macro tabify(data, keys, target, id, class='') %}
     <div role="tabpanel" class="tab-pane fade {{ class }}" id="{{ id }}">
         <div style="padding-top: 20px;">
@@ -32,7 +45,7 @@
                         </a>
                     </td>
                 {% for k in keys %}
-                    <td>{{ d[k] }}</td>
+                    <td>{{ render_pretty_bools(d[k]) }}</td>
                 {% endfor %}
                 <tr>
         {% endfor %}

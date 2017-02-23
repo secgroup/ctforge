@@ -3,7 +3,7 @@
 {% block navigation %}{% endblock %}
 {% block content %}
 
-{% from "_macros.html" import tabify %}
+{% from "_macros.html" import tabify, render_pretty_bools %}
 
 <h1>Admin Panel</h1>
 
@@ -69,17 +69,7 @@
                         </a>
                     </td>
                 {% for ce_k in ce_keys %}
-                    <td>
-                    {% if ce[ce_k] is none %}
-                        <span class="glyphicon glyphicon-minus"></span>
-                    {% elif ce[ce_k] == true %}
-                        <span class="glyphicon glyphicon-ok"></span>
-                    {% elif ce[ce_k] == false %}
-                        <span class="glyphicon glyphicon-remove"></span>
-                    {% else %}
-                        {{ ce[ce_k] }}
-                    {% endif %}
-                    </td>
+                    <td>{{ render_pretty_bools(ce[ce_k]) }}</td>
                 {% endfor %}
                 <tr>
         {% endfor %}
