@@ -39,7 +39,7 @@
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
 
 
-    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade'] %}
+    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
     <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'evaluations' }}" id="evaluations">
         <table class="table table-condensed table-hover sortable">
             <thead>
@@ -69,7 +69,17 @@
                         </a>
                     </td>
                 {% for ce_k in ce_keys %}
-                    <td>{{ ce[ce_k] }}</td>
+                    <td>
+                    {% if ce[ce_k] is none %}
+                        <span class="glyphicon glyphicon-minus"></span>
+                    {% elif ce[ce_k] == true %}
+                        <span class="glyphicon glyphicon-ok"></span>
+                    {% elif ce[ce_k] == false %}
+                        <span class="glyphicon glyphicon-remove"></span>
+                    {% else %}
+                        {{ ce[ce_k] }}
+                    {% endif %}
+                    </td>
                 {% endfor %}
                 <tr>
         {% endfor %}
