@@ -1,10 +1,10 @@
 
 {% macro render_pretty_bools(data) %}
-	{% if data is none %}
+  	{% if data is none %}
 	    <span class="glyphicon glyphicon-minus" alt="none"></span><span class="hidden">none</span>
-	{% elif data == true %}
+	{% elif data is sameas true %}
 	    <span class="glyphicon glyphicon-ok" alt="yes"></span><span class="hidden">yes</span>
-	{% elif data == false %}
+	{% elif data is sameas false %}
 	    <span class="glyphicon glyphicon-remove" alt="no"></span><span class="hidden">no</span>
 	{% else %}
 	    {{ data }}
