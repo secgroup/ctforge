@@ -70,9 +70,12 @@ pre, code, textarea.form-control {
 kbd, samp {
 	font-family: 'Share Tech Mono', monospace;
 }
-pre {
+pre code {
 	border: 0;
 	font-size: 14px;
+	white-space: pre;
+	overflow-wrap: normal;
+	overflow-x: scroll;
 }
 h1, h2, h3, h4, h5, h6, 
 .h1, .h2, .h3, .h4, .h5, .h6 {
