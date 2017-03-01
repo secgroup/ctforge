@@ -5,7 +5,7 @@ import bcrypt
 import datetime
 import psycopg2
 import psycopg2.extras
-from copy import copy
+from copy import deepcopy
 from flask import request, render_template, redirect, url_for, flash, abort, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
@@ -637,7 +637,7 @@ def _challenges():
         "valueAxes": [
             {
                 "id": "ValueAxis-1",
-                "title": "Points"
+                "title": ""
             }
         ],
         "allLabels": [],
@@ -691,13 +691,13 @@ def _challenges():
                 "date": datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S'),
                 "column-{}".format(i): pt
             })
-    users_graph = copy(graph_template)
+    users_graph = deepcopy(graph_template)
     users_graph['titles'][0]['text'] = 'Players'
+    users_graph['valueAxes'][0]['title'] = 'Points'
     users_graph['graphs'] = users_graphs
     users_graph['dataProvider'] = sorted(users_data_provider, key=lambda x: x['date'])
 
     # compute the cart of challenge solvers over time for each challenge
-    challenges_graph = copy(graph_template)
     challenges_graphs = []
     challenges_data_provider = []
 
@@ -714,7 +714,6 @@ def _challenges():
         chal_aux = chal
         chal_aux.append([date_now.timestamp(), 0])
         chal_aux = sorted(chal_aux, key=lambda x: x[0])
-        print(chal_aux)
         for j in range(1, len(chal_aux)):
             chal_aux[j][1] += chal_aux[j - 1][1]
             # finally add the newly created list to the data_provider list
@@ -724,6 +723,9 @@ def _challenges():
                 "column-{}".format(i): solvers
             })
 
+    challenges_graph = deepcopy(graph_template)
+    challenges_graph['titles'][0]['text'] = 'Challenges'
+    challenges_graph['valueAxes'][0]['title'] = 'Solvers'
     challenges_graph['graphs'] = challenges_graphs
     challenges_graph['dataProvider'] = challenges_data_provider
 
