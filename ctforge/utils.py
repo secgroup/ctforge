@@ -4,6 +4,7 @@
 import sys
 import string
 import random
+import datetime
 import configparser
 import os.path
 
@@ -35,12 +36,11 @@ def parse_conf(fname):
             STATIC_FOLDER = config.get('website', 'static_folder', fallback='themes/dctf2017/static'),
             TEMPLATE_FOLDER = config.get('website', 'template_folder', fallback='themes/dctf2017/templates'),
             URL = config.get('website', 'url', fallback='http://localhost:5000/'),
-            DATE_START = config.get('website', 'date_start', fallback='2017-01-01 00:00:00.0'),
+            DATE_START = datetime.datetime.strptime(config.get('website', 'date_start', fallback='2017-02-15 00:00:00.0'), "%Y-%m-%d %H:%M:%S.%f"),
             DEBUG = config.getboolean('website', 'debug', fallback=False),
             SESSION_COOKIE_SECURE = config.getboolean('website', 'secure_cookie', fallback=False),
             LOG_FILE = config.get('website', 'log_file', fallback=None),
             SECRET_KEY = config.get('website', 'secret_key', fallback='ChengeMeWithRandomStuffASAP'),
-
             BOT_LOG_FILE = config.get('flagbot', 'log_file', fallback=None),
             DISPATCH_SCRIPT_PATH = config.get('flagbot', 'dispatch_script_path', fallback='~/.ctforge/bot/dispatch/'),
             CHECK_SCRIPT_PATH = config.get('flagbot', 'check_script_path', fallback='~/.ctforge/bot/check/')

@@ -35,13 +35,13 @@ body {
 	color: #dddddd;
 }
 
-:not(#content a.btn),
+/*:not(#content a.btn),*/
 #content a,
 #content a:active,
 #content a:hover {
-	color: #dddddd;
+/*	color: #dddddd;
 	background-color: rgba(66, 139, 202, 0.3);
-	border-radius: 3px;
+	border-radius: 3px;*/
 	padding: 2px 5px;
 	text-decoration: none;
 }
@@ -315,4 +315,9 @@ table.scoreboard span.alert-info {
 	padding: 0 2px;
 	background: rgba(0,0,0, 0.4);
 	text-shadow: 0px 0px 2px #000000;
+}
+
+.chart {
+	height: 600px;
+	width: 100%;
 }

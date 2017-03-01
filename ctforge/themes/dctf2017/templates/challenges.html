@@ -47,19 +47,23 @@
 </div>
 <div class="row">
     <div class="col-md-12">
-        <div id="users_time" style="height:600px;"></div>
+        <div id="users_time" class="chart"></div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-12">
-        <div id="challenges_time" style="height:600px;"></div>
+        <div id="challenges_time" class="chart"></div>
     </div>
 </div>
 <script>
 $(document).ready(function() {
-    {{ get_jqplot_code('users_time', users_graph, users_labels, 'renderer:$.jqplot.DateAxisRenderer', "label: 'Points'", min_x, max_x, min_y, max_y) }}
-    {{ get_jqplot_code('challenges_time', challenges_graph, challenges_labels, 'renderer:$.jqplot.DateAxisRenderer', "label: '#Solvers'", min_x, max_x, min_y, max_y) }}
+    AmCharts.makeChart("users_time", {{ users_graph|tojson|safe }});
+    AmCharts.makeChart("challenges_time", {{ challenges_graph|tojson|safe }});
 });
 </script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
 
 {% endblock %}

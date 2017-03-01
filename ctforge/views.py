@@ -5,7 +5,8 @@ import bcrypt
 import datetime
 import psycopg2
 import psycopg2.extras
-from flask import request, render_template, redirect, url_for, flash, abort
+from copy import copy
+from flask import request, render_template, redirect, url_for, flash, abort, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
 
@@ -382,7 +383,6 @@ def edit_evaluation(challenge_id, user_id):
             else:
                 # only allow if not yet graded
                 if evaluation['grade'] is None:
-                    print('doing an update')
                     query_handler((
                         'UPDATE challenges_evaluations '
                         'SET grade = %s, feedback = %s '
@@ -549,7 +549,7 @@ def _challenges():
     # get the challenges
     cur.execute('SELECT * FROM challenges')
     res = cur.fetchall()
-    chals = {c['id']: c for c in res} if len(res) != 0  else dict()
+    chals = {c['id']: c for c in res} if len(res) != 0 else dict()
     # get only the users who solved at least one challenge that are not admin
     # and not hidden, sorted by timestamp. Along with the users get the
     # information about the solved challenges
@@ -580,7 +580,7 @@ def _challenges():
             bonus_aux[c] = [(u, t)]
     bonus = dict()
     for c in bonus_aux.keys():
-        bonus_aux[c] = sorted(bonus_aux[c], key = lambda x: x[1])
+        bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
         for i in range(len(bonus_aux[c])):
             bonus[(c, bonus_aux[c][i][0])] = 3 - i
             if i >= 2:
@@ -605,58 +605,131 @@ def _challenges():
             score['challenges'][c] = {'timestamp': timestamp, 'points': points}
         scoreboard.append(score)
     # sort the scoreboard by total points
-    scoreboard = sorted(scoreboard, key=lambda x: x['points'], reverse = True)
-    # generate the two lists suitable for drawing graphs: users vs time and
-    # challenges vs time
-    users_graph = []
-    users_labels = []
-    challenges_graph_dict = {c_id: [] for c_id in chals.keys()}
-    challenges_labels = [c['name'] for c in chals.values()]
+    scoreboard = sorted(scoreboard, key=lambda x: x['points'], reverse=True)
+
+    # charts computation
+    graph_template = {
+        "type": "serial",
+        "categoryField": "date",
+        "dataDateFormat": "YYYY-MM-DD HH:NN:SS",
+        "startDuration": 0.5,
+        "startEffect": "easeOutSine",
+        "fontFamily": "Monda",
+        "fontSize": 14,
+        "theme": "dark",
+        "categoryAxis": {
+            "minPeriod": "ss",
+            "parseDates": True
+        },
+        "chartCursor": {
+            "enabled": True,
+            "categoryBalloonDateFormat": "JJ:NN:SS",
+            "categoryBalloonText": "[[category]]"
+
+        },
+        "chartScrollbar": {
+            "enabled": True,
+            "dragIcon": "dragIconRectSmall"
+        },
+        "trendLines": [],
+        "graphs": [],
+        "guides": [],
+        "valueAxes": [
+            {
+                "id": "ValueAxis-1",
+                "title": "Points"
+            }
+        ],
+        "allLabels": [],
+        "balloon": {},
+        "legend": {
+            "enabled": True,
+            "useGraphSettings": True,
+            "color": "#D4D4D4",
+        },
+        "titles": [
+            {
+                "id": "Title-1",
+                "size": 15,
+                "text": ""
+            }
+        ],
+        "dataProvider": []
+    }
+
     date_start = app.config['DATE_START']
     date_now = datetime.datetime.now()
-    for board_entry in scoreboard:
-        # for each user in the scoreboard create a list representing the score
-        # trend over time. Start with one element (a tuple) at the beginning of
-        # time with 0 point
-        user_performance = [[str(date_start), 0]]
-        # create also a list with the labels used in the graph legend (i.e.
-        # users' names)
-        users_labels.append(board_entry['user'])
-        # add all the challenges solved by the current user with the points
-        # achieved on each of them
+    challenges_graph_dict = {c_id: [] for c_id in chals.keys()}
+
+    # compute the chart of points over time for each user
+    users_graphs = []
+    users_data_provider = []
+    for i, board_entry in enumerate(scoreboard):
+        users_graphs.append({
+            "id": "mygraph-{}".format(i),
+            "title": board_entry['user'],
+            "valueField": "column-{}".format(i),
+            "type": "line",
+            "lineThickness": 3,
+            "balloonText": "[[title]] [[value]]pts"})
+        user_points = [[date_start.timestamp(), 0]]
         for chal_id, chal in board_entry['challenges'].items():
             if chal['timestamp'] is not None:
-                # add 0 points with a timestamp shifted of 1 second before the
-                # actual date to display a proper step
-                user_performance.append([str(chal['timestamp']-datetime.timedelta(seconds=1)), 0])
-                user_performance.append([str(chal['timestamp']), int(chal['points'])])
-                challenges_graph_dict[chal_id].append([str(chal['timestamp']-datetime.timedelta(seconds=1)), 0])
-                challenges_graph_dict[chal_id].append([str(chal['timestamp']), 1])
-        # sort the list by solving date
-        user_performance = sorted(user_performance, key=lambda x: x[0])
+                user_points.append([chal['timestamp'].timestamp(), chal['points']])
+                challenges_graph_dict[chal_id].append([chal['timestamp'].timestamp(), 1])
+
+        # sort the list by date
+        user_points = sorted(user_points, key=lambda x: x[0])
         # finally add the current date to the list
-        user_performance.append([str(date_now), 0])
+        user_points.append([date_now.timestamp(), 0])
         # perform the sum over all the points piled up by the current user
-        for i in range(1, len(user_performance)):
-            user_performance[i][1] += user_performance[i-1][1]
-        # finally add the newly created list to the users_graph list
-        users_graph.append(user_performance)
+        for j in range(1, len(user_points)):
+            user_points[j][1] += user_points[j - 1][1]
+        # finally add the newly created list to the data_provider list
+        for ts, pt in user_points:
+            users_data_provider.append({
+                "date": datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S'),
+                "column-{}".format(i): pt
+            })
+    users_graph = copy(graph_template)
+    users_graph['titles'][0]['text'] = 'Players'
+    users_graph['graphs'] = users_graphs
+    users_graph['dataProvider'] = sorted(users_data_provider, key=lambda x: x['date'])
 
-    # compute the challenges graph from the challenges graph dictionary
-    # previously calculated
-    challenges_graph = []
-    for chal in challenges_graph_dict.values():
+    # compute the cart of challenge solvers over time for each challenge
+    challenges_graph = copy(graph_template)
+    challenges_graphs = []
+    challenges_data_provider = []
+
+    for i, chal in enumerate(chals.values()):
+        challenges_graphs.append({
+            "id": "mygraph-{}".format(i),
+            "title": chal['name'],
+            "valueField": "column-{}".format(i),
+            "type": "line",
+            "lineThickness": 3,
+            "balloonText": "[[title]] solved by [[value]]"})
+
+    for i, chal in enumerate(challenges_graph_dict.values()):
         chal_aux = chal
-        chal_aux.append([str(date_now), 0])
-        challenges_graph.append(sorted(chal_aux, key=lambda x: x[0]))
-        for i in range(1, len(challenges_graph[-1])):
-            challenges_graph[-1][i][1] += challenges_graph[-1][i-1][1]
+        chal_aux.append([date_now.timestamp(), 0])
+        chal_aux = sorted(chal_aux, key=lambda x: x[0])
+        print(chal_aux)
+        for j in range(1, len(chal_aux)):
+            chal_aux[j][1] += chal_aux[j - 1][1]
+            # finally add the newly created list to the data_provider list
+        for ts, solvers in chal_aux:
+            challenges_data_provider.append({
+                "date": datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S'),
+                "column-{}".format(i): solvers
+            })
 
-    return {'challenges': chals, 'scoreboard': scoreboard, 'users_graph': users_graph,
-            'users_labels': users_labels, 'challenges_graph': challenges_graph,
-            'challenges_labels': challenges_labels,
-            'min_x': date_start, 'max_x': date_now+datetime.timedelta(days=1),
-            'min_y': 0, 'max_y': None}
+    challenges_graph['graphs'] = challenges_graphs
+    challenges_graph['dataProvider'] = challenges_data_provider
+
+    return {'challenges': chals, 'scoreboard': scoreboard,
+            'users_graph': users_graph, 'challenges_graph': challenges_graph}
+
 
 @app.route('/challenge/<name>',  methods=['GET', 'POST'])
 @jeopardy_mode_required
