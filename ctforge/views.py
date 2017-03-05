@@ -385,7 +385,7 @@ def edit_evaluation(challenge_id, user_id):
                 if evaluation['grade'] is None:
                     query_handler((
                         'UPDATE challenges_evaluations '
-                        'SET grade = %s, feedback = %s, timestamp = now() '
+                        'SET grade = %s, feedback = %s, timestamp = NOW() '
                         'WHERE user_id = %s AND challenge_id = %s'),
                         [form.grade.data, form.feedback.data, user_id, challenge_id])
                 else:
