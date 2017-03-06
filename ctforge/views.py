@@ -538,11 +538,15 @@ def team():
 def challenges():
     """Display the challenge scoreboard."""
 
-    challenges_data = _challenges()
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT * FROM challenges')
+        challenges = cur.fetchall()
 
-    return render_template('challenges.html', **challenges_data)
+    return render_template('challenges.html', challenges=challenges)
 
 @cache.cached(timeout=30)
+@app.route('/_challenges_scoreboard')
 def _challenges():
     db_conn = get_db_connection()
     cur = db_conn.cursor()
@@ -729,11 +733,11 @@ def _challenges():
     challenges_graph['graphs'] = challenges_graphs
     challenges_graph['dataProvider'] = challenges_data_provider
 
-    return {'challenges': chals, 'scoreboard': scoreboard,
-            'users_graph': users_graph, 'challenges_graph': challenges_graph}
+    return jsonify(challenges=chals, scoreboard=scoreboard, users_graph=users_graph, 
+                   challenges_graph=challenges_graph)
 
 
-@app.route('/challenge/<name>',  methods=['GET', 'POST'])
+@app.route('/challenge/<name>', methods=['GET', 'POST'])
 @jeopardy_mode_required
 @login_required
 def challenge(name):
