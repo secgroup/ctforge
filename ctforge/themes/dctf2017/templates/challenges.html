@@ -2,8 +2,6 @@
 {% block title %}Challenge Scoreboard{% endblock %}
 {% block content %}
 
-{% from "_macros.html" import get_jqplot_code %}
-
 <h1>Challenge Scoreboard</h1>
 
 <p>Bonus points: +3, +2, +1 to the first, second, third solver of each challenge</p>
@@ -15,10 +13,10 @@
             <thead>
                 <tr>
                     <td class="text-left">User</td>
-                {% for c, cv in challenges.items() %}
+                {% for chal in challenges %}
                     <td class="text-center">
-                        <a href="{{ url_for('challenge', name=cv.name) }}" title="{{ cv.points }} points" class="btn btn-lg btn-default {% if not cv.active %}inactive{% endif %}" role="button">
-                            {{ cv.name }}
+                        <a href="{{ url_for('challenge', name=chal.name) }}" title="{{ chal.points }} points" class="btn btn-lg btn-default {% if not chal.active %}inactive{% endif %}" role="button">
+                            {{ chal.name }}
                         </a>
                     </td>
                 {% endfor %}
@@ -26,21 +24,6 @@
                 </tr>
             </thead>
             <tbody>
-            {% for score in scoreboard %}
-                <tr>
-                    <td class="text-left">{{ score.user }}</td>
-                {% for c, cv in challenges.items() %}
-                    <td class="text-center">
-                    {% if score.challenges[c].timestamp %}
-                        <span class="alert-info" aria-hidden="true" title="{{ score.challenges[c].timestamp }}">{{ score.challenges[c].points }}</span>
-                    {% else %}
-                        <span class="glyphicon glyphicon-remove alert-danger" aria-hidden="true" style="background: none"></span>
-                    {% endif %}
-                    </td>
-                {% endfor %}
-                    <td class="text-right">{{ score.points }}</td>
-                </tr>
-            {% endfor %}
             </tbody>
         </table>
     </div>
@@ -55,6 +38,8 @@
         <div id="challenges_time" class="chart"></div>
     </div>
 </div>
+
+{#
 <script>
 $(document).ready(function() {
     AmCharts.makeChart("users_time", {{ users_graph|tojson|safe }});
@@ -65,5 +50,6 @@ $(document).ready(function() {
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
+#}
 
 {% endblock %}
