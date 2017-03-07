@@ -9,8 +9,8 @@
         <meta name="author" content="Secgroup @ University of Venice">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='js/jquery.jqplot.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/footable.bootstrap.min.css') }}">
     {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/dctf-admin.css') }}">
     {% else %}
@@ -18,7 +18,7 @@
     {% endif %}
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.0.3.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery.tablesorter.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/footable.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/dctf.js') }}"></script>
         {% endblock %}
     </head>

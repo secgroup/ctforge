@@ -41,7 +41,7 @@
 
     {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
     <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'evaluations' }}" id="evaluations">
-        <table class="table table-condensed table-hover sortable">
+        <table class="table table-condensed table-hover sortable" data-sorting="true">
             <thead>
                 <tr>
                     <td>&nbsp;</td>
@@ -71,7 +71,7 @@
                 {% for ce_k in ce_keys %}
                     <td>{{ render_pretty_bools(ce[ce_k]) }}</td>
                 {% endfor %}
-                <tr>
+                </tr>
         {% endfor %}
             </tbody>
         </table>

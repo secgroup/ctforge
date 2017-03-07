@@ -1,3 +1,3 @@
-$(document).ready(function(){
-    $('.sortable').tablesorter()
+$(document).ready(function() {
+    $('.sortable').footable();
 });
