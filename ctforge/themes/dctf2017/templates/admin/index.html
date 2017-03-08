@@ -41,11 +41,11 @@
 
     {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
     <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'evaluations' }}" id="evaluations">
-        <table class="table table-condensed table-hover sortable" data-sorting="true">
+        <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
             <thead>
                 <tr>
-                    <td>&nbsp;</td>
-                    <td>&nbsp;</td>
+                    <td>edit</td>
+                    <td>view</td>
                 {% for ce_k in ce_keys %}
                     <td>{{ ce_k }}</td>
                 {% endfor %}
