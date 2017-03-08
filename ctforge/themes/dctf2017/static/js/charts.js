@@ -62,6 +62,7 @@ function usersChart(chart, users) {
     for (i = 0; i < users.length; i++) {
         /* Create a new graph for the user. */
         var g = $.extend(true, {}, defaultGraphSettings);
+        g.balloonText = "[[title]] [[value]]pts";
         g.title = g.valueField = users[i].user;
         chart.graphs.push(g);
 
@@ -121,6 +122,7 @@ function challengesChart(chart, users) {
     var solvers = {};
     for (i = 0; i < challs.length; i++) {
         var g = $.extend(true, {}, defaultGraphSettings);
+        g.balloonText = "[[title]] solved by [[value]]";
         g.title = g.valueField = challs[i];
         chart.graphs.push(g);
         solvers[challs[i]] = 0;
