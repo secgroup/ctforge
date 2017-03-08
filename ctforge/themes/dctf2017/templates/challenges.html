@@ -39,17 +39,19 @@
     </div>
 </div>
 
-{#
+
 <script>
 $(document).ready(function() {
-    AmCharts.makeChart("users_time", {{ users_graph|tojson|safe }});
-    AmCharts.makeChart("challenges_time", {{ challenges_graph|tojson|safe }});
+    $.getJSON("/_challenges_scoreboard", function (data) {
+        makeChart("users_time", data, usersChart);
+        makeChart("challenges_time", data, challengesChart);
+    });
 });
 </script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
-#}
+<script language="javascript" type="text/javascript" src="/static/js/charts.js"></script>
 
 {% endblock %}
