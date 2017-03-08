@@ -41,7 +41,7 @@ var defaultChartSettings = {
 
 function makeChart(divId, data, populate) {
     var chart = $.extend(true, {}, defaultChartSettings);
-    populate(chart, data)
+    populate(chart, data);
     AmCharts.makeChart(divId, chart);
 }
 
@@ -117,8 +117,6 @@ function challengesChart(chart, users) {
     }
     submissions.sort(compareByDate);
 
-    console.log(submissions);
-
     /* Create a graph for each challenge that displays the number of solvers at each time. */
     var solvers = {};
     for (i = 0; i < challs.length; i++) {
@@ -134,8 +132,6 @@ function challengesChart(chart, users) {
         s[cn] = solvers[cn];
         chart.dataProvider.push(s);
     }
-
-    console.log(chart.dataProvider);
 
     /* For each user, add a fake point in the corresponding graph dated as the last submission.
      * In this way all graphs span the entire chart area. */
