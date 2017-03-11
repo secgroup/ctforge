@@ -16,7 +16,10 @@ var defaultChartSettings = {
     },
     "chartScrollbar": {
         "dragIcon": "dragIconRectSmall",
-        "enabled": true
+        "enabled": true,
+        "scrollbarHeight": 10,
+        "dragIconHeight": 22,
+        "dragIconWidth": 22
     },
     "dataDateFormat": "YYYY-MM-DD HH:NN:SS",
     "fontFamily": "Monda",
