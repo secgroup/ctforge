@@ -37,11 +37,7 @@ var columns = [
     {"name": "points", "title": "Total", "classes": "text-right", "type": "number"}
 ];
 
-$(document).ready(function() {
-    var table = FooTable.init(".scoreboard", {
-        "columns": columns
-    });
-
+function updateScores(table) {
     $.getJSON("/_challenges_scoreboard", function (data) {
         makeChart("users_time", data, usersChart);
         makeChart("challenges_time", data, challengesChart);
@@ -57,7 +53,18 @@ $(document).ready(function() {
             return row;
         });
         table.rows.load(rows);
+
+        setTimeout(function () {
+            updateScores(table)
+        }, 5000);
     });
+}
+
+$(document).ready(function() {
+    var table = FooTable.init(".scoreboard", {
+        "columns": columns
+    });
+    updateScores(table);
 });
 </script>
 <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>

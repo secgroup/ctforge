@@ -29,8 +29,8 @@ var defaultChartSettings = {
         "enabled": true,
         "useGraphSettings": true
     },
-    "startDuration": 0.5,
-    "startEffect": "easeOutSine",
+    // "startDuration": 0.5,
+    // "startEffect": "easeOutSine",
     "theme": "dark",
     "titles": [{
         "size": 15,
