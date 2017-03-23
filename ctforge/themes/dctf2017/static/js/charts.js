@@ -29,8 +29,6 @@ var defaultChartSettings = {
         "enabled": true,
         "useGraphSettings": true
     },
-    // "startDuration": 0.5,
-    // "startEffect": "easeOutSine",
     "theme": "dark",
     "titles": [{
         "size": 15,
@@ -53,7 +51,7 @@ function compareByDate(o1, o2) {
 }
 
 function usersChart(chart, users) {
-    chart.titles[0].text = "Players";
+    chart.titles[0].text = "Players (top 10)";
     chart.valueAxes[0].title = "Points";
     chart.graphs = [];
     chart.dataProvider = [];
@@ -62,7 +60,7 @@ function usersChart(chart, users) {
 
     var i, j, s;
     var challs = Object.keys(users[0].challenges);
-    for (i = 0; i < users.length; i++) {
+    for (i = 0; i < Math.min(users.length, 10); i++) {
         /* Create a new graph for the user. */
         var g = $.extend(true, {}, defaultGraphSettings);
         g.balloonText = "[[title]] [[value]]pts";

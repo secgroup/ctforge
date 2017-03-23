@@ -608,8 +608,14 @@ def _challenges():
                 points = 0
             score['challenges'][cv['name']] = {'timestamp': timestamp, 'points': points}
         scoreboard.append(score)
-    # sort the scoreboard by total points
-    scoreboard = sorted(scoreboard, key=lambda x: x['points'], reverse=True)
+
+    # sort the scoreboard by total points or, in case of a tie, by the time of the
+    # last submission
+    def sorting_key(u):
+        timestamps = filter(lambda c: c['timestamp'] is not None, u['challenges'].values())
+        return u['points'], datetime.datetime.now() - max(timestamps)
+
+    scoreboard.sort(key=sorting_key, reverse=True)
 
     return jsonify(scoreboard)
 
