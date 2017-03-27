@@ -25,6 +25,11 @@
     <div class="col-md-7">
         <h2 class="featurette-heading">Scoring System. <span class="text-muted">Take the lead.</span></h2>
 <p>The game is divided in <b>rounds</b> having the duration of {{ config.ROUND_DURATION }} seconds. At the beginning of each round, a bot will renew all the flags in your vulnerable machine. Moreover it will check the integrity of services several times in a round by interacting with them and by retrieving the flags through legitimate accesses. Please do not remove the 3 ssh public keys listed below from <code>/root/.ssh/authorized_keys</code> otherwise your services may result inaccessible to the checkbot.</p>
+<pre><code>
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAhsiDAURnGrsGf0D64FBxf8Q2Jo7TwcCj0v9q5sjkUT root@manager_master.ctf.secgroup.dsi.unive.it
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF2fiOwOSl52KZN43OimLmAN9K4WEr6Q8Y6V/l8VUMmH flagbot@manager_master.ctf.secgroup.dsi.unive.it
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAeucSxnCytqrbLYJf85t+Orl92nOaeFVrr1ChGuW8NO root@router
+</code></pre>
 
 <p>Your team gains points by attacking other teams and defending its own vulnerable machine. For each valid flag submitted by your team, the attack score is increased. On the other hand, you lose defense points for each attack inflicted to your vulnerable machine. For each service, the defense points are multiplied by an integrity factor, defined as the ratio of number of successful checks and the total number of checks performed by the integrity bot during a single round. If the integrity factor is below the threshold of <code>0.8</code>, the service is marked as corrupted and your team gains 0 points in that round which is equivalent to being attacked on that particular
 service by all teams. Note also that a flag of a given service can be submitted only if the corresponding service on your vulnerable machine is not corrupted.</p>
