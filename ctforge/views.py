@@ -436,20 +436,21 @@ def submit():
                 team_id = res['id']
                 # get the flag that the user is trying to submit, if valid
                 # (i.e. active and not one of the flags of his team)
-                cur.execute(('SELECT service_id FROM active_flags '
+                cur.execute(('SELECT service_id, get_current_round() - F.round <= S.flag_lifespan - 1 AS expired '
+                             'FROM flags F JOIN services S ON S.id = F.service_id '
                              'WHERE flag = %s AND team_id != %s'),
                              [flag, team_id])
                 res = cur.fetchone()
                 if res is None:
                     raise ctforge.exceptions.InvalidFlag()
+                if res['expired'] == 1:
+                    raise ctforge.exceptions.ExpiredFlag()
                 service_id = res['service_id']
                 # check whether the team's service is well-functioning or not
-                cur.execute(('SELECT I.successful, I.timestamp '
-                             'FROM active_flags AS A '
-                             'JOIN integrity_checks AS I '
-                             'ON A.flag = I.flag '
-                             'WHERE A.team_id = %s AND A.service_id = %s '
-                             'ORDER BY I.timestamp DESC LIMIT 1'),
+                cur.execute(('SELECT successful '
+                             'FROM integrity_checks AS '
+                             'WHERE team_id = %s AND service_id = %s '
+                             'ORDER BY timestamp DESC LIMIT 1'),
                              [team_id, service_id])
                 res = cur.fetchone()
                 if res is None or res['successful'] != 1:
@@ -476,6 +477,9 @@ def submit():
             except ctforge.exceptions.InvalidFlag:
                 db_conn.rollback()
                 flash('The submitted flag is invalid!', 'error')
+            except ctforge.exceptions.ExpiredFlag:
+                db_conn.rollback()
+                flash('The submitted flag is expired!', 'error')
             except ctforge.exceptions.ServiceCorrupted:
                 db_conn.rollback()
                 flash('Your service is corrupted, fix it before submitting flags!', 'error')
@@ -515,19 +519,17 @@ def team():
     # for each service get the number of attacks suffered and inflicted the
     # user's team
     cur.execute((
-        'SELECT S.name AS service_name, '
-        '       COUNT(A.flag) AS suffered, '
-        '       (SELECT COUNT(A1.flag) '
-        '        FROM active_flags AS F1 '
-        '        JOIN service_attacks AS A1 ON F1.flag = A1.flag '
-        '        WHERE A1.team_id = F.team_id AND F1.service_id = F.service_id '
-        '       ) AS inflicted '
-        'FROM services AS S '
-        'JOIN active_flags AS F ON S.id = F.service_id '
-        'LEFT JOIN service_attacks AS A ON F.flag = A.flag '
-        'WHERE F.team_id = %s '
-        'GROUP BY F.team_id, F.service_id, S.name'),
-        [current_user.team_id])
+        '''SELECT S.id, S.name AS service_name,
+           (SELECT COUNT(A.flag)
+            FROM flags AS F JOIN service_attacks AS A ON F.flag = A.flag
+            WHERE F.service_id = S.id AND A.team_id = %s AND A.timestamp >= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+           ) AS inflicted,
+           (SELECT COUNT(A.flag)
+            FROM flags AS F JOIN service_attacks AS A ON F.flag = A.flag
+            WHERE F.service_id = S.id AND F.team_id = %s AND A.timestamp >= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+           ) AS suffered
+           FROM services AS S
+        '''), [current_user.team_id, current_user.team_id])
     attacks = cur.fetchall()
     cur.close()
 
@@ -546,7 +548,7 @@ def challenges():
     return render_template('challenges.html', challenges=challenges)
 
 @cache.cached(timeout=30)
-@app.route('/_challenges_scoreboard')
+@app.route('/challenges_scoreboard')
 def _challenges():
     db_conn = get_db_connection()
     cur = db_conn.cursor()
@@ -822,7 +824,8 @@ def scoreboard():
     return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, **scoreboard_data)
 
 #@cache.cached(timeout=60)
-def _scoreboard(rnd):
+@app.route('/_ctf_scoreboard')
+def _scoreboard(rnd=None):
     db_conn = get_db_connection()
     cur = db_conn.cursor()
 
@@ -857,7 +860,7 @@ def _scoreboard(rnd):
         '     (F.flag = C.flag AND C.timestamp = (SELECT MAX(timestamp) '
         '                                         FROM integrity_checks '
         '                                         WHERE flag = F.flag)) '
-        'GROUP BY F.team_id, F.service_id, C.successful'));
+        'GROUP BY F.team_id, F.service_id, C.successful'))
     services_status = cur.fetchall()
     for ss in services_status:
         board[ss['team_id']]['services'][ss['service_id']] = (ss['successful'], ss['timestamp'])

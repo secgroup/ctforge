@@ -79,19 +79,9 @@ CREATE TABLE services (
     name          VARCHAR(45) NOT NULL,
     description   TEXT NOT NULL,
     active        BOOLEAN NOT NULL DEFAULT FALSE,
+    flag_lifespan INT NOT NULL DEFAULT 1,
     PRIMARY KEY (id),
     UNIQUE (name)
-);
-
-CREATE TABLE active_flags (
-    flag          VARCHAR(30) NOT NULL,
-    team_id       INT NOT NULL,
-    service_id    INT NOT NULL,
-    round         INT NOT NULL,
-    PRIMARY KEY (flag),
-    FOREIGN KEY (team_id) REFERENCES teams (id),
-    FOREIGN KEY (service_id) REFERENCES services (id),
-    FOREIGN KEY (round) REFERENCES rounds (id)
 );
 
 CREATE TABLE flags (
@@ -99,8 +89,6 @@ CREATE TABLE flags (
     team_id       INT NOT NULL,
     service_id    INT NOT NULL,
     round         INT NOT NULL,
-    n_checks      INT DEFAULT 0,
-    n_up_checks   INT DEFAULT 0,
     PRIMARY KEY (flag),
     FOREIGN KEY (team_id) REFERENCES teams (id),
     FOREIGN KEY (service_id) REFERENCES services (id),
@@ -111,6 +99,7 @@ CREATE TABLE service_attacks (
     id            SERIAL,
     team_id       INT NOT NULL,
     flag          VARCHAR(30) NOT NULL,
+    timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE (team_id, flag),
     FOREIGN KEY (team_id) REFERENCES teams (id),
@@ -118,19 +107,26 @@ CREATE TABLE service_attacks (
 );
 
 CREATE TABLE integrity_checks (
-    flag          VARCHAR(30) NOT NULL,
+    round         INT NOT NULL,
+    team_id       INT NOT NULL,
+    service_id    INT NOT NULL,
     timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     successful    BOOLEAN NOT NULL,
-    PRIMARY KEY (flag, timestamp),
-    FOREIGN KEY (flag) REFERENCES active_flags (flag)
+    PRIMARY KEY (team_id, service_id, round, timestamp),
+    FOREIGN KEY (round) REFERENCES rounds (id),
+    FOREIGN KEY (team_id) REFERENCES teams (id),
+    FOREIGN KEY (service_id) REFERENCES services (id)
 );
 
 CREATE TABLE scores (
-    team_id       INT NOT NULL,
     round         INT NOT NULL,
-    attack        INT NOT NULL,
-    defense       INT NOT NULL,
-    PRIMARY KEY (team_id, round),
+    team_id       INT NOT NULL,
+    service_id    INT NOT NULL,
+    attack        DOUBLE PRECISION NOT NULL,
+    defense       DOUBLE PRECISION NOT NULL,
+    sla           DOUBLE PRECISION NOT NULL,
+    PRIMARY KEY (round, team_id, service_id),
+    FOREIGN KEY (round) REFERENCES rounds (id),
     FOREIGN KEY (team_id) REFERENCES teams (id),
-    FOREIGN KEY (round) REFERENCES rounds (id)
+    FOREIGN KEY (service_id) REFERENCES services (id)
 );

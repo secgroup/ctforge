@@ -5,7 +5,10 @@ class InvalidToken(Exception):
     pass
 
 class InvalidFlag(Exception):
-	pass
+    pass
+
+class ExpiredFlag(Exception):
+    pass
 
 class ServiceCorrupted(Exception):
-	pass
+    pass
