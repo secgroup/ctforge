@@ -321,3 +321,7 @@ table.scoreboard span.alert-info {
 	height: 600px;
 	width: 100%;
 }
+
+.global-score {
+	font-weight: bold;
+}

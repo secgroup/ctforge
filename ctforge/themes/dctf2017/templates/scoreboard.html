@@ -17,45 +17,10 @@
 
 <div class="row">
     <div class="col-md-12">
-        <table class="table">
-            <thead>
-                <tr>
-                    <td class="text-center">#</td>
-                    <td>Team</td>
-                    {% for service in services %}
-                        <td class="text-center">
-                            <a href="{{ url_for('service', name=service.name) }}" class="btn btn-lg btn-default {% if not service.active %}inactive{% endif %}" role="button">
-                                {{ service.name }}
-                            </a>
-                        </td>
-                    {% endfor %}
-                    <td>Attack (%)</td>
-                    <td>Defense (%)</td>
-                    <td>Total (%)</td>
-                </tr>
-            </thead>
-            <tbody>
-        {% for board_team in board %}
-            {% if board_team.team == team %}:
-                <tr class="active">
-            {% else %}
-                <tr>
-            {% endif %}
-                <td class="text-center">{{ board_team.position }}</td>
-                <td><span title="ip: {{ board_team.ip }}">{{ board_team.team }}</span></td>
-                {% for service in services %}
-                    {% set status, timestamp = board_team['services'][service['id']] %}
-                    <td class="text-center" title="last checked at {{ timestamp }}">{{ get_status_badge(status) }}</td>
-                {% endfor %}
-                <td><span title="Attack points: {{ board_team.attack }}">{{ board_team['ratio_attack'] | round(2, 'floor') }}</span></td>
-                <td><span title="Defense points: {{ board_team.defense }}">{{ board_team['ratio_defense'] | round(2, 'floor') }}</span></td>
-                <td>{{ board_team['score'] | round(2, 'floor') }}</td>
-                </tr>
-        {% endfor %}
-            </tbody>
-        </table>
+        <table class="table scoreboard"></table>
     </div>
 </div>
+<!--
 <div class="row">
     <div class="col-md-6">
         <div id="attack_scores" style="height:400px;"></div>
@@ -69,23 +34,92 @@
         <div id="total_scores" style="height:600px;"></div>
     </div>
 </div>
+-->
+<script>
+var columns = [
+    {"name": "team", "title": "Team", "classes": "text-left"},
+{% for s in services %}
+    {
+        "name": "{{ s.name }}",
+        "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-lg btn-default {% if not s.active %}inactive{% endif %}\" role=\"button\">{{ s.name }}</a>",
+        "classes": "text-center",
+        "type": "html"
+    },
+{% endfor %}
+    {"name": "score", "title": "Global Score", "classes": "text-center", "type": "html"}
+];
+
+function formatNumber(n) {
+    var prefix = (n >= 0) ? "  " : " ";
+    return prefix + n.toLocaleString("en-US", {"minimumFractionDigits": 2, "maximumFractionDigits": 2});
+}
+
+function renderService(s) {
+    var integrity_check = s.integrity.status ?
+                          $("<span class='label label-info'>UP</span>") :
+                          $("<span class='label label-danger'>CORRUPTED</span>");
+    integrity_check.attr("title", "last checked at " + s.integrity.timestamp);
+    return $("<td>").append([
+        $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(s.attack), $("<br>"),
+        $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(s.defense), $("<br>"),
+        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(s.sla), $("<br>"),
+        integrity_check
+    ]);
+}
+
+function renderScore(t) {
+    return $("<td>").append([
+        $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(t.attack), $("<br>"),
+        $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(t.defense), $("<br>"),
+        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(t.sla), $("<br>"),
+        $("<span class='glyphicon glyphicon-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score))
+    ]);
+}
+
+function updateScores(table) {
+    $.getJSON("/ctf_scoreboard", function (data) {
+        var rows = data.map(function (t) {
+            var row = { team: t.name, score: renderScore(t) };
+            Object.keys(t.services).forEach(function (s) {
+                row[s] = renderService(t.services[s]);
+            });
+            return row;
+        });
+        table.rows.load(rows);
+
+        setTimeout(function () {
+            updateScores(table)
+        }, 30000);
+    });
+}
+
+$(document).ready(function() {
+    var table = FooTable.init(".scoreboard", {
+        "columns": columns
+    });
+    updateScores(table);
+});
+</script>
+
+
+<!--
 <script>
 $(document).ready(function() {
     {% if rnd >= 1 %}
     var hours, minutes, seconds;
     var seconds_left = {{ time_left }};
     var countdown = document.getElementById("countdown");
-    
+
     setInterval(function () {
         if(seconds_left <= 0 || seconds_left % 600 == 0) {
             window.location.reload(true);
         }
-        
+
         seconds_left = seconds_left - 1;
 
         hours = parseInt(seconds_left / 3600);
         s_left = seconds_left % 3600;
-         
+
         minutes = parseInt(s_left / 60);
         seconds = parseInt(s_left % 60);
 
@@ -95,5 +129,6 @@ $(document).ready(function() {
 
 });
 </script>
+-->
 
 {% endblock %}

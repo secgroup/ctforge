@@ -34,11 +34,11 @@ var columns = [
         "type": "html"
     },
 {% endfor %}
-    {"name": "points", "title": "Total", "classes": "text-right", "type": "number"}
+    {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
 ];
 
 function updateScores(table) {
-    $.getJSON("/_challenges_scoreboard", function (data) {
+    $.getJSON("/challenges_scoreboard", function (data) {
         makeChart("users_time", data, usersChart);
         makeChart("challenges_time", data, challengesChart);
 
@@ -56,7 +56,7 @@ function updateScores(table) {
 
         setTimeout(function () {
             updateScores(table)
-        }, 5000);
+        }, 30000);
     });
 }
 

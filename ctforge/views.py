@@ -5,10 +5,10 @@ import bcrypt
 import datetime
 import psycopg2
 import psycopg2.extras
-from copy import deepcopy
 from flask import request, render_template, redirect, url_for, flash, abort, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
+from collections import defaultdict
 
 from ctforge import app, csrf, login_manager, cache
 from ctforge.users import User
@@ -595,8 +595,7 @@ def _challenges():
     # compute the scoreboard as a list of dictionaries
     scoreboard = []
     for u, uv in users.items():
-        score = {'user': uv, 'points': 0}
-        score['challenges'] = dict()
+        score = {'user': uv, 'points': 0, 'challenges': {}}
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
@@ -807,9 +806,9 @@ def scoreboard():
     # get the latest round
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
-        cur.execute('SELECT id AS rnd, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
+        cur.execute('SELECT id AS round, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
         res = cur.fetchone()
-    rnd = res['rnd']-1 if res is not None and res['rnd'] else 0
+    rnd = res['round']-1 if res is not None and res['round'] else 0
 
     # get the time left until the next round
     date_now = datetime.datetime.now()
@@ -818,110 +817,71 @@ def scoreboard():
         # get seconds left till new round
         seconds_left = max(((res['timestamp'] + datetime.timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
 
-    # get all the other stuff out of the cached function
-    scoreboard_data = _scoreboard(rnd)
+    # get the list of services
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT id, name, active FROM services')
+        services = cur.fetchall()
     
-    return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, **scoreboard_data)
+    return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, services=services)
 
 #@cache.cached(timeout=60)
-@app.route('/_ctf_scoreboard')
+@app.route('/ctf_scoreboard')
+@attackdefense_mode_required
 def _scoreboard(rnd=None):
     db_conn = get_db_connection()
-    cur = db_conn.cursor()
+    with db_conn.cursor() as cur:
 
-    # retrieve the service table
-    cur.execute('SELECT id, name, active FROM services')
-    services = cur.fetchall()
+        scores = defaultdict(dict)
 
-    # retrieve the latest score of each team along with the team names'
-    cur.execute((
-        'SELECT T.id, T.name, T.ip, S.attack, S.defense '
-        'FROM scores as S JOIN teams as T ON S.team_id = T.id '
-        'WHERE round = %s'), [rnd])
-    results = cur.fetchall()
+        # get the scores of each team on each service
+        cur.execute((
+            'SELECT T.name AS team_name, SR.name AS service_name, SC.attack, SC.defense, SC.sla '
+            'FROM scores AS SC '
+            'JOIN services AS SR ON SC.service_id = SR.id '
+            'JOIN teams AS T ON T.id = SC.team_id '
+            'WHERE SC.round = get_current_round() - 1'))
 
-    # start populating the board, it's a dictionary of dictionaries, see
-    # the initialization below to grasp the structure
-    board = {}
-    for r in results:
-        board[r['id']] = {
-            'team': r['name'], 'ip': r['ip'], 'id': r['id'], 
-            'attack': r['attack'], 'defense': r['defense'],
-            'ratio_attack': 0, 'ratio_defense': 0, 'position': 0,
-            'services': {}, 'attack_scores': [], 'defense_scores': [],
-            'total_scores': []
+        for score in cur:
+            team = score['team_name']
+            service = score['service_name']
+            scores[team][service] = {
+                'attack': score['attack'],
+                'defense': score['defense'],
+                'sla': score['sla']
+            }
+
+        # get the status of each service
+        cur.execute((
+            'SELECT T.name AS team_name, S.name AS service_name, C.timestamp, C.successful '
+            'FROM teams AS T, services AS S, LATERAL ('
+            '    SELECT IC.successful, IC.timestamp'
+            '    FROM integrity_checks IC'
+            '    WHERE IC.team_id = T.id AND IC.service_id = S.id'
+            '    ORDER BY IC.timestamp DESC'
+            '    LIMIT 1'
+            ') AS C'))
+        for check in cur:
+            team = check['team_name']
+            service = check['service_name']
+            scores[team][service]['integrity'] = {
+                'status': check['successful'],
+                'timestamp': check['timestamp']
+            }
+
+    board = []
+    for name, services in scores.items():
+        entry = {
+            'name': name,
+            'services': services,
+            'attack': sum(s['attack'] for s in services.values()),
+            'defense': sum(s['defense'] for s in services.values()),
+            'sla': sum(s['sla'] for s in services.values()),
+            'score': sum(s['attack'] + s['defense'] + s['sla'] for s in services.values())
         }
+        board.append(entry)
+    board.sort(key=lambda e: e['score'], reverse=True)
 
-    # get services status
-    cur.execute((
-        'SELECT F.team_id, F.service_id, C.successful, MAX(C.timestamp) AS timestamp '
-        'FROM active_flags AS F '
-        'LEFT JOIN integrity_checks AS C ON '
-        '     (F.flag = C.flag AND C.timestamp = (SELECT MAX(timestamp) '
-        '                                         FROM integrity_checks '
-        '                                         WHERE flag = F.flag)) '
-        'GROUP BY F.team_id, F.service_id, C.successful'))
-    services_status = cur.fetchall()
-    for ss in services_status:
-        board[ss['team_id']]['services'][ss['service_id']] = (ss['successful'], ss['timestamp'])
-    # set default values
-    for team_id in board:
-        for service in services:
-            try:
-                _ = board[team_id]['services'][service['id']]
-            except KeyError:
-                board[team_id]['services'][service['id']] = (2, '???')
-    # normalize scores avoiding divisions by 0. If the score table is empty
-    # (it shouldn't, we can initialize it with 0s) assume the max scores to
-    # be 0. The scoreboard will anyway result empty since the teams are
-    # extracted from the score table
-    if len(board):
-        max_attack = max(max(team['attack'] for team in board.values()), 1)
-        max_defense = max(max(team['defense'] for team in board.values()), 1)
-    else:
-        max_attack = max_defense = 0
-
-    # get the scores of all the teams during the whole game to create some
-    # nice graphs
-    cur.execute('SELECT * FROM scores ORDER BY round')
-    scores = cur.fetchall()
-    cur.close()
-
-    for s in scores:
-        board[s['team_id']]['attack_scores'].append([int(s['round']), int(s['attack'])])
-        board[s['team_id']]['defense_scores'].append([int(s['round']), int(s['defense'])])
-        board[s['team_id']]['total_scores'].append([int(s['round']), int(0.6 * s['attack'] + 0.4 * s['defense'])])
-
-    for team in board.values():
-        team['ratio_attack'] = team['attack'] * 100 / max_attack
-        team['ratio_defense'] = team['defense'] * 100 / max_defense
-        team['score'] = 0.6 * team['ratio_attack'] + 0.4 * team['ratio_defense']
-
-    # sort the board in descending order with respect to the score: the
-    # sorted structure is a list of board values, we just leave out the
-    # team id
-    sorted_board = sorted([t[1] for t in board.items()],
-                          key = lambda x: x['score'],
-                          reverse = True)
-    # add a position index to each team
-    for i, team in enumerate(sorted_board):
-        team['position'] = i+1
-
-    # fill graph lists
-    attack_graph = []
-    defense_graph = []
-    total_graph = []
-    labels = []
-    for team in sorted_board:
-        labels.append(team['team'])
-        attack_graph.append(team['attack_scores'])
-        defense_graph.append(team['defense_scores'])
-        total_graph.append(team['total_scores'])
-
-    return {'services': services, 'board': sorted_board, 'labels': labels,
-            'attack_graph': attack_graph, 'defense_graph': defense_graph,
-            'total_graph': total_graph,
-            'min_x': 0, 'max_x': rnd, 'min_y': 0, 'max_y': None}
+    return jsonify(board)
 
 @app.route('/credits')
 def credits():
