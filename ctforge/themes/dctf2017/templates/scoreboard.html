@@ -55,10 +55,17 @@ function formatNumber(n) {
 }
 
 function renderService(s) {
-    var integrity_check = s.integrity.status ?
+    var integrity_check;
+
+    if (s.integrity) {
+        integrity_check = s.integrity.status ?
                           $("<span class='label label-info'>UP</span>") :
                           $("<span class='label label-danger'>CORRUPTED</span>");
-    integrity_check.attr("title", "last checked at " + s.integrity.timestamp);
+        integrity_check.attr("title", "last checked at " + s.integrity.timestamp);
+    } else {
+        integrity_check = $("<span class=\"label label-warning\">NOT CHECKED</span>");
+    }
+    
     return $("<td>").append([
         $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(s.attack), $("<br>"),
         $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(s.defense), $("<br>"),
