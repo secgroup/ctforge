@@ -33,7 +33,7 @@
     {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'mail', 'hidden', 'admin'], 'user', 'users', class = 'active in' if tab == 'users') }}
 {% if config.ATTACKDEFENSE_ACTIVE %}
     {{ tabify(teams, ['id', 'ip', 'name', 'token', 'poc'], 'team', 'teams', class = 'active in' if tab == 'teams') }}
-    {{ tabify(services, ['id', 'name', 'active'], 'service', 'services', class = 'active in' if tab == 'services') }}
+    {{ tabify(services, ['id', 'name', 'flag_lifespan', 'active'], 'service', 'services', class = 'active in' if tab == 'services') }}
 {% endif %}
 {% if config.JEOPARDY_ACTIVE %}
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}

@@ -17,6 +17,7 @@ class ChallengeFlagForm(FlaskForm):
 
 class ServiceForm(FlaskForm):
     name = StringField('name', validators=[validators.DataRequired()])
+    flag_lifespan = IntegerField('flag_lifespan', validators=[validators.DataRequired(), validators.NumberRange(message='Flag lifespan should be at least 1.', min=1)])
     description = TextAreaField('description', validators=[validators.DataRequired()])
     active = BooleanField('active')
 

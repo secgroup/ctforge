@@ -261,9 +261,9 @@ def add_service():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO services (name, description, active) '
-                'VALUES (%s, %s, %s)'),
-                (form.name.data, form.description.data, form.active.data))
+                'INSERT INTO services (name, description, active, flag_lifespan) '
+                'VALUES (%s, %s, %s, %s)'),
+                (form.name.data, form.description.data, form.active.data, form.flag_lifespan.data))
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='services'))
@@ -278,9 +278,9 @@ def edit_service(id):
         form = ctforge.forms.ServiceForm()
         if form.validate_on_submit():
             query_handler((
-                'UPDATE services SET name = %s, description = %s, active = %s '
+                'UPDATE services SET name = %s, description = %s, active = %s, flag_lifespan = %s '
                 'WHERE id = %s'),
-                (form.name.data, form.description.data, form.active.data, id))
+                (form.name.data, form.description.data, form.active.data, form.flag_lifespan.data, id))
         else:
             flash_errors(form)
     else:
