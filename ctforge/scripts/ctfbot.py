@@ -200,8 +200,8 @@ class Worker(threading.Thread):
         try:
             with db_conn.cursor() as cur:
                 cur.execute((
-                    'INSERT INTO integrity_checks (team_id, service_id, successful) '
-                    'VALUES (%s, %s, %s)')
+                    'INSERT INTO integrity_checks (round, team_id, service_id, successful) '
+                    'VALUES (get_current_round(), %s, %s, %s)')
                     , [self.team.id, self.service.id, success])
             db_conn.commit()
         except psycopg2.Error as e:
