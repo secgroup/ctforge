@@ -218,7 +218,7 @@ class Worker(threading.Thread):
 
         # set status of the service to corrupted by default
         status = 1
-        command = ' '.join([script_name, self.team.ip, self.flag])
+        command = ' '.join([script_name, self.team.ip, self.flag, str(self.rnd)])
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
             # ignore stdout and stderr
