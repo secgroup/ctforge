@@ -222,7 +222,7 @@ class Worker(threading.Thread):
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
             # ignore stdout and stderr
-            process = subprocess.Popen([script_name, self.team.ip, self.flag, self.rnd], preexec_fn=os.setsid,
+            process = subprocess.Popen([script_name, self.team.ip, self.flag, str(self.rnd)], preexec_fn=os.setsid,
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             process.communicate(timeout=self.timeout)
             status = process.returncode
