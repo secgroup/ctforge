@@ -115,13 +115,15 @@ class Worker(threading.Thread):
         self.service = None
         # current flag for the pair (team, service)
         self.flag = None
-        # worker modalities 
+        # worker modalities
         self.dispatch = dispatch
         self.check = check
         # seconds to wait before killing a spawned script
         self.timeout = timeout
         # make it a daemon thread
         self.daemon = True
+        # current round
+        self.rnd = self._get_curr_round()
 
     def run(self):
         """Extract and execute jobs from the tasks queue until there is
@@ -143,7 +145,7 @@ class Worker(threading.Thread):
                 if self.check:
                     self._check_service()
             except Empty:
-                # terminate if the queue is empty 
+                # terminate if the queue is empty
                 break
 
     def _get_flag(self):
@@ -188,7 +190,7 @@ class Worker(threading.Thread):
                     it's probably our fault as above
         * else:     the service is corrupted
 
-        The script is killed if it takes too long to complete and the 
+        The script is killed if it takes too long to complete and the
         service marked as corrupted."""
 
         # execute the script and assume the service status by the return address
@@ -220,13 +222,13 @@ class Worker(threading.Thread):
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
             # ignore stdout and stderr
-            process = subprocess.Popen([script_name, self.team.ip, self.flag], preexec_fn=os.setsid,
+            process = subprocess.Popen([script_name, self.team.ip, self.flag, self.rnd], preexec_fn=os.setsid,
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             process.communicate(timeout=self.timeout)
             status = process.returncode
         except subprocess.TimeoutExpired:
             # the remote VM could be down, this is not a critical error but we
-            # should anyway give it a look 
+            # should anyway give it a look
             logger.warning(self._logalize('Timeout exceeded while executing {}'.format(command)))
             # politely kill the process tree and wait a small amount of time for
             # the process to clear resources
@@ -248,10 +250,24 @@ class Worker(threading.Thread):
 
         return status
 
+    def _get_curr_round(self):
+        """Return the current round by quering the database."""
+
+        with db_conn.cursor() as cur:
+            # advance the round and clear the flag tables
+            try:
+                cur.execute('SELECT MAX(id) AS round FROM rounds')
+                rnd = cur.fetchone()['round']
+            except Exception as e:
+                # wtf happened? this is an unknown error. Assume it's our fault
+                logger.critical(self._logalize('Cannot retrieve current round: {}'.format(e)))
+
+        return rnd
+
     def _logalize(self, message):
         """Return a pretty string ready to be logged."""
 
-        return 'Worker-{} ({}, {}): {}'.format(self.n, self.team.ip, 
+        return 'Worker-{} ({}, {}): {}'.format(self.n, self.team.ip,
                                                self.service.name, message)
 
 def get_teams_services():
@@ -370,14 +386,14 @@ def main():
         help='Number of concurrent workers (default 1)')
     parser.add_argument('-t', dest='timeout', type=int, default=10,
         help='Seconds to wait before killing a spawned script (default 10)')
-    parser.add_argument('-v', dest='verbose', action='store_true', 
+    parser.add_argument('-v', dest='verbose', action='store_true',
         default=False, help='Set logging level to debug')
     args = parser.parse_args()
     if not any([args.advance, args.dispatch, args.check]):
         sys.stderr.write('At least one action is required, aborting.\n')
         abort()
 
-    # register the killer handler        
+    # register the killer handler
     signal.signal(signal.SIGINT, interrupt)
 
     # set variables
