@@ -113,8 +113,9 @@ class Worker(threading.Thread):
         self.team = None
         # service instance processed
         self.service = None
-        # current flag for the pair (team, service)
-        self.flag = None
+        # active flags for the pair (team, service), sorted by round id
+        # in decreasing order (i.e. the first is the most recent)
+        self.flags = []
         # worker modalities
         self.dispatch = dispatch
         self.check = check
@@ -133,8 +134,8 @@ class Worker(threading.Thread):
         while not Worker.killing_time.is_set():
             try:
                 self.team, self.service = tasks.get_nowait()
-                # get the active flag for this team/service
-                self._get_flag()
+                # get the active flags for this team/service
+                self._get_flags()
                 # check whether we need to dispatch the flag or check the service
                 # status and proceed according to the given mode. The program logic
                 # is not f*cked if we execute both actions. Theoretically, one
@@ -148,15 +149,16 @@ class Worker(threading.Thread):
                 # terminate if the queue is empty
                 break
 
-    def _get_flag(self):
-        """Retrieve one of the active flags for the current pair (team, service)."""
+    def _get_flags(self):
+        """Retrieve the active flags for the current pair (team, service)."""
 
         try:
             with db_conn.cursor() as cur:
                 cur.execute((
                     'SELECT flag FROM flags '
                     'WHERE team_id = %s AND service_id = %s AND '
-                    'get_current_round() - round <= %s - 1')
+                    'get_current_round() - round <= %s - 1 '
+                    'ORDER BY round DESC')
                     , [self.team.id, self.service.id, self.service.flag_lifespan])
                 res = cur.fetchall()
         except psycopg2.Error as e:
@@ -165,10 +167,10 @@ class Worker(threading.Thread):
 
         if not res:
             # no active flag, this should never happen
-            logger.critical(self._logalize('No active flag for the current team/service, aborting'))
+            logger.critical(self._logalize('No flags for the current team/service, aborting'))
             abort()
 
-        self.flag = random.choice(res)['flag']
+        self.flags = [r['flag'] for r in res]
 
     def _dispatch_flag(self):
         """Send the flag to a given team for a given service by executing an
@@ -176,7 +178,7 @@ class Worker(threading.Thread):
         complete."""
 
         # execute the script ignoring its return status
-        self._execute(os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name))
+        self._execute(os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name), self.flags[0])
 
     def _check_service(self):
         """Check if a given service on a given host is working as expected by
@@ -193,8 +195,9 @@ class Worker(threading.Thread):
         The script is killed if it takes too long to complete and the
         service marked as corrupted."""
 
-        # execute the script and assume the service status by the return address
-        status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name))
+        # execute the script and assume the service status by the return address: run the checker using
+        # one of the valid flags (selected randomly)
+        status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name), random.choice(self.flags))
         if status == -1 or status > 125:
             # our fault: we don't add anything in the integrity_checks table
             return
@@ -213,16 +216,16 @@ class Worker(threading.Thread):
             # update successful
             logger.debug(self._logalize('Status added as {}'.format(status)))
 
-    def _execute(self, script_name):
+    def _execute(self, script_name, flag):
         """Execute the provided script killing the process if it timeouts."""
 
         # set status of the service to corrupted by default
         status = 1
-        command = ' '.join([script_name, self.team.ip, self.flag, str(self.rnd)])
+        command = ' '.join([script_name, self.team.ip, flag, str(self.rnd)])
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
             # ignore stdout and stderr
-            process = subprocess.Popen([script_name, self.team.ip, self.flag, str(self.rnd)], preexec_fn=os.setsid,
+            process = subprocess.Popen([script_name, self.team.ip, flag, str(self.rnd)], preexec_fn=os.setsid,
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             process.communicate(timeout=self.timeout)
             status = process.returncode
@@ -256,7 +259,7 @@ class Worker(threading.Thread):
         with db_conn.cursor() as cur:
             # advance the round and clear the flag tables
             try:
-                cur.execute('SELECT MAX(id) AS round FROM rounds')
+                cur.execute('SELECT get_current_round() AS round')
                 rnd = cur.fetchone()['round']
             except Exception as e:
                 # wtf happened? this is an unknown error. Assume it's our fault
