@@ -67,19 +67,19 @@ function renderService(s) {
     }
 
     return $("<td>").append([
-        $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(s.attack), $("<br>"),
+        integrity_check, $("<br>"),
+        $("<span class='glyphicon glyphicon-fire' title='attack' style='margin-top: 10px'>"), formatNumber(s.attack), $("<br>"),
         $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(s.defense), $("<br>"),
-        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(s.sla), $("<br>"),
-        integrity_check
+        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(s.sla), $("<br>")
     ]);
 }
 
 function renderScore(t) {
     return $("<td>").append([
+        $("<span class='glyphicon glyphicon-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score)), $("<br>"),
         $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(t.attack), $("<br>"),
         $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(t.defense), $("<br>"),
-        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(t.sla), $("<br>"),
-        $("<span class='glyphicon glyphicon-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score))
+        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(t.sla)
     ]);
 }
 
