@@ -162,7 +162,7 @@ class Worker(threading.Thread):
                     , [self.team.id, self.service.id, self.service.flag_lifespan])
                 res = cur.fetchall()
         except psycopg2.Error as e:
-            logger.critical(self._logalize('Error while accessing the active flag table, aborting: {}'.format(e)))
+            logger.critical(self._logalize('Error while retrieving the active flags, aborting: {}'.format(e)))
             abort()
 
         if not res:
