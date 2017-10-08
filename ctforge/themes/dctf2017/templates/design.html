@@ -24,23 +24,39 @@
     </div>
     <div class="col-md-7">
         <h2 class="featurette-heading">Scoring System. <span class="text-muted">Take the lead.</span></h2>
-<p>The game is divided in <b>rounds</b> having the duration of {{ config.ROUND_DURATION }} seconds. At the beginning of each round, a bot will renew all the flags in your vulnerable machine. Moreover it will check the integrity of services several times in a round by interacting with them and by retrieving the flags through legitimate accesses. Please do not remove the 3 ssh public keys listed below from <code>/root/.ssh/authorized_keys</code> otherwise your services may result inaccessible to the checkbot.</p>
-
-<p>Your team gains points by attacking other teams and defending its own vulnerable machine. For each valid flag submitted by your team, the attack score is increased. On the other hand, you lose defense points for each attack inflicted to your vulnerable machine. For each service, the defense points are multiplied by an integrity factor, defined as the ratio of number of successful checks and the total number of checks performed by the integrity bot during a single round. If the integrity factor is below the threshold of <code>0.8</code>, the service is marked as corrupted and your team gains 0 points in that round which is equivalent to being attacked on that particular
-service by all teams. Note also that a flag of a given service can be submitted only if the corresponding service on your vulnerable machine is not corrupted.</p>
-
-<p>To recap, the scores of a service in a round are computed according to the following formulae:</p>
-
-<ul>
-    <li><code>attack = #attacks</code></li>
-    <li><code>integrity = #successful_checks / #checks</code></li>
-    <li><code>defense = (0 if integrity &lt; 0.8 else integrity) * (#teams - 1 - #attacks_received)</code></li>
-</ul>
-
-<p>A flag is considered valid if it has been dispatched by the flagbot in the current round. Old flags are discarded by the flag submission system. The total score of each team is given by <code>0.6 * attack + 0.4 * defense</code>, where attack and defense are expressed as a percentage of the best scores achieved among the teams.</p>
-
-<p>Please notice that services may (or may not) include multiple vulnerabilities. Do not stop the security analysis of applications after
-finding the first simple issue. Complex vulnerabilties have an higher chance of being left unpatched.</p>
+        <p>The game is divided in <b>rounds</b> having the duration of {{ config.ROUND_DURATION }} seconds. At the beginning of each round, a bot will renew all the flags in your vulnerable machine. Moreover it will check the integrity of services by interacting with them and by retrieving the flags through a legitimate accesses. Please do not remove the 3 ssh public keys listed below from <code>/root/.ssh/authorized_keys</code> otherwise your services may result inaccessible to the checkbot.</p>
+        <pre><code>
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAhsiDAURnGrsGf0D64FBxf8Q2Jo7TwcCj0v9q5sjkUT root@manager_master.ctf.secgroup.dsi.unive.it
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF2fiOwOSl52KZN43OimLmAN9K4WEr6Q8Y6V/l8VUMmH flagbot@manager_master.ctf.secgroup.dsi.unive.it
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGz26Wuq8f0B9FwPx9M/kdEReWqQy+SqTUWCs83lZKKe root@seclab
+        </code></pre>
+        <p>Your team gains points by attacking other teams, defending its own vulnerable machine and by keeping services up and running.</p>
+        <p>Rules stolen from <a href="https://2017.faustctf.net/information/rules/">FaustCTF</a></p>
+        <p>The total score is the sum of the individual scores for each service. The score per service is made up of three components:</p>
+        <ul>
+            <li>Offense: Points for flags captured from other teams and submitted to the Gameserver within their validity period</li>
+            <li>Defense: Points for not letting other teams capture your flags</li>
+            <li>SLA: Points for the availability and correct behavior of your services</li>
+        </ul>
+        <p>For each service, the component scores for a team are calculated as in this Python-like pseudocode:</p>
+        <p>Offense:</p>
+        <pre><code>offense = count(flags_captured_by[team])
+        for flag in flags_captured_by[team]:
+            offense += (1 / count(all_captures_of[flag]))
+        </code></pre>
+        <p>Defense:</p>
+        <pre><code>defense = 0
+        for flag in flags_owned_by[team]:
+            defense -= sqrt(count(all_captures_of[flag]))
+        </code></pre>
+        <p>SLA:</p>
+        <pre><code>sla = (count(ticks_with_status['up'] + 0.5 * ticks_with_status['recovering'])) * sqrt(count(teams))
+        </code></pre>
+        <h3>Total Score</h3>
+        <pre><code>total = 0
+        for service in services:
+            total += offense[service] + defense[service] + sla[service]
+        </code></pre>
     </div>
 </div>
 
