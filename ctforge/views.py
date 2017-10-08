@@ -436,7 +436,7 @@ def submit():
                 team_id = res['id']
                 # get the flag that the user is trying to submit, if valid
                 # (i.e. active and not one of the flags of his team)
-                cur.execute(('SELECT service_id, get_current_round() - F.round <= S.flag_lifespan - 1 AS expired '
+                cur.execute(('SELECT service_id, get_current_round() - F.round > S.flag_lifespan - 1 AS expired '
                              'FROM flags F JOIN services S ON S.id = F.service_id '
                              'WHERE flag = %s AND team_id != %s'),
                              [flag, team_id])
