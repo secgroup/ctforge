@@ -448,7 +448,7 @@ def submit():
                 service_id = res['service_id']
                 # check whether the team's service is well-functioning or not
                 cur.execute(('SELECT successful '
-                             'FROM integrity_checks AS '
+                             'FROM integrity_checks '
                              'WHERE team_id = %s AND service_id = %s '
                              'ORDER BY timestamp DESC LIMIT 1'),
                              [team_id, service_id])
