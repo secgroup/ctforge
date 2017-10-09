@@ -70,19 +70,33 @@ function renderService(s) {
     }
 
     return $("<td>").append([
-        integrity_check, $("<br>"),
-        $("<span class='glyphicon glyphicon-fire' title='attack' style='margin-top: 10px'>"), formatNumber(s.attack), $("<br>"),
-        $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(s.defense), $("<br>"),
-        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(s.sla), $("<br>")
+        $("<div>").append(integrity_check),
+        $("<div title='attack' style='margin-top: 5px'>").append([
+            $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(s.attack)]
+        ),
+        $("<div title='defense'>").append([
+            $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(s.defense)
+        ]),
+        $("<div title='SLA'>").append([
+            $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(s.sla)
+        ])
     ]);
 }
 
 function renderScore(t) {
     return $("<td>").append([
-        $("<span class='glyphicon glyphicon-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score)), $("<br>"),
-        $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(t.attack), $("<br>"),
-        $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(t.defense), $("<br>"),
-        $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(t.sla)
+        $("<div title='global score'>").append([
+            $("<span class='glyphicon glyphicon-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score))
+        ]),
+        $("<div title='attack'>").append([
+            $("<span class='glyphicon glyphicon-fire' title='attack'>"), formatNumber(t.attack)]
+        ),
+        $("<div title='defense'>").append([
+            $("<span class='glyphicon glyphicon-tower' title='defense'>"), formatNumber(t.defense)
+        ]),
+        $("<div title='SLA'>").append([
+            $("<span class='glyphicon glyphicon-wrench' title='SLA'>"), formatNumber(t.sla)
+        ])
     ]);
 }
 
