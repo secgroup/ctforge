@@ -6,10 +6,10 @@
 
 <h1>CTF Scoreboard</h1>
 <p>
-{% if rnd >= 0 %}
-    Scores computed at round {{ rnd }}.
-    Current round {{ rnd + 1 }}.
-    Round {{ rnd + 2 }} starting in <span id="countdown">{{ time_left }} seconds</span>
+{% if rnd > 0 %}
+    Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
+    Current round <span id="rnd-cur">{{ rnd }}</span>.
+    Next round starting in <span id="countdown"></span>
 {% else %}
     Attack/defense CTF is coming soon
 {% endif %}
@@ -35,6 +35,9 @@
     </div>
 </div>
 -->
+
+{% if rnd > 0 %}
+
 <script>
 var columns = [
     {"name": "team", "title": "Team", "classes": "text-left"},
@@ -83,59 +86,57 @@ function renderScore(t) {
     ]);
 }
 
-function updateScores(table) {
-    $.getJSON("/ctf_scoreboard", function (data) {
-        var rows = data.map(function (t) {
-            var row = { team: t.name, score: renderScore(t) };
-            Object.keys(t.services).forEach(function (s) {
-                row[s] = renderService(t.services[s]);
-            });
-            return row;
-        });
-        table.rows.load(rows);
-
-        setTimeout(function () {
-            updateScores(table)
-        }, 30000);
-    });
-}
-
 $(document).ready(function() {
     var table = FooTable.init(".scoreboard", {
         "columns": columns
     });
-    updateScores(table);
-});
-</script>
-
-
-<!--
-<script>
-$(document).ready(function() {
-    {% if rnd >= 1 %}
-    var hours, minutes, seconds;
     var seconds_left = {{ time_left }};
-    var countdown = document.getElementById("countdown");
+    var current_round = {{ rnd }};
+    var update_period = {{ rnd_duration }} / 20;
+    var first_load = true;
 
+    function updateTable() {
+        $.getJSON("/ctf_scoreboard", function (data) {
+            current_round = data.round;
+            if (first_load || seconds_left <= 0) {
+                seconds_left = data.seconds_left;
+            }
+
+            var rows = data.scores.map(function (t) {
+                var row = {team: t.name, score: renderScore(t)};
+                Object.keys(t.services).forEach(function (s) {
+                    row[s] = renderService(t.services[s]);
+                });
+                return row;
+            });
+            table.rows.load(rows);
+            first_load = false;
+
+            $("#rnd-scores").text(current_round - 1);
+            $("#rnd-current").text(current_round);
+        });
+    }
+
+    function updateCountdown() {
+        seconds_left--;
+        var s = seconds_left % 3600;
+        var hours = Math.floor(seconds_left / 3600);
+        var minutes = Math.floor(s / 60);
+        var seconds = s % 60;
+        $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
+    }
+
+    updateCountdown();
+    updateTable();
     setInterval(function () {
-        if(seconds_left <= 0 || seconds_left % 600 == 0) {
-            window.location.reload(true);
+        if (seconds_left <= 0 || seconds_left % update_period == 0) {
+            updateTable();
         }
-
-        seconds_left = seconds_left - 1;
-
-        hours = parseInt(seconds_left / 3600);
-        s_left = seconds_left % 3600;
-
-        minutes = parseInt(s_left / 60);
-        seconds = parseInt(s_left % 60);
-
-        countdown.innerHTML = hours + "h " + minutes + "m " + seconds + "s";
+        updateCountdown();
     }, 1000);
-    {% endif %}
-
 });
 </script>
--->
+
+{% endif %}
 
 {% endblock %}

@@ -800,35 +800,45 @@ def teams():
         users = cur.fetchall()
     return render_template('teams.html', teams=teams, users=users)
 
-@app.route('/scoreboard')
-@attackdefense_mode_required
-def scoreboard():
+def round_info(db_conn):
     # get the latest round
-    db_conn = get_db_connection()
     with db_conn.cursor() as cur:
         cur.execute('SELECT id AS round, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
         res = cur.fetchone()
-    rnd = res['round']-1 if res is not None and res['round'] else 0
+    rnd = res['round'] if res is not None and res['round'] else 0
 
     # get the time left until the next round
     date_now = datetime.datetime.now()
     seconds_left = app.config['ROUND_DURATION']
     if rnd >= 1:
         # get seconds left till new round
-        seconds_left = max(((res['timestamp'] + datetime.timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
+        seconds_left = max(
+            ((res['timestamp'] + datetime.timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
+
+    return rnd, seconds_left
+
+@app.route('/scoreboard')
+@attackdefense_mode_required
+def scoreboard():
+    # get info about the current round
+    db_conn = get_db_connection()
+    rnd, seconds_left = round_info(db_conn)
 
     # get the list of services
     with db_conn.cursor() as cur:
         cur.execute('SELECT id, name, active FROM services')
         services = cur.fetchall()
     
-    return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, services=services)
+    return render_template('scoreboard.html', rnd=rnd, rnd_duration=app.config['ROUND_DURATION'],
+                           time_left=seconds_left, services=services)
 
 #@cache.cached(timeout=60)
 @app.route('/ctf_scoreboard')
 @attackdefense_mode_required
 def _scoreboard(rnd=None):
     db_conn = get_db_connection()
+    rnd, seconds_left = round_info(db_conn)
+
     with db_conn.cursor() as cur:
 
         scores = defaultdict(dict)
@@ -881,7 +891,11 @@ def _scoreboard(rnd=None):
         board.append(entry)
     board.sort(key=lambda e: e['score'], reverse=True)
 
-    return jsonify(board)
+    return jsonify({
+        'round': rnd,
+        'seconds_left': seconds_left,
+        'scores': board
+    })
 
 @app.route('/credits')
 def credits():
