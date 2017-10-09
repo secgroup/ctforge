@@ -92,13 +92,12 @@ $(document).ready(function() {
     });
     var seconds_left = {{ time_left }};
     var current_round = {{ rnd }};
-    var update_period = {{ rnd_duration }} / 20;
-    var first_load = true;
+    var update_period = {{ rnd_duration / 20 }};
 
     function updateTable() {
         $.getJSON("/ctf_scoreboard", function (data) {
             current_round = data.round;
-            if (first_load || seconds_left <= 0) {
+            if (seconds_left <= 0) {
                 seconds_left = data.seconds_left;
             }
 
@@ -110,7 +109,6 @@ $(document).ready(function() {
                 return row;
             });
             table.rows.load(rows);
-            first_load = false;
 
             $("#rnd-scores").text(current_round - 1);
             $("#rnd-current").text(current_round);
