@@ -27,7 +27,7 @@ setup(
         'Flask-Cache>=0.13.1',
         'Flask-Misaka>=0.4.1',
         'py-bcrypt>=0.4',
-        'psycopg2>=2.6.1'
+        'psycopg2-binary>=2.6.1'
     ],
     classifiers=[
         'Private :: Do Not Upload'
