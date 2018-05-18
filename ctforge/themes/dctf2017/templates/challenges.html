@@ -1,76 +1,75 @@
 {% extends "layout.html" %}
-{% block title %}Challenge Scoreboard{% endblock %}
+{% block title %}Challenges{% endblock %}
 {% block content %}
 
-<h1>Challenge Scoreboard</h1>
+<style>
+ .chall-tile {
+     display: block;
+     padding: 4px;
+     margin-top: 30px;
+     line-height: 1.42857143;
+     background-color: #e3e3e3;
+     border: 1px solid #ddd;
+     border-radius: 4px;
+     -webkit-transition: border .2s ease-in-out;
+     -o-transition: border .2s ease-in-out;
+     transition: border .2s ease-in-out;
+     padding: 9px;
+     color: #333;
+     clear:both;
+ }
+ .chall-tile:hover {
+     color: #333;
+     text-decoration: none;
+ }
+ .chall-tile:active {
+     color: #333;
+     text-decoration: none;
+ }
+ .chall-tile.inactive {
+     opacity: 0.6;
+ }
+ .chall-tile h3 {
+     white-space: nowrap;
+     text-overflow: ellipsis;
+     overflow: hidden;
+     height: 27px;
+     line-height: 24px;
+     text-align: center;
+     margin-top: 10px;
+ }
+ .chall-tile .solvers {
+     float: right;
+ }
+ .chall-tile .description {
+     text-align: center;
+ }
+</style>
 
+
+<h1>Challenges</h1>
+
+{% if config.JEOPARDY_BONUS %}
 <p>Bonus points: +3, +2, +1 to the first, second, third solver of each challenge</p>
+{% endif %}
 
 <div class="row">
-    <div class="col-md-12">
-        <!-- Table filled dynamically via JS -->
-        <table class="table scoreboard" data-sorting="true"></table>
+    {% for chal in challenges %}
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('challenge', name=chal.name) }}" class="chall-tile {% if not chal.active %} inactive {% endif %}" >
+            <span class="points">{{ chal.points }} <small>pts</small></span>
+            <span class="solvers">{{ chal.solvers }} <small>solver(s)</small></span>
+            <h3 class="title">
+                {% if chal.solved %}
+                <span class="glyphicon glyphicon-ok alert-info"
+                      style="background:none;" aria-hidden="true" ></span>
+                {% endif %}
+                {{ chal.name }}
+            </h3>
+            <p class="description">{{ chal.short_description }}</p>
+        </a>
     </div>
+    {% endfor %}
 </div>
-<div class="row">
-    <div class="col-md-12">
-        <div id="users_time" class="chart"></div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-12">
-        <div id="challenges_time" class="chart"></div>
-    </div>
-</div>
-
-<script>
-var columns = [
-    {"name": "user", "title": "User", "classes": "text-left"},
-{% for chal in challenges %}
-    {
-        "name": "{{ chal.name }}",
-        "title": "<a href=\"{{ url_for('challenge', name=chal.name) }}\" title=\"{{ chal.points }} points\" class=\"btn btn-lg btn-default {% if not chal.active %}inactive{% endif %}\" role=\"button\">{{ chal.name }}</a>",
-        "classes": "text-center",
-        "type": "html"
-    },
-{% endfor %}
-    {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
-];
-
-function updateScores(table) {
-    $.getJSON("/challenges_scoreboard", function (data) {
-        makeChart("users_time", data, usersChart);
-        makeChart("challenges_time", data, challengesChart);
-
-        var rows = data.map(function (u) {
-            var row = { user: u.user, points: u.points };
-            Object.keys(u.challenges).forEach(function (c) {
-                var entry = $("<span>").attr("aria-hidden", "true");
-                row[c] = $("<td>").append(u.challenges[c].timestamp !== null ?
-                         entry.addClass("alert-info").attr("title", u.challenges[c].timestamp).text(u.challenges[c].points) :
-                         entry.addClass("glyphicon glyphicon-remove alert-danger").css("background", "none"));
-            });
-            return row;
-        });
-        table.rows.load(rows);
-
-        setTimeout(function () {
-            updateScores(table)
-        }, 30000);
-    });
-}
-
-$(document).ready(function() {
-    var table = FooTable.init(".scoreboard", {
-        "columns": columns
-    });
-    updateScores(table);
-});
-</script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
-<script language="javascript" type="text/javascript" src="/static/js/charts.js"></script>
 
 {% endblock %}

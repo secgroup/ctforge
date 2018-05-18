@@ -38,7 +38,10 @@
                 <div class="collapse navbar-collapse">
                     <ul class="nav navbar-nav">
                     {% if config.JEOPARDY_ACTIVE %}
-                        <li {% if request.path == url_for('challenges') %}class="active"{% endif %}><a href="{{ url_for('challenges') }}">Challenge Scoreboard</a></li>
+                        <li {% if request.path == url_for('challenges_scoreboard') %}class="active"{% endif %}><a href="{{ url_for('challenges_scoreboard') }}">Challenges Scoreboard</a></li>
+                    {% endif %}
+                    {% if config.JEOPARDY_ACTIVE and current_user.is_authenticated %}
+                        <li {% if request.path == url_for('challenges') %}class="active"{% endif %}><a href="{{ url_for('challenges') }}">Challenges</a></li>
                     {% endif %}
                     {% if config.ATTACKDEFENSE_ACTIVE %}
                         <li {% if request.path == url_for('scoreboard') %}class="active"{% endif %}><a href="{{ url_for('scoreboard') }}">CTF Scoreboard</a></li>

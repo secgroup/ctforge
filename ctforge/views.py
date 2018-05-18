@@ -307,11 +307,12 @@ def add_challenge():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO challenges (name, description, flag, points, '
+                'INSERT INTO challenges (name, description, flag, points, short_description, '
                 '                        active, hidden, writeup, writeup_template) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'),
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, form.hidden.data, form.writeup.data,
+                 form.points.data, form.short_description.data,
+                 form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data])
         else:
             flash_errors(form)
@@ -329,10 +330,12 @@ def edit_challenge(id):
             query_handler((
                 'UPDATE challenges '
                 'SET name = %s, description = %s, flag = %s, points = %s, '
-                '    active = %s, hidden = %s, writeup = %s, writeup_template = %s '
+                '    short_description = %s, active = %s, hidden = %s, '
+                '    writeup = %s, writeup_template = %s '
                 'WHERE id = %s'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, form.hidden.data, form.writeup.data,
+                 form.points.data, form.short_description.data,
+                 form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data, id])
         else:
             flash_errors(form)
@@ -538,20 +541,43 @@ def team():
 
     return render_template('team.html', team=team, members=members, attacks=attacks)
 
-@app.route('/challenges')
+@app.route('/challenges_scoreboard')
 @jeopardy_mode_required
-def challenges():
+def challenges_scoreboard():
     """Display the challenge scoreboard."""
 
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
-        cur.execute('SELECT * FROM challenges')
+        cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
         challenges = cur.fetchall()
 
+    return render_template('challenges_scoreboard.html', challenges=challenges)
+
+@app.route('/challenges')
+@login_required
+def challenges():
+    """ Display the list of challenges with score and solvers """
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
+        challenges = cur.fetchall()
+        cur.execute('SELECT A.*, U.id as user_id, U.hidden as user_hidden '
+                    'FROM challenge_attacks as A '
+                    'LEFT JOIN users as U ON A.user_id = U.id')
+        attacks = cur.fetchall()
+
+    for chal in challenges:
+        chal_attacks = [a for a in attacks if a['challenge_id'] == chal['id']]
+        chal_solved = [a for a in chal_attacks if a['user_id'] == current_user.id]
+        chal['solved'] = bool(chal_solved)
+        chal['solved_time'] = None if not chal_solved else chal_solved[0]['timestamp']
+        chal['solvers'] = sum( 1 for x in chal_attacks if not x['user_hidden'] )
+    
     return render_template('challenges.html', challenges=challenges)
+    
 
 @cache.cached(timeout=30)
-@app.route('/challenges_scoreboard')
+@app.route('/scoreboard_jeopardy')
 def _challenges():
     db_conn = get_db_connection()
     cur = db_conn.cursor()
@@ -580,20 +606,21 @@ def _challenges():
         users[ca['user_id']] = '{} {}'.format(ca['name'], ca['surname'])
         attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
 
-    # compute the bonus: +3 for firt shot, +2 to second and +1 to third
-    bonus_aux = dict()
-    for (c, u), t in attacks.items():
-        try:
-            bonus_aux[c].append((u, t))
-        except KeyError:
-            bonus_aux[c] = [(u, t)]
     bonus = dict()
-    for c in bonus_aux.keys():
-        bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
-        for i in range(len(bonus_aux[c])):
-            bonus[(c, bonus_aux[c][i][0])] = 3 - i
-            if i >= 2:
-                break
+    if app.config['JEOPARDY_BONUS']:
+        # compute the bonus: +3 for firt shot, +2 to second and +1 to third
+        bonus_aux = dict()
+        for (c, u), t in attacks.items():
+            try:
+                bonus_aux[c].append((u, t))
+            except KeyError:
+                bonus_aux[c] = [(u, t)]
+        for c in bonus_aux.keys():
+            bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
+            for i in range(len(bonus_aux[c])):
+                bonus[(c, bonus_aux[c][i][0])] = 3 - i
+                if i >= 2:
+                    break
 
     # compute the scoreboard as a list of dictionaries
     scoreboard = []
@@ -638,7 +665,7 @@ def challenge(name):
                 [name])
     challenge = cur.fetchone()
     # if the challenge is not valid abort
-    if challenge is None:
+    if challenge is None or challenge['hidden']:
         cur.close()
         abort(404)
 

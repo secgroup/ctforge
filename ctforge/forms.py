@@ -26,6 +26,7 @@ class ChallengeForm(FlaskForm):
     description = TextAreaField('description', validators=[validators.DataRequired()])
     flag = StringField('flag', validators=[validators.DataRequired()])
     points = IntegerField('points', validators=[validators.NumberRange(message='Challenge points should be between 0 and 1000.', min=0, max=1000), validators.DataRequired()])
+    short_description = StringField('short_description', validators=[validators.DataRequired()])
     active = BooleanField('active')
     hidden = BooleanField('hidden', default=True)
     writeup = BooleanField('writeup')

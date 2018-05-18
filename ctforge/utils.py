@@ -23,7 +23,10 @@ def parse_conf(fname):
             DB_USER = config.get('database', 'user', fallback='ctforge'),
             DB_PASSWORD = config.get('database', 'password', fallback='ctforge'),
 
+            SHOW_NAMES = config.getboolean('DEFAULT', 'show_names', fallback=True),
+
             JEOPARDY_ACTIVE = config.getboolean('mode_jeopardy', 'active', fallback=True),
+            JEOPARDY_BONUS = config.getboolean('mode_jeopardy', 'bonus', fallback=True),
 
             ATTACKDEFENSE_ACTIVE = config.getboolean('mode_attackdefense', 'active', fallback=False),
             ROUND_DURATION = config.getint('mode_attackdefense', 'round_duration', fallback=300),

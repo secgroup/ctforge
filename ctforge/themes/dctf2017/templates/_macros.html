@@ -34,7 +34,7 @@
             </thead>
             <tbody>
         {% for d in data %}
-            {% if d.active == 0 %}
+            {% if d.active == 0 or d.hidden %}
                 <tr class="text-muted danger">
             {% else %}
                 <tr>

@@ -34,15 +34,16 @@ CREATE TABLE users (
 );
 
 CREATE TABLE challenges (
-    id            SERIAL,
-    name          VARCHAR(45) NOT NULL,
-    description   TEXT NOT NULL,
-    flag          VARCHAR(120) NOT NULL,
-    points        INT NOT NULL,
-    active        BOOLEAN NOT NULL DEFAULT FALSE,
-    hidden        BOOLEAN NOT NULL DEFAULT TRUE,
-    writeup       BOOLEAN NOT NULL DEFAULT FALSE,
-    writeup_template TEXT,
+    id                SERIAL,
+    name              VARCHAR(45) NOT NULL,
+    description       TEXT NOT NULL,
+    flag              VARCHAR(120) NOT NULL,
+    points            INT NOT NULL,
+    short_description TEXT NOT NULL DEFAULT '', 
+    active            BOOLEAN NOT NULL DEFAULT FALSE,
+    hidden            BOOLEAN NOT NULL DEFAULT TRUE,
+    writeup           BOOLEAN NOT NULL DEFAULT FALSE,
+    writeup_template  TEXT,
     PRIMARY KEY (id),
     UNIQUE (name)
 );
