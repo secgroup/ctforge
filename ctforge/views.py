@@ -190,8 +190,8 @@ def edit_user(id):
                     '    mail = %s, affiliation = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data,
-                     form.affiliation.data,
-                     form.surname.data, form.nickname.data, form.mail.data, form.admin.data,
+                     form.surname.data, form.nickname.data, form.mail.data,
+                     form.affiliation.data, form.admin.data,
                      form.hidden.data, id))
         else:
             flash_errors(form)
