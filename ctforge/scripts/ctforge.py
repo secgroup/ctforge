@@ -33,16 +33,16 @@ def db_create_procedures():
     db_conn.commit()
     db_conn.close()
 
-def db_add_admin(name, surname, mail, password):
-    db_add_user(name, surname, mail, password, admin=True, hidden=True)
+def db_add_admin(name, surname, nickname, mail, affiliation, password):
+    db_add_user(name, surname, nickname, mail, affiliation, password, admin=True, hidden=True)
 
-def db_add_user(name, surname, mail, password, admin=False, hidden=False, team_id=None):
+def db_add_user(name, surname, nickname, mail, affiliation, password, admin=False, hidden=False, team_id=None):
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
         cur.execute((
-            'INSERT INTO users (team_id, name, surname, mail, password, admin, hidden) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
-            [team_id, name, surname, mail, bcrypt.hashpw(password, bcrypt.gensalt()),
+            'INSERT INTO users (team_id, name, surname, nickname, mail, affiliation, password, admin, hidden) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
+            [team_id, name, surname, nickname, mail, affiliation, bcrypt.hashpw(password, bcrypt.gensalt()),
              admin, hidden])
     db_conn.commit()
     db_conn.close()
@@ -78,6 +78,7 @@ def init(args):
 
     admin_name = ask('    name:', args.name)
     admin_surname = ask('    surname:', args.surname)
+    admin_nickname = ask('    nickname:', args.nickname)
     admin_mail = ask('    mail:', args.mail)
     if args.password is None:
         admin_password = getpass('    password: ')
@@ -87,8 +88,10 @@ def init(args):
             sys.exit(1)
     else:
         admin_password = args.password
+    admin_affiliation = None
 
-    db_add_admin(admin_name, admin_surname, admin_mail, admin_password)
+    db_add_admin(admin_name, admin_surname, admin_nickname,
+                 admin_mail, admin_affiliation, admin_password)
 
     resp = ask('Save configuration to {} ? (y/n)'.format(confile), 'y' if args.yes else None)
     exit_on_resp(resp)
@@ -118,7 +121,7 @@ def imp(args):
         print('Importing users...')
         users = csv.reader(args.users, delimiter=',', quotechar='"')
         for user in users:
-            db_add_user(name=user[0], surname=user[1], mail=user[2], password=user[3])
+            db_add_user(name=user[0], surname=user[1], nickname=user[2], mail=user[3], affiliation=user[4], password=user[5])
         args.users.close()
         print('Done!')
 
@@ -131,6 +134,7 @@ def parse_args():
     parser_init = subparsers.add_parser('init', help='Install and initialize the framework')
     parser_init.add_argument('-n', '--name', type=str, help='Administrator name')
     parser_init.add_argument('-s', '--surname', type=str, help='Administrator surname')
+    parser_init.add_argument('-k', '--nickname', type=str, help='Administrator nickname')
     parser_init.add_argument('-m', '--mail', type=str, help='Administrator mail')
     parser_init.add_argument('-p', '--password', type=str, help='Administrator password (unsafe)')
     parser_init.add_argument('-y', '--yes', action='store_true', help='Say Yes to all questions')

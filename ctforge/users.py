@@ -6,12 +6,14 @@ from flask_login import UserMixin
 from ctforge.database import get_db_connection
 
 class User(UserMixin):
-    def __init__(self, id, team_id, name, surname, mail, password, admin, hidden, active=True):
+    def __init__(self, id, team_id, name, surname, nickname, mail, affiliation, password, admin, hidden, active=True):
         self.id = id
         self.team_id = team_id
         self.name = name
+        self.nickname = nickname
         self.surname = surname
         self.mail = mail
+        self.affiliation = affiliation
         self.password = password
         self.admin = admin
         self.hidden = hidden

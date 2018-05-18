@@ -21,13 +21,16 @@ CREATE TABLE users (
     team_id       INT NULL,
     name          VARCHAR(45) NOT NULL,
     surname       VARCHAR(45) NOT NULL,
+    nickname      VARCHAR(45) NOT NULL,
     mail          VARCHAR(70) NOT NULL,
+    affiliation   VARCHAR(100) NULL,
     password      VARCHAR(100) NOT NULL,
     admin         BOOLEAN NOT NULL DEFAULT FALSE,
     hidden        BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id),
     FOREIGN KEY (team_id) REFERENCES teams (id),
-    UNIQUE (mail)
+    UNIQUE (mail),
+    UNIQUE (nickname)
 );
 
 CREATE TABLE challenges (
@@ -37,6 +40,7 @@ CREATE TABLE challenges (
     flag          VARCHAR(120) NOT NULL,
     points        INT NOT NULL,
     active        BOOLEAN NOT NULL DEFAULT FALSE,
+    hidden        BOOLEAN NOT NULL DEFAULT TRUE,
     writeup       BOOLEAN NOT NULL DEFAULT FALSE,
     writeup_template TEXT,
     PRIMARY KEY (id),

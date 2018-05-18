@@ -151,11 +151,12 @@ def add_user():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO users (team_id, name, surname, mail, '
-                '                   password, admin, hidden) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
+                'INSERT INTO users (team_id, name, surname, nickname, mail, '
+                '                   affiliation, password, admin, hidden) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 (form.team_id.data, form.name.data,
-                 form.surname.data, form.mail.data,
+                 form.surname.data, form.nickname.data, form.mail.data,
+                 form.affiliation.data,
                  bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
                  form.admin.data, form.hidden.data))
         else:
@@ -174,21 +175,23 @@ def edit_user(id):
                 # update the password
                 query_handler((
                     'UPDATE users '
-                    'SET team_id = %s, name = %s, surname = %s, '
-                    '    mail = %s, password = %s, admin = %s, hidden = %s '
+                    'SET team_id = %s, name = %s, surname = %s, nickname = %s '
+                    '    mail = %s, affiliation = %s, password = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data,
-                     form.surname.data, form.mail.data,
+                     form.surname.data, form.nickname.data, form.mail.data,
+                     form.affiliation.data,
                      bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
                      form.admin.data, form.hidden.data, id))
             else:
                 query_handler((
                     'UPDATE users '
-                    'SET team_id = %s, name = %s, surname = %s, '
-                    '    mail = %s, admin = %s, hidden = %s '
+                    'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
+                    '    mail = %s, affiliation = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data,
-                     form.surname.data, form.mail.data, form.admin.data,
+                     form.affiliation.data,
+                     form.surname.data, form.nickname.data, form.mail.data, form.admin.data,
                      form.hidden.data, id))
         else:
             flash_errors(form)
@@ -196,7 +199,7 @@ def edit_user(id):
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
             cur.execute((
-                'SELECT id, team_id, name, surname, mail, admin, hidden '
+                'SELECT id, team_id, name, surname, nickname, mail, affiliation, admin, hidden '
                 'FROM users '
                 'WHERE id = %s'), [id])
             user = cur.fetchone()
@@ -218,7 +221,7 @@ def add_team():
             query_handler((
                 'INSERT INTO teams (ip, name, token, poc) '
                 'VALUES (%s, %s, %s, %s)'),
-                (form.ip.data, form.name.data, form.token.data, 
+                (form.ip.data, form.name.data, form.token.data,
                  form.poc.data))
         else:
             flash_errors(form)
@@ -236,7 +239,7 @@ def edit_team(id):
             query_handler((
                 'UPDATE teams SET ip = %s, name = %s, token = %s, poc = %s '
                 'WHERE id = %s'),
-                (form.ip.data, form.name.data, form.token.data, 
+                (form.ip.data, form.name.data, form.token.data,
                  form.poc.data, id))
         else:
             flash_errors(form)
@@ -305,10 +308,10 @@ def add_challenge():
         if form.validate_on_submit():
             query_handler((
                 'INSERT INTO challenges (name, description, flag, points, '
-                '                        active, writeup, writeup_template) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
+                '                        active, hidden, writeup, writeup_template) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, form.writeup.data, 
+                 form.points.data, form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data])
         else:
             flash_errors(form)
@@ -326,10 +329,10 @@ def edit_challenge(id):
             query_handler((
                 'UPDATE challenges '
                 'SET name = %s, description = %s, flag = %s, points = %s, '
-                '    active = %s, writeup = %s, writeup_template = %s '
+                '    active = %s, hidden = %s, writeup = %s, writeup_template = %s '
                 'WHERE id = %s'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, form.writeup.data, 
+                 form.points.data, form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data, id])
         else:
             flash_errors(form)
@@ -731,7 +734,7 @@ def challenge(name):
     db_conn.close()
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
-                           challenge=challenge, evaluation=evaluation, solved=solved, 
+                           challenge=challenge, evaluation=evaluation, solved=solved,
                            graded=graded, writeups=writeups)
 
 
@@ -828,7 +831,7 @@ def scoreboard():
     with db_conn.cursor() as cur:
         cur.execute('SELECT id, name, active FROM services')
         services = cur.fetchall()
-    
+
     return render_template('scoreboard.html', rnd=rnd, rnd_duration=app.config['ROUND_DURATION'],
                            time_left=seconds_left, services=services)
 
