@@ -610,7 +610,7 @@ def _challenges():
     # and not hidden, sorted by timestamp. Along with the users get the
     # information about the solved challenges
     cur.execute((
-        'SELECT U.id AS user_id, U.name AS name, U.surname AS surname, '
+        'SELECT U.id AS user_id, U.name AS name, U.surname AS surname, U.nickname AS nickname, '
         '       U.admin AS admin, U.hidden AS hidden, '
         '       CA.challenge_id AS challenge_id, CA.timestamp AS timestamp '
         'FROM users AS U JOIN challenge_attacks AS CA '
@@ -624,7 +624,10 @@ def _challenges():
     # map the pair challenge id and user id to the timestamp
     attacks = dict()
     for ca in challenge_attacks:
-        users[ca['user_id']] = '{} {}'.format(ca['name'], ca['surname'])
+        if app.config['SHOW_NAMES']:
+            users[ca['user_id']] = '{} {} ({})'.format(ca['name'], ca['surname'], ca['nickname'])
+        else:
+            users[ca['user_id']] = '{}'.format(ca['nickname'])
         attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
 
     bonus = dict()
