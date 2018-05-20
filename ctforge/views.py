@@ -501,6 +501,27 @@ def submit():
             flash_errors(form)
     return render_template('submit.html', form=form, team_token=team_token)
 
+@app.route('/user')
+@jeopardy_mode_required
+@login_required
+def user():
+    """Render a page with information about the user."""
+    db_conn = get_db_connection()
+    cur = db_conn.cursor()
+    cur.execute('SELECT * FROM users WHERE id = %s', [current_user.id])
+    user = cur.fetchone()
+    if user is None:
+        cur.close()
+        flash('Your user id is does not match any user', 'error')
+        return redirect(url_for('index'))
+
+    cur.execute('SELECT * FROM challenges C JOIN challenge_attacks A '
+                'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY C.name', [current_user.id])
+    challenges = cur.fetchall()
+    return render_template('user.html', user=user, challenges=challenges)
+
+
+
 @app.route('/team')
 @attackdefense_mode_required
 @team_required
@@ -572,9 +593,9 @@ def challenges():
         chal['solved'] = bool(chal_solved)
         chal['solved_time'] = None if not chal_solved else chal_solved[0]['timestamp']
         chal['solvers'] = sum( 1 for x in chal_attacks if not x['user_hidden'] )
-    
+
     return render_template('challenges.html', challenges=challenges)
-    
+
 
 @cache.cached(timeout=30)
 @app.route('/scoreboard_jeopardy')

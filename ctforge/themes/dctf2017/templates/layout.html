@@ -59,6 +59,10 @@
                                 Hi {{ current_user.name }}<span class="caret">
                             </span></a>
                             <ul class="dropdown-menu" role="menu">
+                            {% if config.JEOPARDY_ACTIVE %}
+                                <li><a href="/user">User Profile</a></li>
+                                <li class="divider"></li>
+                            {% endif %}
                             {% if config.ATTACKDEFENSE_ACTIVE and current_user.team_id %}
                                 <li><a href="/team">Team Details</a></li>
                                 <li><a href="/submit">Flag Submission Service</a></li>
