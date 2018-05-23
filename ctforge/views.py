@@ -307,11 +307,11 @@ def add_challenge():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO challenges (name, description, flag, points, short_description, '
+                'INSERT INTO challenges (name, description, flag, points, tags, '
                 '                        active, hidden, writeup, writeup_template) '
                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.short_description.data,
+                 form.points.data, form.tags.data,
                  form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data])
         else:
@@ -330,11 +330,11 @@ def edit_challenge(id):
             query_handler((
                 'UPDATE challenges '
                 'SET name = %s, description = %s, flag = %s, points = %s, '
-                '    short_description = %s, active = %s, hidden = %s, '
+                '    tags = %s, active = %s, hidden = %s, '
                 '    writeup = %s, writeup_template = %s '
                 'WHERE id = %s'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.short_description.data,
+                 form.points.data, form.tags.data,
                  form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data, id])
         else:
