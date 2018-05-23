@@ -1,0 +1,96 @@
+
+{% macro render_pretty_bools(data) %}
+  	{% if data is none %}
+	    <span class="glyphicon glyphicon-minus" alt="none"></span><span class="hidden">none</span>
+	{% elif data is sameas true %}
+	    <span class="glyphicon glyphicon-ok" alt="yes"></span><span class="hidden">yes</span>
+	{% elif data is sameas false %}
+	    <span class="glyphicon glyphicon-remove" alt="no"></span><span class="hidden">no</span>
+	{% else %}
+	    {{ data }}
+	{% endif %}
+{% endmacro %}
+
+{% macro tabify(data, keys, target, id, class='') %}
+    <div role="tabpanel" class="tab-pane fade {{ class }}" id="{{ id }}">
+        <div style="padding-top: 20px;">
+            <p>
+                <a href="{{ url_for('add_' ~ target) }}" style="background: none">
+                    <button type="button" class="btn btn-info">
+                        <span class="glyphicon glyphicon-plus"></span>
+                        add new {{ target }}
+                    </button>
+                </a>
+            </p>
+        </div>
+        <table class="table table-condensed table-hover">
+            <thead>
+                <tr>
+                    <td>&nbsp;</td>
+                {% for k in keys %}
+                    <td>{{ k }}</td>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+        {% for d in data %}
+            {% if d.active == 0 or d.hidden %}
+                <tr class="text-muted danger">
+            {% else %}
+                <tr>
+            {% endif %}
+                    <td>
+                        <a href="{{ url_for('edit_' ~ target, id=d.id) }}" style="background: none">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </a>
+                    </td>
+                {% for k in keys %}
+                    <td>{{ render_pretty_bools(d[k]) }}</td>
+                {% endfor %}
+                <tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}
+
+{% macro render_inline_fields(form) %}
+    {% for field in form %}
+        {% if field.type == 'CSRFTokenField' %}
+        {% elif field.type == 'BooleanField' %}
+             <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <div class="checkbox">
+                        <label>
+                            {{ field }} {{ field.name }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            {% if field.flags.required %}
+                <div class="form-group has-feedback has-error">
+                    <span class="glyphicon glyphicon-hand-left form-control-feedback" aria-hidden="true"></span>
+            {% else %}
+                <div class="form-group">
+            {% endif %}
+                    {{ field.label(class="col-sm-2 control-label") }}
+                    <div class="col-md-10" >
+                        {{ field(class="form-control") }}
+                    </div>
+                </div>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro get_status_badge(status) %}
+    {% if status == 1 %}
+        <span class="label label-info">UP</span>
+    {% elif status == 0 %}
+        <span class="label label-danger">CORRUPTED</span>
+    {% elif status == 2 %}
+        <span class="label label-warning">NO FLAG</span>
+    {% else %}
+        <span class="label label-warning">NOT CHECKED</span>
+    {% endif %}
+{% endmacro %}

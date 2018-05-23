@@ -1,0 +1,16 @@
+textarea.form-control {
+    width: 100%;
+    min-height: 500px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+textarea.form-control:disabled {
+    overflow-x: scroll;
+    overflow-y: auto;
+    word-wrap: normal;
+    white-space: pre;
+}

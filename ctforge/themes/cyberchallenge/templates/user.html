@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}User Profile{% endblock %}
+{% block content %}
+
+<h1>User Profile</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <table class="table">
+            <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
+            <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
+            <tr><td>Affiliation:</td><td>{{ user.affiliation }}</td></tr>
+        </table>
+    </div>
+    <div class="col-md-6">
+        <h2>VPN Configuration</h2>
+        <p><a href="#">{{ user.nickname }}.ovpn</a></p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <h2>Solved Challenges</h2>
+
+        {% if challenges|length > 0 %}
+        <table class="table">
+            <thead><tr><td>Challenge</td><td>Score</td><td>Time</td></tr></thead>
+            <tbody>
+            {% for chal in challenges %}
+                <tr>
+                    <td>{{ chal.name }}</td><td>{{ chal.points }}</td><td>{{ chal.timestamp }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <h3 align="center">No Challenges</h3>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

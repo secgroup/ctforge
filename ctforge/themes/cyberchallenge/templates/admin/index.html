@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+{% from "_macros.html" import tabify, render_pretty_bools %}
+
+<h1>Admin Panel</h1>
+
+<ul class="nav nav-tabs" role="tablist" id="tab">
+    <li role="presentation" {% if tab == 'users' %}class="active"{% endif %}>
+        <a href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a>
+    </li>
+    {% if config.ATTACKDEFENSE_ACTIVE %}
+    <li role="presentation" {% if tab == 'teams' %}class="active"{% endif %}>
+        <a href="#teams" aria-controls="teams" role="tab" data-toggle="tab">Teams</a>
+    </li>
+    <li role="presentation" {% if tab == 'services' %}class="active"{% endif %}>
+        <a href="#services" aria-controls="services" role="tab" data-toggle="tab">Services</a>
+    </li>
+    {% endif %}
+    {% if config.JEOPARDY_ACTIVE %}
+    <li role="presentation" {% if tab == 'challenges' %}class="active"{% endif %}>
+        <a href="#challenges" aria-controls="challenges" role="tab" data-toggle="tab">Challenges</a>
+    </li>
+    <li role="presentation" {% if tab == 'evaluations' %}class="active"{% endif %}>
+        <a href="#evaluations" aria-controls="evaluations" role="tab" data-toggle="tab">Writeups</a>
+    </li>
+    {% endif %}
+</ul>
+
+<div class="tab-content">
+    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'nickname', 'mail', 'affiliation', 'hidden', 'admin'], 'user', 'users', class = 'active in' if tab == 'users') }}
+{% if config.ATTACKDEFENSE_ACTIVE %}
+    {{ tabify(teams, ['id', 'ip', 'name', 'token', 'poc'], 'team', 'teams', class = 'active in' if tab == 'teams') }}
+    {{ tabify(services, ['id', 'name', 'flag_lifespan', 'active'], 'service', 'services', class = 'active in' if tab == 'services') }}
+{% endif %}
+{% if config.JEOPARDY_ACTIVE %}
+    {{ tabify(challenges, ['id', 'name', 'points', 'active', 'hidden', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
+
+
+    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
+    <div role="tabpanel" class="tab-pane fade {{ 'active in' if tab == 'evaluations' }}" id="evaluations">
+        <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
+            <thead>
+                <tr>
+                    <td>edit</td>
+                    <td>view</td>
+                {% for ce_k in ce_keys %}
+                    <td>{{ ce_k }}</td>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+        {% for ce in evaluations %}
+            {% if ce.active == 0 %}
+                <tr class="text-muted danger">
+            {% else %}
+                <tr>
+            {% endif %}
+                    <td>
+                        <a href="{{ url_for('edit_evaluation', challenge_id=ce['challenge_id'], user_id=ce['user_id']) }}" style="background: none">
+                            <span class="glyphicon glyphicon-pencil"></span>
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('writeup', id=ce['id']) }}" style="background: none">
+                            <span class="glyphicon glyphicon-eye-open"></span>
+                        </a>
+                    </td>
+                {% for ce_k in ce_keys %}
+                    <td>{{ render_pretty_bools(ce[ce_k]) }}</td>
+                {% endfor %}
+                </tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+</div>
+
+{% endblock %}
+{% block footer %}{% endblock %}

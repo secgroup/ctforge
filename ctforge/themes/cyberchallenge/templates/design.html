@@ -1,0 +1,112 @@
+{% extends "layout.html" %}
+{% block title %}CTF Design{% endblock %}
+{% block content %}
+
+<h1>CTF Design</h1>
+
+<div class="row featurette">
+    <div class="col-md-7">
+        <h2 class="featurette-heading">Infrastructure. <span class="text-muted">How things work.</span></h2>
+<p>The game is played within a VPN in the <code>10.0.0.0/16</code> subnet. Each team has its own vulnerable machine located at <code>10.0.&lt;team_id&gt;.1</code>, while players connecting to the VPN network are assigned an ip in the range <code>10.0.&lt;team_id&gt;.150 - 10.0.&lt;team_id&gt;.200</code>. VMs can be accessed also via the DNS name <code>team&lt;team_id&gt;</code>.</p>
+
+<p>The <i>manager</i> machine is responsible for dispatching flags to the vulnerable machines, checking services integrity, hosting the scoreboard (this website) and updating scores.</p>
+
+<p>Players are not allowed to attack each other (e.g., you can't break into rivals' laptops). The only permitted attack targets are the vulnerable machines. Teams have limited Internet access to install new software on the VM, if needed. Beware that if you mess up your vulnerable machine, all we can do is reset it to its original state (backup your exploits and patches!).</p>
+    </div>
+    <div class="col-md-5">
+        <img class="featurette-image img-responsive" src="{{ url_for('static', filename='img/cog.png') }}" alt="Cog">
+    </div>
+</div>
+
+<div class="row featurette">
+    <div class="col-md-5">
+        <img class="featurette-image img-responsive" src="{{ url_for('static', filename='img/coin.png') }}" alt="Dollar">
+    </div>
+    <div class="col-md-7">
+        <h2 class="featurette-heading">Scoring System. <span class="text-muted">Take the lead.</span></h2>
+        <p>The game is divided in <b>rounds</b> having the duration of {{ config.ROUND_DURATION }} seconds. At the beginning of each round, a bot will renew all the flags in your vulnerable machine. Moreover it will check the integrity of services by interacting with them and by retrieving the flags through a legitimate accesses. Please do not remove the 3 ssh public keys listed below from <code>/root/.ssh/authorized_keys</code> otherwise your services may result inaccessible to the checkbot.</p>
+        <pre><code>
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAhsiDAURnGrsGf0D64FBxf8Q2Jo7TwcCj0v9q5sjkUT root@manager_master.ctf.secgroup.dsi.unive.it
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF2fiOwOSl52KZN43OimLmAN9K4WEr6Q8Y6V/l8VUMmH flagbot@manager_master.ctf.secgroup.dsi.unive.it
+        ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGz26Wuq8f0B9FwPx9M/kdEReWqQy+SqTUWCs83lZKKe root@seclab
+        </code></pre>
+        <p>Your team gains points by attacking other teams, defending its own vulnerable machine and by keeping services up and running.</p>
+        <p>Rules stolen from <a href="https://2017.faustctf.net/information/rules/">FaustCTF</a></p>
+        <p>The total score is the sum of the individual scores for each service. The score per service is made up of three components:</p>
+        <ul>
+            <li>Offense: Points for flags captured from other teams and submitted to the Gameserver within their validity period</li>
+            <li>Defense: Points for not letting other teams capture your flags</li>
+            <li>SLA: Points for the availability and correct behavior of your services</li>
+        </ul>
+        <p>For each service, the component scores for a team are calculated as in this Python-like pseudocode:</p>
+        <p>Offense:</p>
+        <pre><code>offense = count(flags_captured_by[team])
+        for flag in flags_captured_by[team]:
+            offense += (1 / count(all_captures_of[flag]))
+        </code></pre>
+        <p>Defense:</p>
+        <pre><code>defense = 0
+        for flag in flags_owned_by[team]:
+            defense -= sqrt(count(all_captures_of[flag]))
+        </code></pre>
+        <p>SLA:</p>
+        <pre><code>sla = (count(ticks_with_status['up'] + 0.5 * ticks_with_status['recovering'])) * sqrt(count(teams))
+        </code></pre>
+        <h3>Total Score</h3>
+        <pre><code>total = 0
+        for service in services:
+            total += offense[service] + defense[service] + sla[service]
+        </code></pre>
+    </div>
+</div>
+
+<div class="row featurette">
+    <div class="col-md-7">
+        <h2 class="featurette-heading">Flags. <span class="text-muted">Catch 'em all!</span></h2>
+<p>A flag is a string made up of <code>{{ config.FLAG_PREFIX }}</code>, followed by {{ config.FLAG_LENGTH }}
+random characters in the set <code>{{ config.FLAG_CHARS }}</code>, ending with <code>{{ config.FLAG_SUFFIX }}</code>. It is matched by the regular expression <code>{{ config.FLAG_REGEXP }}</code>.</p>
+
+<p>To manually submit a flag, click on the <a href="{{ url_for('submit') }}">flag submission service</a> entry in the top-right menu and enter the flag in the provided form. During the CTF, anyway, you may want to automatically submit flags in order to keep the exploitation going while you are not connected. To do so, you can submit stolen flags by performing an HTTP POST request to <code>{{ url_for('submit') }}</code>. The request must contain the keys <code>flag</code> and <code>team_token</code>, where the values of the first entry is the stolen flag and <code>team_token</code> is a string that allows the server to identify your team. The token of your team can
+be found in the <a href="{{ url_for('team') }}">team page</a>. <strong>Important: do not perform user authentication whilst submitting flags, this is not needed and may overload our servers</strong>.</p>
+
+<p>As an example, we provide a simple python snippet that accounts for the submission of an hardcoded flag.</p>
+
+<pre><code>#!/usr/bin/python
+import requests
+
+url = 'https://10.0.254.1/submit'
+team_token = '&lt;insert your token here&gt;'
+stolen_flag = 'flg{qwertyuiop123456789asdfg}'
+ 
+r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag}, verify=False)</code></pre>
+    </div>
+    <div class="col-md-5">
+        <img class="featurette-image img-responsive" src="{{ url_for('static', filename='img/flag.png') }}" alt="Attention">
+    </div>
+</div>
+
+<div class="row featurette">
+    <div class="col-md-5">
+        <img class="featurette-image img-responsive" src="{{ url_for('static', filename='img/spam.png') }}" alt="Attention">
+    </div>
+    <div class="col-md-7">
+        <h2 class="featurette-heading">Rules. <span class="text-muted">Obey or get obliterated.</span></h2>
+<p>Below, you'll find the current list of rules. These may change as more issues are raised by the participants. Also, the organizers have the right to change any rule (as well as the structure of the competition) at any time. Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask to us.
+</p>
+<ul>
+    <li>It is forbidden to launch denial-of-service (DOS) attacks</li>
+    <li>Please no floods, no DNS poisoning, no ARP spoofing, no MITM</li>
+    <li>Destructive behavior and unfair practices are severely prohibited. These include removing flags or deleting files on compromised hosts, creating fake flags to break legitimate attacks and sharing attacks or flags</li>
+    <li>Vulnerability/network scanners are not allowed</li>
+    <li>Do not attack this website and do not try to break the scoring system</li>
+    <li>If you find a way to hack into a service/challenge more easily than intended, please report it to the organizers for extra points</li>
+    <li>Teams or individuals breaking these rules might be penalized or excluded from the competition</li>
+</ul>
+<p>Before attempting to break one of the aforementioned rules, remember that
+all the traffic generated within the VPN network is logged. <b>Vaporizing a
+team is just one click away</b>.</p>
+    </div>
+</div>
+<!-- /END THE FEATURETTES -->
+
+{% endblock %}
