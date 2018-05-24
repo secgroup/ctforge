@@ -54,6 +54,22 @@
      {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
  ];
 
+ function escapeHTML (string) {
+     var entityMap = {
+         '&': '&amp;',
+         '<': '&lt;',
+         '>': '&gt;',
+         '"': '&quot;',
+         "'": '&#39;',
+         '/': '&#x2F;',
+         '`': '&#x60;',
+         '=': '&#x3D;'
+     };
+     return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+         return entityMap[s];
+     });
+ }
+
  function updateScores(table) {
      $.getJSON("/scoreboard_jeopardy", function (data) {
          makeChart("users_time", data, usersChart);
@@ -63,9 +79,9 @@
              var row = { user: u.user, affiliation: u.affiliation, points: u.points };
              Object.keys(u.challenges).forEach(function (c) {
                  var entry = $("<span>").attr("aria-hidden", "true");
-                 row[c] = $("<td>").append(u.challenges[c].timestamp !== null ?
-                                           entry.addClass("alert-info").attr("title", u.challenges[c].timestamp).text(u.challenges[c].points) :
-                                           entry.addClass("glyphicon glyphicon-remove alert-danger").css("background", "none"));
+                 row[escapeHTML(c)] = $("<td>").append(u.challenges[c].timestamp !== null ?
+                                                       entry.addClass("alert-info").attr("title", u.challenges[c].timestamp).text(u.challenges[c].points) :
+                                                       entry.addClass("glyphicon glyphicon-remove alert-danger").css("background", "none"));
              });
              return row;
          });
@@ -76,7 +92,6 @@
          }, 30000);
      });
  }
-
 
  FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
      construct: function(instance){
