@@ -2,12 +2,30 @@
 {% block title %}Challenge Scoreboard{% endblock %}
 {% block content %}
 
+<style>
+ table.scoreboard span.alert-info {
+     border-radius: 3px;
+     padding: 0 2px;
+     /*background: rgba(0,0,0, 0.4);
+     text-shadow: 0px 0px 2px #000000;*/
+ }
+
+ .chart {
+     height: 600px;
+     width: 100%;
+ }
+
+ .global-score {
+     font-weight: bold;
+ }
+</style>
+
 <h1>Challenge Scoreboard</h1>
 
 <div class="row">
     <div class="col-md-12">
         <!-- Table filled dynamically via JS -->
-        <table class="table scoreboard" data-sorting="true"></table>
+        <table class="table scoreboard" data-filtering="true"></table> <!-- data-sorting="true" -->
     </div>
 </div>
 <div class="row">
@@ -24,6 +42,7 @@
 <script>
  var columns = [
      {"name": "user", "title": "User", "classes": "text-left"},
+     {"name": "affiliation", "title": "Affiliation", "classes": "text-left"},
      {% for chal in challenges %}
      {
          "name": "{{ chal.name }}",
@@ -41,7 +60,7 @@
          makeChart("challenges_time", data, challengesChart);
 
          var rows = data.map(function (u) {
-             var row = { user: u.user, points: u.points };
+             var row = { user: u.user, affiliation: u.affiliation, points: u.points };
              Object.keys(u.challenges).forEach(function (c) {
                  var entry = $("<span>").attr("aria-hidden", "true");
                  row[c] = $("<td>").append(u.challenges[c].timestamp !== null ?
@@ -58,9 +77,56 @@
      });
  }
 
+
+ FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
+     construct: function(instance){
+	 this._super(instance);
+	 this.statuses = {{ affiliations|safe }};
+	 this.def = 'Global';
+	 this.$status = null;
+     },
+     $create: function(){
+	 this._super();
+         this.$form.empty();
+	 var self = this,
+             $form_grp = $('<div/>', {'class': 'form-group'})
+		 .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
+		 .prependTo(self.$form);
+
+	 self.$status = $('<select/>', { 'class': 'form-control' })
+	     .on('change', {self: self}, self._onStatusDropdownChanged)
+	     .append($('<option/>', {text: self.def}))
+	     .appendTo($form_grp);
+
+	 $.each(self.statuses, function(i, status){
+	     self.$status.append($('<option/>').text(status));
+	 });
+     },
+     _onStatusDropdownChanged: function(e){
+	 var self = e.data.self,
+	     selected = $(this).val();
+	 if (selected !== self.def){
+	     self.addFilter('affiliation', selected, ['affiliation']);
+	 } else {
+	     self.removeFilter('affiliation');
+	 }
+	 self.filter();
+     },
+     draw: function(){
+	 this._super();
+	 var status = this.find('affiliation');
+	 if (status instanceof FooTable.Filter){
+	     this.$status.val(status.query.val());
+	 } else {
+	     this.$status.val(this.def);
+	 }
+     }
+ });
+
  $(document).ready(function() {
      var table = FooTable.init(".scoreboard", {
-         "columns": columns
+         "columns": columns,
+         "components": { "filtering": FooTable.ScoreBoardFiltering },
      });
      updateScores(table);
  });

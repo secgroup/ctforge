@@ -571,8 +571,12 @@ def challenges_scoreboard():
     with db_conn.cursor() as cur:
         cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
         challenges = cur.fetchall()
+        cur.execute('SELECT DISTINCT affiliation FROM users')
+        affiliations = [ v['affiliation'] for v in cur.fetchall()
+                         if v['affiliation'] ]
 
-    return render_template('challenges_scoreboard.html', challenges=challenges)
+    return render_template('challenges_scoreboard.html',
+                           challenges=challenges, affiliations=affiliations)
 
 @app.route('/challenges')
 @login_required
@@ -611,7 +615,7 @@ def _challenges():
     # information about the solved challenges
     cur.execute((
         'SELECT U.id AS user_id, U.name AS name, U.surname AS surname, U.nickname AS nickname, '
-        '       U.admin AS admin, U.hidden AS hidden, '
+        '       U.admin AS admin, U.hidden AS hidden, U.affiliation AS affiliation, '
         '       CA.challenge_id AS challenge_id, CA.timestamp AS timestamp '
         'FROM users AS U JOIN challenge_attacks AS CA '
         'ON U.id = CA.user_id '
@@ -624,10 +628,12 @@ def _challenges():
     # map the pair challenge id and user id to the timestamp
     attacks = dict()
     for ca in challenge_attacks:
-        if app.config['SHOW_NAMES']:
-            users[ca['user_id']] = '{} {} ({})'.format(ca['name'], ca['surname'], ca['nickname'])
-        else:
-            users[ca['user_id']] = '{}'.format(ca['nickname'])
+        users[ca['user_id']] = {
+            'name': '{} {} ({})'.format(ca['name'], ca['surname'], ca['nickname']) \
+                    if app.config['SHOW_NAMES'] \
+                    else '{}'.format(ca['nickname']),
+            'affiliation': ca['affiliation']
+        }
         attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
 
     bonus = dict()
@@ -649,7 +655,7 @@ def _challenges():
     # compute the scoreboard as a list of dictionaries
     scoreboard = []
     for u, uv in users.items():
-        score = {'user': uv, 'points': 0, 'challenges': {}}
+        score = {'user': uv['name'], 'affiliation': uv['affiliation'], 'points': 0, 'challenges': {}}
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
