@@ -114,7 +114,7 @@ def init(args):
 
 def run(args):
     debug = args.debug or app.config['DEBUG']
-    app.run(host=args.host, port=args.port, debug=debug)
+    app.run(host=args.host, port=args.port, debug=debug, threaded=True)
 
 def imp(args):
     if args.users:

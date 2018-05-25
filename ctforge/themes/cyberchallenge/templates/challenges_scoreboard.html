@@ -70,10 +70,26 @@
      });
  }
 
+ // Last received data
+ var last_data = null;
+ // Current Filter
+ var data_filter = null;
+
+ function filter_affiliation (affiliation) {
+     return function (row) {
+         return row['affiliation'] == affiliation;
+     }
+ }
+
+ function updateCharts(data) {
+     makeChart("users_time", data_filter ? data.filter(data_filter) : data, usersChart);
+     makeChart("challenges_time", data_filter ? data.filter(data_filter) : data, challengesChart);
+ }
+
  function updateScores(table) {
      $.getJSON("/scoreboard_jeopardy", function (data) {
-         makeChart("users_time", data, usersChart);
-         makeChart("challenges_time", data, challengesChart);
+         last_data = data;
+         updateCharts(data);
 
          var rows = data.map(function (u) {
              var row = { user: u.user, affiliation: u.affiliation, points: u.points };
@@ -122,8 +138,12 @@
 	     selected = $(this).val();
 	 if (selected !== self.def){
 	     self.addFilter('affiliation', selected, ['affiliation']);
+             data_filter = filter_affiliation(selected)
+             updateCharts(last_data);
 	 } else {
 	     self.removeFilter('affiliation');
+             data_filter = null;
+             updateCharts(last_data);
 	 }
 	 self.filter();
      },

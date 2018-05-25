@@ -566,15 +566,18 @@ def team():
 @jeopardy_mode_required
 def challenges_scoreboard():
     """Display the challenge scoreboard."""
+    @cache.memoize(timeout=5)
+    def challenge_list():
+        db_conn = get_db_connection()
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
+            challenges = cur.fetchall()
+            cur.execute('SELECT DISTINCT affiliation FROM users')
+            affiliations = [ v['affiliation'] for v in cur.fetchall()
+                             if v['affiliation'] ]
+        return (challenges, affiliations)
 
-    db_conn = get_db_connection()
-    with db_conn.cursor() as cur:
-        cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
-        challenges = cur.fetchall()
-        cur.execute('SELECT DISTINCT affiliation FROM users')
-        affiliations = [ v['affiliation'] for v in cur.fetchall()
-                         if v['affiliation'] ]
-
+    challenges, affiliations = challenge_list()
     return render_template('challenges_scoreboard.html',
                            challenges=challenges, affiliations=affiliations)
 
@@ -582,15 +585,20 @@ def challenges_scoreboard():
 @login_required
 def challenges():
     """ Display the list of challenges with score and solvers """
-    db_conn = get_db_connection()
-    with db_conn.cursor() as cur:
-        cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
-        challenges = cur.fetchall()
-        cur.execute('SELECT A.*, U.id as user_id, U.hidden as user_hidden '
-                    'FROM challenge_attacks as A '
-                    'LEFT JOIN users as U ON A.user_id = U.id')
-        attacks = cur.fetchall()
 
+    @cache.memoize(timeout=5)
+    def challenges_attacks():
+        db_conn = get_db_connection()
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
+            challenges = cur.fetchall()
+            cur.execute('SELECT A.*, U.id as user_id, U.hidden as user_hidden '
+                        'FROM challenge_attacks as A '
+                        'LEFT JOIN users as U ON A.user_id = U.id')
+            attacks = cur.fetchall()
+        return (challenges, attacks)
+
+    challenges, attacks = challenges_attacks()
     for chal in challenges:
         chal_attacks = [a for a in attacks if a['challenge_id'] == chal['id']]
         chal_solved = [a for a in chal_attacks if a['user_id'] == current_user.id]
@@ -601,8 +609,8 @@ def challenges():
     return render_template('challenges.html', challenges=challenges)
 
 
-@cache.cached(timeout=30)
 @app.route('/scoreboard_jeopardy')
+@cache.cached(timeout=5)
 def _challenges():
     db_conn = get_db_connection()
     cur = db_conn.cursor()
@@ -669,7 +677,6 @@ def _challenges():
                 points = 0
             score['challenges'][cv['name']] = {'timestamp': timestamp, 'points': points}
         scoreboard.append(score)
-
     # sort the scoreboard by total points or, in case of a tie, by the time of the
     # last submission
     def sorting_key(u):
