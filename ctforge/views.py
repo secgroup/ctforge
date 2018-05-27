@@ -972,6 +972,10 @@ def credits():
 def design():
     return render_template('design.html')
 
+@app.route('/rules')
+def rules():
+    return render_template('rules.html')
+
 @app.route('/')
 def index():
     return render_template('index.html')

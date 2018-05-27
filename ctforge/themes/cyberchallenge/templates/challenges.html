@@ -2,51 +2,6 @@
 {% block title %}Challenges{% endblock %}
 {% block content %}
 
-<style>
- .chall-tile {
-     display: block;
-     padding: 4px;
-     margin-top: 30px;
-     line-height: 1.42857143;
-     background-color: #e3e3e3;
-     border: 1px solid #ddd;
-     border-radius: 4px;
-     -webkit-transition: border .2s ease-in-out;
-     -o-transition: border .2s ease-in-out;
-     transition: border .2s ease-in-out;
-     padding: 9px;
-     color: #333;
-     clear:both;
- }
- .chall-tile:hover {
-     color: #333;
-     text-decoration: none;
- }
- .chall-tile:active, .chall-tile:visited, .chall-tile:enabled, .chall-tile:link, .chall-tile:hover{
-     color: #333;
-     text-decoration: none;
- }
- .chall-tile.inactive {
-     opacity: 0.6;
- }
- .chall-tile h3 {
-     white-space: nowrap;
-     text-overflow: ellipsis;
-     overflow: hidden;
-     height: 27px;
-     line-height: 25px;
-     text-align: center;
-     margin-top: 10px;
- }
- .chall-tile .solvers {
-     float: right;
- }
- .chall-tile .description {
-     text-align: center;
- }
-</style>
-
-
 <h1>Challenges</h1>
 
 {% if config.JEOPARDY_BONUS %}
@@ -61,7 +16,7 @@
             <span class="solvers">{{ chal.solvers }} <small>solver(s)</small></span>
             <h3 class="title">
                 {% if chal.solved %}
-                <span class="glyphicon glyphicon-ok alert-info"
+                <span class="fa fa-check-circle"
                       style="background:none;" aria-hidden="true" ></span>
                 {% endif %}
                 {{ chal.name }}

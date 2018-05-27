@@ -1,11 +1,11 @@
 
 {% macro render_pretty_bools(data) %}
   	{% if data is none %}
-	    <span class="glyphicon glyphicon-minus" alt="none"></span><span class="hidden">none</span>
+	    <span class="fa fa-minus" alt="none"></span><span class="d-none">none</span>
 	{% elif data is sameas true %}
-	    <span class="glyphicon glyphicon-ok" alt="yes"></span><span class="hidden">yes</span>
+	    <span class="fa fa-check" alt="yes"></span><span class="d-none">yes</span>
 	{% elif data is sameas false %}
-	    <span class="glyphicon glyphicon-remove" alt="no"></span><span class="hidden">no</span>
+	    <span class="fa fa-remove" alt="no"></span><span class="d-none">no</span>
 	{% else %}
 	    {{ data }}
 	{% endif %}
@@ -17,7 +17,7 @@
             <p>
                 <a href="{{ url_for('add_' ~ target) }}" style="background: none">
                     <button type="button" class="btn btn-info">
-                        <span class="glyphicon glyphicon-plus"></span>
+                        <span class="fa fa-plus"></span>
                         add new {{ target }}
                     </button>
                 </a>
@@ -41,7 +41,7 @@
             {% endif %}
                     <td>
                         <a href="{{ url_for('edit_' ~ target, id=d.id) }}" style="background: none">
-                            <span class="glyphicon glyphicon-pencil"></span>
+                            <span class="fa fa-pencil"></span>
                         </a>
                     </td>
                 {% for k in keys %}
@@ -70,7 +70,7 @@
         {% else %}
             {% if field.flags.required %}
                 <div class="form-group has-feedback has-error">
-                    <span class="glyphicon glyphicon-hand-left form-control-feedback" aria-hidden="true"></span>
+                    <span class="fa fa-hand-left form-control-feedback" aria-hidden="true"></span>
             {% else %}
                 <div class="form-group">
             {% endif %}
