@@ -39,8 +39,10 @@
         {% endif %}
         {% if not graded %}
             <div class="row">
+                <div class="col-md-12">
                 <h3>Submit a writeup</h3>
                 <p>Writeup submission can be performed until a grade is assigned</p>
+                </div>
                 <div class="col-md-12">
                     <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
                         {{ writeup_form.hidden_tag() }}

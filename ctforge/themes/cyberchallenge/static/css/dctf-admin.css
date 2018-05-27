@@ -14,3 +14,33 @@ textarea.form-control:disabled {
     word-wrap: normal;
     white-space: pre;
 }
+
+.modal {
+    overflow-y: auto;
+}
+#flash-messages .modal-content {
+    opacity: 0.9;
+    background: none;
+    color: inherit;
+    box-shadow: none;
+    border: 0;
+    margin: 0;
+}
+
+.modal .modal-dialog {
+    margin: 50px auto;
+}
+
+thead, tr {
+    background-color: rgba(238, 232, 213, 0.09);
+}
+
+table {
+    background-color: rgba(238, 232, 213, 0.09);
+}
+.table>thead>tr>.active, .table>tbody>tr>.active, .table>tfoot>tr>.active,
+.table>thead>.active>td, .table>tbody>.active>td, .table>tfoot>.active>td,
+.table>thead>.active>th, .table>tbody>.active>th, .table>tfoot>.active>th {
+    background-color: rgba(238, 232, 213, 0.05);
+}
+

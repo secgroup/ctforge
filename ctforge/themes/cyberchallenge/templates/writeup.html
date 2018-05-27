@@ -7,8 +7,8 @@
 <div class="row">
 	<div class="col-md-9">
 		<div class="row">
-			<div class="panel panel-default">
-				<div class="panel-body">
+			<div class="card bg-dark d-block w-100">
+				<div class="card-body">
 				{% if md != 0 %}
 					<p class="text-right"><a href="{{ url_for('writeup', id=writeup.id, md=0) }}" class="btn btn-default" role="button">Plain view</a></p>
       				{{ writeup.writeup|markdown }}
