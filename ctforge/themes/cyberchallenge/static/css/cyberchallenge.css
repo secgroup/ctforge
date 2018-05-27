@@ -26,9 +26,10 @@ pre code {
     overflow-x: scroll;
 }
 
-thead {
+thead, tr {
     background-color: rgba(238, 232, 213, 0.09);
 }
+
 table {
     background-color: rgba(238, 232, 213, 0.09);
 }
@@ -123,6 +124,11 @@ table.scoreboard span.alert-info {
     padding: 0 2px;
     background: #1e434a;
     color: inherit;
+    text-shadow: 0px 0px 1px #000000;
+}
+
+table.scoreboard span.alert-danger {
+    color: #7e284a;
     text-shadow: 0px 0px 1px #000000;
 }
 

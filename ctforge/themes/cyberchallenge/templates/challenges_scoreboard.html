@@ -2,30 +2,14 @@
 {% block title %}Challenge Scoreboard{% endblock %}
 {% block content %}
 
-<style>
- table.scoreboard span.alert-info {
-     border-radius: 3px;
-     padding: 0 2px;
-     /*background: rgba(0,0,0, 0.4);
-     text-shadow: 0px 0px 2px #000000;*/
- }
-
- .chart {
-     height: 600px;
-     width: 100%;
- }
-
- .global-score {
-     font-weight: bold;
- }
-</style>
-
 <h1>Challenge Scoreboard</h1>
 
 <div class="row">
     <div class="col-md-12">
         <!-- Table filled dynamically via JS -->
-        <table class="table scoreboard" data-filtering="true"></table> <!-- data-sorting="true" -->
+        <div class="table-responsive">
+            <table class="table scoreboard" data-filtering="true"></table> <!-- data-sorting="true" -->
+        </div>
     </div>
 </div>
 <div class="row">
