@@ -334,10 +334,23 @@ def advance_round(teams, services):
                     defense = -sum(math.sqrt(count_flag_captures[flag]) for flag in lost_flags[team.id])
                     sla = checks.get(team.id, 0) * math.sqrt(len(teams))
 
-                    cur.execute((
-                        'INSERT INTO scores '
-                        'VALUES (%s, %s, %s, %s, %s, %s)')
-                        , [rnd, team.id, service.id, attack, defense, sla])
+                    # if round is 0 and there is already a score of 0.
+                    # we need to update those rows
+                    if rnd == 0:
+                        cur.execute((
+                            'INSERT INTO scores '
+                            'VALUES (%s, %s, %s, %s, %s, %s) '
+                            'ON CONFLICT (round, team_id, service_id) '
+                            'DO UPDATE SET attack = %s, defense = %s, sla = %s '
+                            'WHERE scores.round = %s AND scores.team_id = %s AND scores.service_id = %s')
+                            , [rnd, team.id, service.id, attack, defense, sla,
+                               attack, defense, sla,
+                               rnd, team.id, service.id])
+                    else:
+                        cur.execute((
+                            'INSERT INTO scores '
+                            'VALUES (%s, %s, %s, %s, %s, %s)')
+                            , [rnd, team.id, service.id, attack, defense, sla])
 
             # create a new round entry
             cur.execute('INSERT INTO rounds (id) VALUES (%s)', [rnd+1])

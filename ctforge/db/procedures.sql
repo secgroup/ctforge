@@ -24,7 +24,8 @@ BEGIN
   /* Use the function GREATEST to avoid inserting scores with round -1 when
    * the CTF is not started yet. */
   INSERT INTO scores
-  SELECT GREATEST(current_round - 1, 0), id, NEW.id, 0, 0, 0
+  SELECT GREATEST(current_round - 1, 0), NEW.id, id, 0, 0, 0
+
   FROM services;
 
   RETURN NEW;
