@@ -14,7 +14,12 @@
     </div>
     <div class="col-md-6">
         <h2>VPN Configuration</h2>
-        <p><a href="#">{{ user.nickname }}.ovpn</a></p>
+        <p><a class="btn btn-dark d-block" target="_blank"
+              download="{{ user.nickname }}.ovpn"
+              href="data:application/octet-stream;base64,VE9ETwo=">
+            <i class="fa fa-download"></i>
+            {{ user.nickname }}.ovpn
+        </a></p>
     </div>
 </div>
 <div class="row">

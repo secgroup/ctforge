@@ -39,6 +39,10 @@ table {
     background-color: rgba(238, 232, 213, 0.05);
 }
 
+.jumbotron {
+    background-color: rgba(238, 232, 213, 0.125);
+}
+
 .form-signin {
     margin: 100px 0;
 }
@@ -123,13 +127,15 @@ table.scoreboard span.alert-info {
     border-radius: 3px;
     padding: 0 2px;
     background: #1e434a;
+    font-weight: bold;
     color: inherit;
     text-shadow: 0px 0px 1px #000000;
 }
 
 table.scoreboard span.alert-danger {
-    color: #7e284a;
-    text-shadow: 0px 0px 1px #000000;
+    /*color: #7e284a;*/
+    /*text-shadow: 0px 0px 1px #000000;*/
+    color: inherit;
 }
 
 .chart {
@@ -191,7 +197,7 @@ table.scoreboard span.alert-danger {
 }
 
 .chall-tile:hover {
-    border: 1px solid rgba(0, 43, 54, 0.7);
+    border: 1px solid rgba(0, 43, 54, 0.9);
     box-shadow: 0 0 10px 1px rgba(238, 232, 213, 0.08);
     transition: border 0.4s ease;
     transition: box-shadow 0.4s ease;

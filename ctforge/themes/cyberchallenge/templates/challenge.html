@@ -8,8 +8,10 @@
 {% endif %}
 </h2>
 
-<div class="row">
-{{ challenge.description|safe }}
+<div class="card">
+    <div class="card-body">
+        {{ challenge.description|safe }}
+    </div>
 </div>
 
 {% if challenge.active %}
@@ -49,7 +51,7 @@
                         <div class="form-group">
                             {{ writeup_form.writeup(placeholder="Writeup data", class="form-control", rows="20", required=True) }}
                         </div>
-                        <button class="btn btn-primary" type="submit">Submit</button>
+                        <button class="btn btn-dark" type="submit">Submit</button>
                     </form>
                 </div>
             </div>
@@ -65,7 +67,7 @@
                     {{ flag_form.flag.label(class="sr-only") }}
                     {{ flag_form.flag(placeholder="Flag", class="form-control", required=True) }}
                 </div>
-                <button class="btn btn-primary" type="submit">Submit</button>
+                <button class="btn btn-dark" type="submit">Submit</button>
             </form>
         </div>
         <div class="col-md-2"></div>

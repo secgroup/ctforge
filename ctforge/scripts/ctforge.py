@@ -2,13 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import sys
 import csv
 import pkgutil
 import argparse
 import bcrypt
+import json
 from shutil import copy2
 from getpass import getpass
+from ctforge.database import db_connect
 
 from ctforge import app, utils, database
 
@@ -125,6 +128,28 @@ def imp(args):
         args.users.close()
         print('Done!')
 
+def imp_chal(chal_info_file, public_folder):
+    chal_info = json.loads(re.sub("//.*\n", "",chal_info_file.read()))
+    print('Importing challenge `{}`...'.format(chal_info['title']))
+    db_conn = db_connect()
+    db_conn.autocommit = True
+    with db_conn.cursor() as cur:
+        # NOTE: need to manually copy public files to the webserver public folder
+        description = chal_info['description']
+        if chal_info['public_files']:
+            description += '<br><br><p><b>Public Files:</b></p><ul>'
+            for f in chal_info['public_files']:
+                description += '<li><a href="{}">{}</a></li>'.format(
+                    os.path.join(public_folder,f), f)
+            description += '</ul>'
+        cur.execute('INSERT INTO challenges (name, description, flag, points, '
+                    'tags, active, hidden,writeup) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
+                    [chal_info['title'], description, chal_info['flag'],
+                     chal_info['points'], '/'.join(chal_info['tags']),
+                     False, True, False])
+    db_conn.close()
+    print('Done.')
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
     parser.add_argument('-c', '--conf', dest='conf', type=str,
@@ -144,9 +169,13 @@ def parse_args():
     parser_run.add_argument('-P', '--port', type=int, help='Port to listen on', default=5000)
     parser_run.add_argument('-D', '--disable-debug', dest='debug', action='store_false', help='Disable debug mode')
 
-    parser_import = subparsers.add_parser('import', help='Import users')
+    parser_import = subparsers.add_parser('import_users', help='Import users')
     parser_import.add_argument('-u', '--users', type=argparse.FileType('r'),
-        help='A csv file of users to import. The supported format is: name, surname, mail, password. No header and comma as separator')
+                               help='A csv file of users to import. The supported format is: name, surname, nickname, mail, affiliation, password. No header and comma as separator')
+
+    parser_challenge = subparsers.add_parser('import_challenge', help='Import Challenge')
+    parser_challenge.add_argument('challenge', type=argparse.FileType('r'), help='Challenges folder in which each subdirectory contains an `info.json` file')
+    parser_challenge.add_argument('--public-files-uri', default='/data/public_files/', help='Webserver public folder')
 
     return parser.parse_args()
 
@@ -171,8 +200,10 @@ def main():
         run(args)
     elif args.command == 'init':
         init(args)
-    elif args.command == 'import':
+    elif args.command == 'import_users':
         imp(args)
+    elif args.command == 'import_challenge':
+        imp_chal(args.challenge, args.public_files_uri)
     else:
         sys.stderr.write("... Doing nothing, bye\n")
         sys.exit(1)
