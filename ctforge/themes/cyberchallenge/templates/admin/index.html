@@ -5,7 +5,16 @@
 
 {% from "_macros.html" import tabify, render_pretty_bools %}
 
-<h1>Admin Panel</h1>
+<h1>
+    Admin Panel
+    <span class="d-block-inline mr-3"></span>
+    {% if config.JEOPARDY_ACTIVE %}
+    <a class="btn btn-secondary" href="/admin/jeopardy_settings">
+        <span class="fa fa-pencil"></span>
+        Jeopardy Settings
+    </a>
+    {% endif %}
+</h1>
 
 
 <ul class="nav nav-pills" role="tablist" id="tab">
@@ -41,7 +50,7 @@
 
 
     {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
-    <div role="tabpanel" class="tab-pane fade {{ 'active show' if tab == 'evaluations' }}" id="evaluations">
+    <div role="tabpanel" class="tab-pane fade {{ 'active show' if tab == 'evaluations' }} mt-4" id="evaluations">
         <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
             <thead>
                 <tr>

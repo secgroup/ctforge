@@ -151,10 +151,16 @@
      updateScores(table);
  });
 </script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
-<script language="javascript" type="text/javascript" src="/static/js/charts.js"></script>
+<!--
+    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
+    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
+    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
+-->
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/charts.js') }}"></script>
 
 {% endblock %}

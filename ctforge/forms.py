@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, HiddenField, IntegerField, BooleanField, TextAreaField, validators
+from wtforms import StringField, PasswordField, HiddenField, IntegerField, BooleanField, TextAreaField, DateTimeField, validators
 
 class LoginForm(FlaskForm):
     mail = StringField('mail', validators=[validators.DataRequired()])
@@ -61,3 +61,9 @@ class TeamForm(FlaskForm):
     name = StringField('name', validators=[validators.DataRequired()])
     token = StringField('token', validators=[validators.DataRequired()])
     poc = IntegerField('poc', validators=[validators.Optional()])
+
+class JeopardyForm(FlaskForm):
+    time_enabled = BooleanField('time_enabled', validators=[validators.Optional()])
+    start_time = DateTimeField('start_time', validators=[validators.Optional()])
+    end_time = DateTimeField('end_time', validators=[validators.Optional()])
+    ctf_running = BooleanField('ctf_running', validators=[validators.Optional()])

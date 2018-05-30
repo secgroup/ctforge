@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import bcrypt
-import datetime
+import time
+import json
+import base64
 import psycopg2
 import psycopg2.extras
 from flask import request, render_template, redirect, url_for, flash, abort, jsonify
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 from ctforge import app, csrf, login_manager, cache
 from ctforge.users import User
@@ -142,7 +146,6 @@ def admin(tab='users'):
                             users=users, teams=teams, services=services,
                             challenges=challenges, evaluations=evaluations,
                             tab=tab)
-
 
 @app.route('/admin/user/new', methods=['GET', 'POST'])
 @admin_required
@@ -298,6 +301,74 @@ def edit_service(id):
             return render_template('admin/data.html', form=form, target='service',
                                    action='edit')
     return redirect(url_for('admin', tab='services'))
+
+@cache.memoize(timeout=1)
+def get_jeopardy_settings():
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT SUBSTRING(name, 10, LENGTH(name)) AS name, value '
+                    'FROM ctf_config WHERE name LIKE \'jeopardy_%\'')
+        config = { v['name']: v['value'] for v in cur.fetchall() }
+    fields = [
+        ('time_enabled', json.loads, False),
+        ('start_time',
+         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
+         datetime.fromtimestamp(time.time())),
+        ('end_time',
+         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
+         datetime.fromtimestamp(time.time())),
+        ('ctf_running', json.loads, False)
+    ]
+    jeopardy = {}
+    for k, from_string, default in fields:
+        try:
+            jeopardy[k] = from_string(config[k])
+        except KeyError as e:
+            jeopardy[k] = default
+
+    if jeopardy['time_enabled']:
+        now = datetime.now()
+        jeopardy['ctf_running'] = now <= jeopardy['end_time']
+
+    return jeopardy
+
+@app.route('/admin/jeopardy_settings', methods=['GET', 'POST'])
+@jeopardy_mode_required
+@admin_required
+def jeopardy_settings():
+    if request.method == 'POST':
+        form = ctforge.forms.JeopardyForm()
+        if form.validate_on_submit():
+            form_vals = {
+                'jeopardy_time_enabled': form.time_enabled.data,
+                'jeopardy_start_time': form.start_time.data,
+                'jeopardy_end_time': form.end_time.data,
+                'jeopardy_ctf_running': form.ctf_running.data
+            }
+
+            db_conn = get_db_connection()
+            try:
+                with db_conn.cursor() as cur:
+                    cur.executemany(
+                        'INSERT INTO ctf_config (name, value) '
+                        'VALUES (%(name)s, %(value)s) '
+                        'ON CONFLICT (name) DO '
+                        'UPDATE SET value = %(value)s',
+                        [{'name':n, 'value': val} for n,val in form_vals.items()])
+                flash('Configuration updated', 'success')
+            except psycopg2.Error as e:
+                db_conn.rollback()
+                flash('Error: {}'.format(e), 'error')
+        else:
+            flash_errors(form)
+
+        return redirect(url_for('admin'))
+
+    jeopardy = get_jeopardy_settings()
+    form = ctforge.forms.JeopardyForm(**jeopardy)
+    return render_template('admin/data.html', form=form,
+                           action='edit', target='jeopardy CTF',
+                           return_to=url_for('admin'))
 
 @app.route('/admin/challenge/new', methods=['GET', 'POST'])
 @jeopardy_mode_required
@@ -518,7 +589,11 @@ def user():
     cur.execute('SELECT * FROM challenges C JOIN challenge_attacks A '
                 'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY C.name', [current_user.id])
     challenges = cur.fetchall()
-    return render_template('user.html', user=user, challenges=challenges)
+
+    with open(os.path.expanduser('~/.ctforge/client.ovpn'), 'r') as f:
+        vpn = base64.b64encode(f.read().encode()).decode()
+
+    return render_template('user.html', user=user, challenges=challenges, vpn_encoded=vpn)
 
 
 
@@ -586,6 +661,9 @@ def challenges_scoreboard():
 def challenges():
     """ Display the list of challenges with score and solvers """
 
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+
     @cache.memoize(timeout=5)
     def challenges_attacks():
         db_conn = get_db_connection()
@@ -606,7 +684,13 @@ def challenges():
         chal['solved_time'] = None if not chal_solved else chal_solved[0]['timestamp']
         chal['solvers'] = sum( 1 for x in chal_attacks if not x['user_hidden'] )
 
-    return render_template('challenges.html', challenges=challenges)
+    if jeopardy['time_enabled']:
+        jeopardy['ctf_ended'] = now >= jeopardy['end_time']
+        jeopardy['seconds_left'] = int((jeopardy['end_time'] - now).total_seconds())
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M %m/%d/%Y")
+
+    return render_template('challenges.html', challenges=challenges,
+                           settings=jeopardy)
 
 
 @app.route('/scoreboard_jeopardy')
@@ -681,7 +765,7 @@ def _challenges():
     # last submission
     def sorting_key(u):
         timestamps = [c['timestamp'] for c in u['challenges'].values() if c['timestamp'] is not None]
-        return u['points'], datetime.datetime.now() - max(timestamps)
+        return u['points'], datetime.now() - max(timestamps)
 
     scoreboard.sort(key=sorting_key, reverse=True)
 
@@ -736,6 +820,7 @@ def challenge(name):
         # process the two mutually exclusive forms
         writeup_data = request.form.get('writeup')
         flag = request.form.get('flag')
+        jeopardy = get_jeopardy_settings()
 
         if writeup_data is not None:
             # only allow writeup submission if writeup support is enabled for this chal
@@ -766,6 +851,22 @@ def challenge(name):
                 cur = db_conn.cursor()
             if flag is not None and flag_form.validate_on_submit():
                 flag = flag_form.flag.data
+
+                # Check if the user can submit flags
+                # if the ctf is over the flags are validated but the db is not updated
+                if not jeopardy['ctf_running']:
+                    if jeopardy['time_enabled']:
+                        now = datetime.now()
+                        if now >= jeopardy['end_time'] and flag == challenge['flag']:
+                            flash('Flag accepted! (No points)', 'success')
+                        else:
+                            flash('Invalid flag', 'error')
+                        return redirect(url_for('challenge', name=challenge['name']))
+                    else:
+                        flash('There is no running CTF!', 'error')
+                        return redirect(url_for('challenge', name=challenge['name']))
+
+
                 if flag == challenge['flag']:
                     try:
                         # save this attack into the db
@@ -875,12 +976,12 @@ def round_info(db_conn):
     rnd = res['round'] if res is not None and res['round'] else 0
 
     # get the time left until the next round
-    date_now = datetime.datetime.now()
+    date_now = datetime.now()
     seconds_left = app.config['ROUND_DURATION']
     if rnd >= 1:
         # get seconds left till new round
         seconds_left = max(
-            ((res['timestamp'] + datetime.timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
+            ((res['timestamp'] + timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
 
     return rnd, seconds_left
 

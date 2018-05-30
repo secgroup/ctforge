@@ -16,7 +16,7 @@
         <h2>VPN Configuration</h2>
         <p><a class="btn btn-dark d-block" target="_blank"
               download="{{ user.nickname }}.ovpn"
-              href="data:application/octet-stream;base64,VE9ETwo=">
+              href="data:application/octet-stream;base64,{{ vpn_encoded }}">
             <i class="fa fa-download"></i>
             {{ user.nickname }}.ovpn
         </a></p>

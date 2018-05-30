@@ -10,6 +10,12 @@ CREATE TABLE teams (
     UNIQUE (token)
 );
 
+CREATE TABLE ctf_config (
+  name  VARCHAR(30) NOT NULL,
+  value TEXT,
+  PRIMARY KEY (name)
+);
+
 CREATE TABLE rounds (
     id            INT NOT NULL,
     timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
