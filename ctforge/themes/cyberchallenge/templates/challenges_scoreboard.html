@@ -4,163 +4,176 @@
 
 <h1>Challenge Scoreboard</h1>
 
-<div class="row">
-    <div class="col-md-12">
-        <!-- Table filled dynamically via JS -->
-        <div class="table-responsive">
-            <table class="table scoreboard" data-filtering="true"></table> <!-- data-sorting="true" -->
+{% if settings['ctf_running'] or (settings['time_enabled'] and settings['ctf_ended']) %}
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Table filled dynamically via JS -->
+            <div class="table-responsive">
+                <table class="table scoreboard" data-filtering="true"></table> <!-- data-sorting="true" -->
+            </div>
         </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-md-12">
-        <div id="users_time" class="chart"></div>
+    <div class="row">
+        <div class="col-md-12">
+            <div id="users_time" class="chart"></div>
+        </div>
     </div>
-</div>
-<div class="row">
-    <div class="col-md-12">
-        <div id="challenges_time" class="chart"></div>
+    <div class="row">
+        <div class="col-md-12">
+            <div id="challenges_time" class="chart"></div>
+        </div>
     </div>
-</div>
 
-<script>
- var columns = [
-     {"name": "user", "title": "User", "classes": "text-left"},
-     {"name": "affiliation", "title": "Affiliation", "classes": "text-left"},
-     {% for chal in challenges %}
-     {
-         "name": "{{ chal.name }}",
-         "title": "<span title=\"{{ chal.points }} points\" class=\"{% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
-         "classes": "text-center",
-         "type": "html"
-     },
-     {% endfor %}
-     {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
- ];
+    <script>
+     var columns = [
+         {"name": "user", "title": "User", "classes": "text-left"},
+         {"name": "affiliation", "title": "Affiliation", "classes": "text-left"},
+         {% for chal in challenges %}
+         {
+             "name": "{{ chal.name }}",
+             "title": "<span title=\"{{ chal.points }} points\" class=\"{% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
+             "classes": "text-center",
+             "type": "html"
+         },
+         {% endfor %}
+         {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
+     ];
 
- function escapeHTML (string) {
-     var entityMap = {
-         '&': '&amp;',
-         '<': '&lt;',
-         '>': '&gt;',
-         '"': '&quot;',
-         "'": '&#39;',
-         '/': '&#x2F;',
-         '`': '&#x60;',
-         '=': '&#x3D;'
-     };
-     return String(string).replace(/[&<>"'`=\/]/g, function (s) {
-         return entityMap[s];
-     });
- }
-
- // Last received data
- var last_data = null;
- // Current Filter
- var data_filter = null;
-
- function filter_affiliation (affiliation) {
-     return function (row) {
-         return row['affiliation'] == affiliation;
-     }
- }
-
- function updateCharts(data) {
-     makeChart("users_time", data_filter ? data.filter(data_filter) : data, usersChart);
-     makeChart("challenges_time", data_filter ? data.filter(data_filter) : data, challengesChart);
- }
-
- function updateScores(table) {
-     $.getJSON("/scoreboard_jeopardy", function (data) {
-         last_data = data;
-         updateCharts(data);
-
-         var rows = data.map(function (u) {
-             var row = { user: u.user, affiliation: u.affiliation, points: u.points };
-             Object.keys(u.challenges).forEach(function (c) {
-                 var entry = $("<span>").attr("aria-hidden", "true");
-                 row[escapeHTML(c)] = $("<td>").append(u.challenges[c].timestamp !== null ?
-                                                       entry.addClass("alert-info").attr("title", u.challenges[c].timestamp).text(u.challenges[c].points) :
-                                                       entry.addClass("fa fa-remove alert-danger").css("background", "none"));
-             });
-             return row;
+     function escapeHTML (string) {
+         var entityMap = {
+             '&': '&amp;',
+             '<': '&lt;',
+             '>': '&gt;',
+             '"': '&quot;',
+             "'": '&#39;',
+             '/': '&#x2F;',
+             '`': '&#x60;',
+             '=': '&#x3D;'
+         };
+         return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+             return entityMap[s];
          });
-         table.rows.load(rows);
-
-         setTimeout(function () {
-             updateScores(table)
-         }, 30000);
-     });
- }
-
- FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
-     construct: function(instance){
-	 this._super(instance);
-	 this.statuses = {{ affiliations|safe }};
-	 this.def = 'Global';
-	 this.$status = null;
-     },
-     $create: function(){
-	 this._super();
-         this.$form.empty();
-         this.$form.addClass('float-right');
-	 var self = this,
-             $form_grp = $('<div/>', {'class': 'form-group'})
-		 .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
-		 .prependTo(self.$form);
-
-	 self.$status = $('<select/>', { 'class': 'form-control' })
-	     .on('change', {self: self}, self._onStatusDropdownChanged)
-	     .append($('<option/>', {text: self.def}))
-	     .appendTo($form_grp);
-
-	 $.each(self.statuses, function(i, status){
-	     self.$status.append($('<option/>').text(status));
-	 });
-     },
-     _onStatusDropdownChanged: function(e){
-	 var self = e.data.self,
-	     selected = $(this).val();
-	 if (selected !== self.def){
-	     self.addFilter('affiliation', selected, ['affiliation']);
-             data_filter = filter_affiliation(selected)
-             updateCharts(last_data);
-	 } else {
-	     self.removeFilter('affiliation');
-             data_filter = null;
-             updateCharts(last_data);
-	 }
-	 self.filter();
-     },
-     draw: function(){
-	 this._super();
-	 var status = this.find('affiliation');
-	 if (status instanceof FooTable.Filter){
-	     this.$status.val(status.query.val());
-	 } else {
-	     this.$status.val(this.def);
-	 }
      }
- });
 
- $(document).ready(function() {
-     var table = FooTable.init(".scoreboard", {
-         "columns": columns,
-         "components": { "filtering": FooTable.ScoreBoardFiltering },
+     // Last received data
+     var last_data = null;
+     // Current Filter
+     var data_filter = null;
+
+     function filter_affiliation (affiliation) {
+         return function (row) {
+             return row['affiliation'] == affiliation;
+         }
+     }
+
+     function updateCharts(data) {
+         makeChart("users_time", data_filter ? data.filter(data_filter) : data, usersChart);
+         makeChart("challenges_time", data_filter ? data.filter(data_filter) : data, challengesChart);
+     }
+
+     function updateScores(table) {
+         $.getJSON("/scoreboard_jeopardy", function (data) {
+             last_data = data;
+             updateCharts(data);
+
+             var rows = data.map(function (u) {
+                 var row = { user: u.user, affiliation: u.affiliation, points: u.points };
+                 Object.keys(u.challenges).forEach(function (c) {
+                     var entry = $("<span>").attr("aria-hidden", "true");
+                     row[escapeHTML(c)] = $("<td>").append(u.challenges[c].timestamp !== null ?
+                                                           entry.addClass("alert-info").attr("title", u.challenges[c].timestamp).text(u.challenges[c].points) :
+                                                           entry.addClass("fa fa-remove alert-danger").css("background", "none"));
+                 });
+                 return row;
+             });
+             table.rows.load(rows);
+
+             setTimeout(function () {
+                 updateScores(table)
+             }, 30000);
+         });
+     }
+
+     FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
+         construct: function(instance){
+         this._super(instance);
+         this.statuses = {{ affiliations|safe }};
+         this.def = 'Global';
+         this.$status = null;
+         },
+         $create: function(){
+         this._super();
+             this.$form.empty();
+             this.$form.addClass('float-right');
+         var self = this,
+                 $form_grp = $('<div/>', {'class': 'form-group'})
+             .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
+             .prependTo(self.$form);
+
+         self.$status = $('<select/>', { 'class': 'form-control' })
+             .on('change', {self: self}, self._onStatusDropdownChanged)
+             .append($('<option/>', {text: self.def}))
+             .appendTo($form_grp);
+
+         $.each(self.statuses, function(i, status){
+             self.$status.append($('<option/>').text(status));
+         });
+         },
+         _onStatusDropdownChanged: function(e){
+         var self = e.data.self,
+             selected = $(this).val();
+         if (selected !== self.def){
+             self.addFilter('affiliation', selected, ['affiliation']);
+                 data_filter = filter_affiliation(selected)
+                 updateCharts(last_data);
+         } else {
+             self.removeFilter('affiliation');
+                 data_filter = null;
+                 updateCharts(last_data);
+         }
+         self.filter();
+         },
+         draw: function(){
+         this._super();
+         var status = this.find('affiliation');
+         if (status instanceof FooTable.Filter){
+             this.$status.val(status.query.val());
+         } else {
+             this.$status.val(this.def);
+         }
+         }
      });
-     updateScores(table);
- });
-</script>
-<!--
-    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
-    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
-    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
-    <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
--->
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/charts.js') }}"></script>
+
+     $(document).ready(function() {
+         var table = FooTable.init(".scoreboard", {
+             "columns": columns,
+             "components": { "filtering": FooTable.ScoreBoardFiltering },
+         });
+         updateScores(table);
+     });
+    </script>
+    <!--
+        <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+        <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
+        <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
+        <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
+    -->
+    <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+    <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+    <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+    <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+    <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% else %}
+
+    <div class="card">
+        <div class="card-body mx-auto h5">
+            {% if settings['time_enabled'] %}
+                The CTF starts at {{ settings['start_time'] }}
+            {% else %}
+                The CTF is coming soon!
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
 
 {% endblock %}

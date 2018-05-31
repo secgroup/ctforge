@@ -55,7 +55,9 @@
                     {% if config.ATTACKDEFENSE_ACTIVE %}
                     <li class="nav-item {% if request.path == url_for('scoreboard') %}active{% endif %}"><a class="nav-link" href="{{ url_for('scoreboard') }}">CTF Scoreboard</a></li>
                     {% endif %}
+                    {% if config.ATTACKDEFENSE_ACTIVE %}
                     <li class="nav-item {% if request.path == url_for('design') %}active{% endif %}"><a class="nav-link" href="{{ url_for('design') }}">CTF Design</a></li>
+                    {% endif %}
                     {% if config.ATTACKDEFENSE_ACTIVE %}
                     <li class="nav-item {% if request.path == url_for('teams') %}active{% endif %}"><a class="nav-link" href="{{ url_for('teams') }}">Teams</a></li>
                     {% endif %}

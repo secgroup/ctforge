@@ -328,7 +328,7 @@ def get_jeopardy_settings():
 
     if jeopardy['time_enabled']:
         now = datetime.now()
-        jeopardy['ctf_running'] = now <= jeopardy['end_time']
+        jeopardy['ctf_running'] = jeopardy['start_time'] <= now <= jeopardy['end_time']
 
     return jeopardy
 
@@ -652,9 +652,16 @@ def challenges_scoreboard():
                              if v['affiliation'] ]
         return (challenges, affiliations)
 
+    jeopardy = get_jeopardy_settings()
+    if jeopardy['time_enabled']:
+        now = datetime.now()
+        jeopardy['ctf_ended'] = now >= jeopardy['end_time']
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M %m/%d/%Y")
+
     challenges, affiliations = challenge_list()
     return render_template('challenges_scoreboard.html',
-                           challenges=challenges, affiliations=affiliations)
+                           challenges=challenges, affiliations=affiliations,
+                           settings=jeopardy)
 
 @app.route('/challenges')
 @login_required
@@ -696,6 +703,13 @@ def challenges():
 @app.route('/scoreboard_jeopardy')
 @cache.cached(timeout=5)
 def _challenges():
+
+    # if the ctf is not running return the empty object
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+    if not jeopardy['ctf_running'] and (jeopardy['time_enabled'] and now < jeopardy['end_time']):
+        return jsonify([])
+
     db_conn = get_db_connection()
     cur = db_conn.cursor()
     # get the challenges
