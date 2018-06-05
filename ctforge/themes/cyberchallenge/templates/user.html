@@ -5,23 +5,28 @@
 <h1>User Profile</h1>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <table class="table">
             <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
             <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
             <tr><td>Affiliation:</td><td>{{ user.affiliation }}</td></tr>
         </table>
     </div>
-    <div class="col-md-6">
-        <h2>VPN Configuration</h2>
-        <p><a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %}"
-              download="{{ user.nickname }}.ovpn"
-              {% if vpn_encoded %}
-              href="data:application/octet-stream;base64,{{ vpn_encoded }}"
-              {% endif %}>
+    <div class="col-md-4">
+        <a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %}"
+           download="{{ user.nickname }}.ovpn"
+           {% if vpn_encoded %}
+           href="data:application/octet-stream;base64,{{ vpn_encoded }}"
+           {% endif %}>
             <i class="fa fa-download"></i>
             {{ user.nickname }}.ovpn
-        </a></p>
+        </a>
+        <a class="btn btn-dark d-block mt-3 mb-3"
+           target="_blank"
+           href="https://join.slack.com/t/cyberchallengeit-ctf/shared_invite/enQtMzc2MDMxNDc4OTYyLWUzOTdkMzIwMWYxMmFmMzJmMTllYjYwZDRmYWNhMTE5NWM4ZDdiYzU2OTJjNzE1MTQ0ZDU2NTg4OTcwMjcxYjY">
+            <i class="fa fa-slack"></i>
+            Join on Slack
+        </a>
     </div>
 </div>
 <div class="row">
