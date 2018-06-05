@@ -40,7 +40,13 @@ table {
 }
 
 .jumbotron {
-    background-color: rgba(238, 232, 213, 0.125);
+    background: transparent url("/static/img/cyberchallenge_logo_front.png") no-repeat top center;
+    background-size: contain;
+    height: 400px;
+}
+
+.lead strong {
+    font-weight: 700;
 }
 
 .form-signin {

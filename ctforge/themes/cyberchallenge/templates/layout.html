@@ -43,7 +43,7 @@
                 <ul class="navbar-nav mr-auto">
                     {% if config.JEOPARDY_ACTIVE %}
                     <li class="nav-item {% if request.path == url_for('challenges_scoreboard') %}active{% endif %}">
-                        <a class="nav-link" href="{{ url_for('challenges_scoreboard') }}">Challenges Scoreboard</a></li>
+                        <a class="nav-link" href="{{ url_for('challenges_scoreboard') }}">Scoreboard</a></li>
                     {% endif %}
                     {% if config.JEOPARDY_ACTIVE and current_user.is_authenticated %}
                     <li class="nav-item {% if request.path == url_for('challenges') %}active{% endif %}"><a class="nav-link" href="{{ url_for('challenges') }}">Challenges</a></li>
@@ -95,7 +95,7 @@
             {% block footer %}
             <hr>
             <footer>
-                <p class="muted credit">A <a href="https://secgroup.github.io/">c00kies@venice</a> production | Join us on <a href="https://seclabunive.slack.com/messages">Slack</a></p>
+                <p class="muted credit">A <a href="https://secgroup.github.io/">c00kies@venice</a> and <a href="https://www.consorzio-cini.it/">CINI</a> production | Join us on <a href="https://cyberchallengeit-ctf.slack.com/">Slack</a></p>
             </footer><!-- /footer -->
             {% endblock %}
         </div> <!-- /container -->

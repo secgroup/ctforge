@@ -2,16 +2,33 @@
 {% block title %}CTF Design{% endblock %}
 {% block content %}
 
-<h1>Jeopardy CTF Rules</h1>
+<h1>CTF Rules</h1>
+<p>The CCIT CTF '18 is a security competition for students who attended the CyberChallenge.IT training in one of the 8 universities involved in the project. This year the CTF is organized by the <a href="https://secgroup.github.io">c00kies@venice</a> hacking team under the direction of the <a href="https://cyberchallenge.it">CyberChallenge.IT</a> committee.</p>
 
-<div class="row featurette">
-    <div class="col-md-8">
-        <h2 class="featurette-heading">Infrastructure. <span class="text-muted">How things work.</span></h2>
-<p>// TODO</p>
-    </div>
-    <div class="col-md-4">
-        <img width="250" class="featurette-image img-responsive" src="{{ url_for('static', filename='img/cog.png') }}" alt="Cog">
-    </div>
-</div>
+<h2>Schedule</h2>
+<p>The contest is expected to take place on Jun 7 and last for 7 hours, from 10:00am to 5:00pm (Italian local time). Access to the laboratory of your university should be granted from 9:00am. Once the competition is finished, you can still try to complete challenges and submit flags, but you won't get new points.</p>
+
+<h2>Scoring</h2>
+<p>Each challenge is worth a certain amount of points in the range <code>0-500</code> according to the expected difficulty. You can start from your favourite problems according to the topic(s) listed in the challenge boxes. All the challenges are available from the beginning of the competition, so plan your work wisely to exploit most of them and rule the scoreboard! If multiple users obtain the same score, they will be sorted according to the timestamp of the last submission: the first user reaching that score will be on top among the others. No bonus points are given for first bloods.</p>
+
+<h3>Flags</h3>
+<p>The aim of each challenge is to get a string (called flag) that proves a successful exploitation. Unless otherwise noted in the challenge description, all flags will be in the format <code>ccit{...}</code>. You must submit the whole string, including <code>ccit</code> and curly brackets.</p>
+
+<h3>Technical and Human Beahviour</h3>
+<p>We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:</p>
+<ul>
+    <li>No attacks against the infrastructure (this website and challenges) including denial-of-service (DOS), floods, DNS poisoning, ARP spoofing, MITM, etc...</li>
+    <li>Vulnerability/network scanners are useless for these challenges and not allowed. Do something better.</li>
+    <li>If you find a way to hack into a service/challenge more easily than intended, please report it to the organizers.</li>
+    <li>Sharing flags, exploits or hints is severely prohibited and will grant you the exclusion from the competition.</li>
+</ul>
+<p>Before attempting to break one of the aforementioned rules, remember that all the traffic generated within the VPN network is logged.</p>
+<p>Rules anyway may change as more issues are raised by the participants. Also, the organizers keep the right to change them at any time. Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask to us on slack.</p>
+
+<h3>Communication</h3>
+<p>We invite everyone attending the contest to join us on slack. The invitation link to the organization will be provided in your profile page! Challenge hints, if any, will be announced there.</p>
+
+<h3>And remember to...</h3>
+<p>...have fun and hack all the things!!!!!11</p>
 
 {% endblock %}
