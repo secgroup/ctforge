@@ -31,7 +31,7 @@
          {% for chal in challenges %}
          {
              "name": "{{ chal.name }}",
-             "title": "<span title=\"{{ chal.points }} points\" class=\"chall-header {% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
+             "title": "<span title=\"{{ chal.name }}: {{ chal.points }} points\" class=\"chall-header {% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
              "classes": "text-center",
              "type": "html"
          },
