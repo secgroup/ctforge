@@ -89,7 +89,7 @@
             </div>
         </nav>
         {% endblock %}
-        <div id="content" class="container">
+        <div id="content" class="{% block container_fluid %}{% endblock %}{% if not self.container_fluid() %}container{% endif %}">
             {% block content %}
             {% endblock %}
             {% block footer %}
