@@ -26,8 +26,24 @@
         </div>
     </div>
 
+    <style>
+     /* Add a counter to every td.counter in tbody */
+     table tbody {
+        counter-reset: rowNumber;
+     }
+
+     table tr {
+         counter-increment: rowNumber;
+     }
+
+     table tr td.counter::before {
+         content: counter(rowNumber);
+     }
+    </style>
+
     <script>
      var columns = [
+         {"name": "position", "title": "#", "classes": "text-left counter"},
          {"name": "user", "title": "User", "classes": "text-left"},
          {"name": "affiliation", "title": "Affiliation", "classes": "text-left"},
          {% for chal in challenges %}
@@ -38,7 +54,8 @@
              "type": "html"
          },
          {% endfor %}
-         {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
+         {"name": "points", "title": "Total", "classes": "text-right", "type": "number"},
+         {"name": "index", "type": "number", "sorted": true, "direction": "DESC", "visible": false}
      ];
 
      function escapeHTML (string) {
@@ -98,51 +115,51 @@
 
      FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
          construct: function(instance){
-         this._super(instance);
-         this.statuses = {{ affiliations|safe }};
-         this.def = 'Global';
-         this.$status = null;
+             this._super(instance);
+             this.statuses = {{ affiliations|safe }};
+             this.def = 'Global';
+             this.$status = null;
          },
          $create: function(){
-         this._super();
+             this._super();
              this.$form.empty();
              this.$form.addClass('float-right');
-         var self = this,
+             var self = this,
                  $form_grp = $('<div/>', {'class': 'form-group'})
-             .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
-             .prependTo(self.$form);
+                     .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
+                     .prependTo(self.$form);
 
-         self.$status = $('<select/>', { 'class': 'form-control' })
-             .on('change', {self: self}, self._onStatusDropdownChanged)
-             .append($('<option/>', {text: self.def}))
-             .appendTo($form_grp);
+             self.$status = $('<select/>', { 'class': 'form-control' })
+                 .on('change', {self: self}, self._onStatusDropdownChanged)
+                 .append($('<option/>', {text: self.def}))
+                 .appendTo($form_grp);
 
-         $.each(self.statuses, function(i, status){
-             self.$status.append($('<option/>').text(status));
-         });
+             $.each(self.statuses, function(i, status){
+                 self.$status.append($('<option/>').text(status));
+             });
          },
          _onStatusDropdownChanged: function(e){
-         var self = e.data.self,
-             selected = $(this).val();
-         if (selected !== self.def){
-             self.addFilter('affiliation', selected, ['affiliation']);
+             var self = e.data.self,
+                 selected = $(this).val();
+             if (selected !== self.def){
+                 self.addFilter('affiliation', selected, ['affiliation']);
                  data_filter = filter_affiliation(selected)
                  updateCharts(last_data);
-         } else {
-             self.removeFilter('affiliation');
+             } else {
+                 self.removeFilter('affiliation');
                  data_filter = null;
                  updateCharts(last_data);
-         }
-         self.filter();
+             }
+             self.filter();
          },
          draw: function(){
-         this._super();
-         var status = this.find('affiliation');
-         if (status instanceof FooTable.Filter){
-             this.$status.val(status.query.val());
-         } else {
-             this.$status.val(this.def);
-         }
+             this._super();
+             var status = this.find('affiliation');
+             if (status instanceof FooTable.Filter){
+                 this.$status.val(status.query.val());
+             } else {
+                 this.$status.val(this.def);
+             }
          }
      });
 

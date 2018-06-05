@@ -787,6 +787,10 @@ def _challenges():
 
     scoreboard.sort(key=sorting_key, reverse=True)
 
+    # add an index to the scoreboard row to preserve sorting
+    for i, elm in enumerate(scoreboard):
+        elm['index'] = i
+
     return jsonify(scoreboard)
 
 
