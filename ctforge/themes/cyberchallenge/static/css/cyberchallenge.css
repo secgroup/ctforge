@@ -214,3 +214,12 @@ table.scoreboard span.alert-danger {
 .carousel-caption {
     position: initial !important;
 }
+
+span.chall-header {
+    display:inline-block;
+    max-width:80px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    vertical-align: bottom;
+}
