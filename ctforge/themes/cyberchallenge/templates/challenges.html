@@ -11,9 +11,12 @@
 <div class="card">
     {% if settings['ctf_running'] %}
         {% if settings['time_enabled'] %}
-        <div  class="card-body mx-auto h3">
-            <small>ETA</small>&nbsp;
-            <span id="countdown">00:00:00</span>
+        <div  class="card-body h3">
+            <i class="fa fa-clock-o"></i>
+            <div class="float-right">
+                TIME LEFT &nbsp;
+                <span id="countdown">00:00:00</span>
+            </div>
         </div>
         <script>
          $(document).ready(function () {
@@ -37,7 +40,7 @@
         </script>
         {% endif %}
     {% else %}
-        <div class="card-body mx-auto h5">
+        <div class="card-body text-center mx-auto h5">
         {% if settings['time_enabled'] %}
             {% if settings['ctf_ended'] %}
               The CTF is over! <br>
