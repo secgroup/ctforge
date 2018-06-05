@@ -660,7 +660,7 @@ def challenges_scoreboard():
     if jeopardy['time_enabled']:
         now = datetime.now()
         jeopardy['ctf_ended'] = now >= jeopardy['end_time']
-        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M %m/%d/%Y")
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %m/%d/%Y")
 
     challenges, affiliations = challenge_list()
     return render_template('challenges_scoreboard.html',
@@ -698,7 +698,7 @@ def challenges():
     if jeopardy['time_enabled']:
         jeopardy['ctf_ended'] = now >= jeopardy['end_time']
         jeopardy['seconds_left'] = int((jeopardy['end_time'] - now).total_seconds())
-        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M %m/%d/%Y")
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %m/%d/%Y")
 
     return render_template('challenges.html', challenges=challenges,
                            settings=jeopardy)
@@ -796,6 +796,11 @@ def _challenges():
 def challenge(name):
     """Display information about a challenge plus the flag submission form and the writeup."""
 
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+    if not jeopardy['ctf_running'] and now < jeopardy['end_time']:
+        return abort(404)
+
     db_conn = db_connect()
     cur = db_conn.cursor()
 
@@ -838,7 +843,6 @@ def challenge(name):
         # process the two mutually exclusive forms
         writeup_data = request.form.get('writeup')
         flag = request.form.get('flag')
-        jeopardy = get_jeopardy_settings()
 
         if writeup_data is not None:
             # only allow writeup submission if writeup support is enabled for this chal
@@ -874,7 +878,6 @@ def challenge(name):
                 # if the ctf is over the flags are validated but the db is not updated
                 if not jeopardy['ctf_running']:
                     if jeopardy['time_enabled']:
-                        now = datetime.now()
                         if now >= jeopardy['end_time'] and flag == challenge['flag']:
                             flash('Flag accepted! (No points)', 'success')
                         else:

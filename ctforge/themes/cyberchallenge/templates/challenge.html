@@ -2,10 +2,12 @@
 {% block title %}{{ challenge.name }}{% endblock %}
 {% block content %}
 
-<h2>{{ challenge.name }} <span class="text-muted">({{ challenge.points }} points)
+<h2>{{ challenge.name }}
+    <span class="text-muted">({{ challenge.points }} points)</span>
 {% if solved %}
     <span class="fa fa-check alert-info" aria-hidden="true" style="background: none"></span>
 {% endif %}
+    <span class="small float-right">{{ challenge.tags }}</span>
 </h2>
 
 <div class="card">
