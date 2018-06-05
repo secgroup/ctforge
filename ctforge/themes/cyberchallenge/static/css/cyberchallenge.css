@@ -184,8 +184,6 @@ table.scoreboard span.alert-danger {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
-    height: 27px;
-    line-height: 25px;
     text-align: center;
     margin-top: 10px;
 }
