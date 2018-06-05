@@ -14,9 +14,11 @@
     </div>
     <div class="col-md-6">
         <h2>VPN Configuration</h2>
-        <p><a class="btn btn-dark d-block" target="_blank"
+        <p><a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %}"
               download="{{ user.nickname }}.ovpn"
-              href="data:application/octet-stream;base64,{{ vpn_encoded }}">
+              {% if vpn_encoded %}
+              href="data:application/octet-stream;base64,{{ vpn_encoded }}"
+              {% endif %}>
             <i class="fa fa-download"></i>
             {{ user.nickname }}.ovpn
         </a></p>
