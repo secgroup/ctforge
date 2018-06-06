@@ -29,7 +29,7 @@
     <style>
      /* Add a counter to every td.counter in tbody */
      table tbody {
-        counter-reset: rowNumber;
+         counter-reset: rowNumber;
      }
 
      table tr {
@@ -40,6 +40,13 @@
          content: counter(rowNumber);
      }
 
+     .table td:first-child, .table th:first-child {
+         padding-left: 0.75rem;
+     }
+     /* last is not visible */
+     .table td:nth-last-child(2), .table th:nth-last-child(2) {
+         padding-right: 0.75rem;
+     }
      .table td, .table th {
          padding-left: 0.40rem;
          padding-right: 0.40rem;

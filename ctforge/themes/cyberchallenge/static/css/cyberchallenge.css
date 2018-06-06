@@ -42,7 +42,7 @@ table {
 .jumbotron {
     background: transparent url("/static/img/cyberchallenge_logo_front.png") no-repeat top center;
     background-size: contain;
-    height: 400px;
+    height: 350px;
 }
 
 .lead strong {
