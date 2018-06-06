@@ -302,7 +302,7 @@ def edit_service(id):
                                    action='edit')
     return redirect(url_for('admin', tab='services'))
 
-@cache.memoize(timeout=1)
+@cache.memoize(timeout=20)
 def get_jeopardy_settings():
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
