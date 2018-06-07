@@ -129,7 +129,7 @@ def imp(args):
         print('Done!')
 
 def imp_chal(chal_info_file, public_folder):
-    chal_info = json.loads(re.sub("//.*\n", "",chal_info_file.read()))
+    chal_info = json.loads(chal_info_file.read())
     print('Importing challenge `{}`...'.format(chal_info['title']))
     db_conn = db_connect()
     db_conn.autocommit = True

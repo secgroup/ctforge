@@ -660,7 +660,7 @@ def challenges_scoreboard():
     if jeopardy['time_enabled']:
         now = datetime.now()
         jeopardy['ctf_ended'] = now >= jeopardy['end_time']
-        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %m/%d/%Y")
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
 
     challenges, affiliations = challenge_list()
     return render_template('challenges_scoreboard.html',
@@ -698,7 +698,7 @@ def challenges():
     if jeopardy['time_enabled']:
         jeopardy['ctf_ended'] = now >= jeopardy['end_time']
         jeopardy['seconds_left'] = int((jeopardy['end_time'] - now).total_seconds())
-        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %m/%d/%Y")
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
 
     return render_template('challenges.html', challenges=challenges,
                            settings=jeopardy)
