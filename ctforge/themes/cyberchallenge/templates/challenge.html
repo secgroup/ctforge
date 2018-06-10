@@ -17,7 +17,24 @@
 </div>
 
 {% if challenge.active %}
-    {% if challenge.writeup and solved %}
+    {% if not solved %}
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+            <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
+                {{ flag_form.hidden_tag() }}
+                <div class="form-group">
+                    {{ flag_form.flag.label(class="sr-only") }}
+                    {{ flag_form.flag(placeholder="Flag", class="form-control", required=True) }}
+                </div>
+                <button class="btn btn-dark" type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="col-md-2"></div>
+    </div>
+    {% endif %}
+
+    {% if challenge.writeup %}
             <hr>
         {% if writeups %}
             <div class="row">
@@ -58,22 +75,6 @@
                 </div>
             </div>
         {% endif %}
-    {% endif %}
-    {% if not solved %}
-    <div class="row">
-        <div class="col-md-2"></div>
-        <div class="col-md-8">
-            <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
-                {{ flag_form.hidden_tag() }}
-                <div class="form-group">
-                    {{ flag_form.flag.label(class="sr-only") }}
-                    {{ flag_form.flag(placeholder="Flag", class="form-control", required=True) }}
-                </div>
-                <button class="btn btn-dark" type="submit">Submit</button>
-            </form>
-        </div>
-        <div class="col-md-2"></div>
-    </div>
     {% endif %}
 {% else %}
     <div class="row">
