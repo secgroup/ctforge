@@ -49,7 +49,7 @@
     {{ tabify(challenges, ['id', 'name', 'points', 'active', 'hidden', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active show' if tab == 'challenges') }}
 
 
-    {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
+    {% set ce_keys = ['mail', 'name', 'surname', 'nickname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
     <div role="tabpanel" class="tab-pane fade {{ 'active show' if tab == 'evaluations' }} mt-4" id="evaluations">
         <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
             <thead>

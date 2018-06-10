@@ -131,7 +131,7 @@ def admin(tab='users'):
         # get the challenge writeups
         cur.execute((
             'SELECT W.id AS id, C.id AS challenge_id, U.id AS user_id, U.mail AS mail, '
-            '       U.name AS name, U.surname AS surname, C.name AS challenge, '
+            '       U.name AS name, U.surname AS surname, U.nickname AS nickname, C.name AS challenge, '
             '       W.timestamp AS timestamp, E.feedback IS NOT NULL AS feedback, '
             '       E.grade AS grade, W.timestamp > E.timestamp AS updated '
             'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
@@ -432,7 +432,7 @@ def edit_evaluation(challenge_id, user_id):
     db_conn = db_connect()
     with db_conn.cursor() as cur:
         cur.execute((
-            'SELECT U.mail AS mail, U.name, U.surname, C.name AS challenge, '
+            'SELECT U.mail AS mail, U.name, U.surname, U.nickname, C.name AS challenge, '
             '       W.timestamp AS timestamp, W.writeup AS writeup, E.grade, E.feedback '
             'FROM writeups AS W '
             'JOIN challenges AS C ON W.challenge_id = C.id '

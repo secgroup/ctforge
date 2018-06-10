@@ -39,6 +39,7 @@ class AdminWriteupForm(FlaskForm):
     mail = StringField('mail', render_kw={'disabled': True})
     name = StringField('name', render_kw={'disabled': True})
     surname = StringField('surname', render_kw={'disabled': True})
+    nickname = StringField('nickname', render_kw={'disabled': True})
     challenge = StringField('challenge', render_kw={'disabled': True})
     timestamp = StringField('timestamp', render_kw={'disabled': True})
     writeup = TextAreaField('writeup', render_kw={'disabled': True})
