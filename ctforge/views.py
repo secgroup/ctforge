@@ -988,7 +988,7 @@ def teams():
         cur.execute('SELECT id, name FROM teams ORDER BY id')
         teams = cur.fetchall()
         # get users
-        cur.execute(('SELECT id, team_id, name, surname '
+        cur.execute(('SELECT id, team_id, name, surname, nickname '
                      'FROM users ORDER BY id'))
         users = cur.fetchall()
     return render_template('teams.html', teams=teams, users=users)

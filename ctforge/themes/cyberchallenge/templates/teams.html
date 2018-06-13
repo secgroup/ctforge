@@ -5,23 +5,29 @@
 <h1>Teams</h1>
 
 <div class="row">
-    <div class="col-md-12">
     {% for team in teams %}
-        <div class="col-md-4">
-            <h2 class="text-center">{{ team.name }} (team{{ team.id }})</h2>
-            <table class="table" id="team-{{ team.id }}">
-                <thead><tr><td>Name</td><td>Surname</td></tr></thead>
-                <tbody>
-            {% for user in users %}
-                {% if team.id == user.team_id %}
-                    <tr id="user-{{ user.id }}"><td>{{ user.name }}</td><td>{{ user.surname }}</td></tr>
+    <div class="col-md-4">
+        <h2 class="text-center">{{ team.name }} (team{{ team.id }})</h2>
+        <table class="table" id="team-{{ team.id }}">
+            <thead><tr>
+                {% if config.SHOW_NAMES %}
+                <td>Name</td><td>Surname</td>
                 {% endif %}
-            {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% endfor %}
+                <td>Nickname</td></tr></thead>
+            <tbody>
+              {% for user in users %}
+                {% if team.id == user.team_id %}
+                <tr id="user-{{ user.id }}">
+                    {% if config.SHOW_NAMES %}
+                    <td>{{ user.name }}</td><td>{{ user.surname }}</td>
+                    {% endif %}
+                    <td>{{ user.nickname }}</td></tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% endfor %}
 </div>
 
 {% endblock %}
