@@ -44,7 +44,7 @@
      {% for s in services %}
      {
          "name": "{{ s.name }}",
-         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-lg btn-default {% if not s.active %}inactive{% endif %}\" role=\"button\">{{ s.name }}</a>",
+         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}inactive{% endif %}\" role=\"button\">{{ s.name }}</a>",
          "classes": "text-center",
          "type": "html"
      },
@@ -62,23 +62,23 @@
 
      if (s.integrity) {
          integrity_check = s.integrity.status ?
-                           $("<span class='label label-info'>UP</span>") :
-                           $("<span class='label label-danger'>CORRUPTED</span>");
+                           $("<span class='badge badge-info'>UP</span>") :
+                           $("<span class='badge badge-danger'>CORRUPTED</span>");
          integrity_check.attr("title", "last checked at " + s.integrity.timestamp);
      } else {
-         integrity_check = $("<span class=\"label label-warning\">NOT CHECKED</span>");
+         integrity_check = $("<span class=\"badge badge-warning\">NOT CHECKED</span>");
      }
 
      return $("<td>").append([
          $("<div>").append(integrity_check),
          $("<div title='attack' style='margin-top: 5px'>").append([
-             $("<span class='fa fa-fire' title='attack'>"), formatNumber(s.attack)]
+             $("<span class='fa fa-lg fa-fire' title='attack'>"), formatNumber(s.attack)]
          ),
          $("<div title='defense'>").append([
-             $("<span class='fa fa-shield-alt' title='defense'>"), formatNumber(s.defense)
+             $("<span class='fa fa-lg fa-shield' title='defense'>"), formatNumber(s.defense)
          ]),
          $("<div title='SLA'>").append([
-             $("<span class='fa fa-wrench' title='SLA'>"), formatNumber(s.sla)
+             $("<span class='fa fa-lg fa-wrench' title='SLA'>"), formatNumber(s.sla)
          ])
      ]);
  }
@@ -86,16 +86,16 @@
  function renderScore(t) {
      return $("<td>").append([
          $("<div title='global score'>").append([
-             $("<span class='fa fa-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score))
+             $("<span class='fa fa-lg fa-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score))
          ]),
          $("<div title='attack'>").append([
-             $("<span class='fa fa-fire' title='attack'>"), formatNumber(t.attack)]
+             $("<span class='fa fa-lg fa-fire' title='attack'>"), formatNumber(t.attack)]
          ),
          $("<div title='defense'>").append([
-             $("<span class='fa fa-shield-alt' title='defense'>"), formatNumber(t.defense)
+             $("<span class='fa fa-lg fa-shield' title='defense'>"), formatNumber(t.defense)
          ]),
          $("<div title='SLA'>").append([
-             $("<span class='fa fa-wrench' title='SLA'>"), formatNumber(t.sla)
+             $("<span class='fa fa-lg fa-wrench' title='SLA'>"), formatNumber(t.sla)
          ])
      ]);
  }
@@ -116,7 +116,11 @@
              }
 
              var rows = data.scores.map(function (t) {
-                 var row = {team: t.name, score: renderScore(t)};
+                 var row = {
+                     team: $("<td>").addClass("align-middle p-3 pl-5")
+                                     .append($("<div>").text(t.name))
+                                     .append($("<small>").text(t.ip)),
+                     score: renderScore(t)};
                  Object.keys(t.services).forEach(function (s) {
                      row[s] = renderService(t.services[s]);
                  });

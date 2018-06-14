@@ -106,6 +106,28 @@ def logout():
     flash('Logged out!', 'success')
     return redirect(url_for('index'))
 
+@app.route('/api/flag_id')
+@app.route('/api/flag_id/<service>')
+@cache.cached(timeout=app.config['ROUND_DURATION'] / 2)
+def flag_id(service=None):
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute(
+            'SELECT S.name as sname, T.name as tname, F.flag_id as flag_id '
+            'FROM  teams T, services S, flags F '
+            'WHERE S.flag_id AND T.id = F.team_id AND '
+            'get_current_round() - F.round <= S.flag_lifespan - 1 '
+            'ORDER BY S.name, T.name, F.round DESC'
+        )
+        flag_ids = cur.fetchall()
+
+    data = defaultdict(dict)
+    for row in flag_ids:
+        if (service and row['sname'] == service) or not service:
+            data[row['sname']][row['tname']] = row['flag_id']
+
+    return jsonify(data)
+
 @app.route('/admin')
 @app.route('/admin/<tab>')
 @admin_required
@@ -267,9 +289,10 @@ def add_service():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO services (name, description, active, flag_lifespan) '
-                'VALUES (%s, %s, %s, %s)'),
-                (form.name.data, form.description.data, form.active.data, form.flag_lifespan.data))
+                'INSERT INTO services (name, description, active, flag_lifespan,flag_id) '
+                'VALUES (%s, %s, %s, %s, %s)'),
+                (form.name.data, form.description.data, form.active.data,
+                 form.flag_lifespan.data, form.flag_id.data))
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='services'))
@@ -284,9 +307,11 @@ def edit_service(id):
         form = ctforge.forms.ServiceForm()
         if form.validate_on_submit():
             query_handler((
-                'UPDATE services SET name = %s, description = %s, active = %s, flag_lifespan = %s '
+                'UPDATE services SET name = %s, description = %s, '
+                'active = %s, flag_lifespan = %s, flag_id = %s '
                 'WHERE id = %s'),
-                (form.name.data, form.description.data, form.active.data, form.flag_lifespan.data, id))
+                (form.name.data, form.description.data, form.active.data,
+                 form.flag_lifespan.data, form.flag_id.data, id))
         else:
             flash_errors(form)
     else:
@@ -1025,9 +1050,9 @@ def scoreboard():
     return render_template('scoreboard.html', rnd=rnd, rnd_duration=app.config['ROUND_DURATION'],
                            time_left=seconds_left, services=services)
 
-#@cache.cached(timeout=60)
 @app.route('/ctf_scoreboard')
 @attackdefense_mode_required
+@cache.cached(timeout=2)
 def _scoreboard(rnd=None):
     db_conn = get_db_connection()
     rnd, seconds_left = round_info(db_conn)
@@ -1035,10 +1060,12 @@ def _scoreboard(rnd=None):
     with db_conn.cursor() as cur:
 
         scores = defaultdict(dict)
+        ips = {}
 
         # get the scores of each team on each service
         cur.execute((
-            'SELECT T.name AS team_name, SR.name AS service_name, SC.attack, SC.defense, SC.sla '
+            'SELECT T.name AS team_name, T.ip as team_ip, '
+            'SR.name AS service_name, SC.attack, SC.defense, SC.sla '
             'FROM scores AS SC '
             'JOIN services AS SR ON SC.service_id = SR.id '
             'JOIN teams AS T ON T.id = SC.team_id '
@@ -1046,12 +1073,14 @@ def _scoreboard(rnd=None):
 
         for score in cur:
             team = score['team_name']
+            ip = score['team_ip']
             service = score['service_name']
             scores[team][service] = {
                 'attack': score['attack'],
                 'defense': score['defense'],
                 'sla': score['sla']
             }
+            ips[team] = ip
 
         # get the status of each service
         cur.execute((
@@ -1075,6 +1104,7 @@ def _scoreboard(rnd=None):
     for name, services in scores.items():
         entry = {
             'name': name,
+            'ip': ips[name],
             'services': services,
             'attack': sum(s['attack'] for s in services.values()),
             'defense': sum(s['defense'] for s in services.values()),

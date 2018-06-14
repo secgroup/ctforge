@@ -227,3 +227,11 @@ span.chall-header {
     white-space:nowrap;
     vertical-align: bottom;
 }
+
+table.scoreboard thead th {
+    vertical-align: middle;
+}
+
+table.scoreboard .badge {
+    padding: 10px;
+}

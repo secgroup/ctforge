@@ -91,15 +91,17 @@ CREATE TABLE services (
     description   TEXT NOT NULL,
     active        BOOLEAN NOT NULL DEFAULT FALSE,
     flag_lifespan INT NOT NULL DEFAULT 1,
+    flag_id       BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id),
     UNIQUE (name)
 );
 
 CREATE TABLE flags (
-    flag          VARCHAR(30) NOT NULL,
+    flag          VARCHAR(40) NOT NULL,
     team_id       INT NOT NULL,
     service_id    INT NOT NULL,
     round         INT NOT NULL,
+    flag_id       TEXT,
     PRIMARY KEY (flag),
     FOREIGN KEY (team_id) REFERENCES teams (id),
     FOREIGN KEY (service_id) REFERENCES services (id),

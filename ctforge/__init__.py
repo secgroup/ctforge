@@ -26,6 +26,8 @@ try:
     config_file = user_config_file if os.path.isfile(user_config_file) else 'ctforge.conf'
     config = utils.parse_conf(config_file)
 except Exception:
+    import traceback
+    traceback.print_exc()
     pass
 
 app = Flask(__name__, static_folder=config['STATIC_FOLDER'], 

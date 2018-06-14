@@ -8,6 +8,11 @@
 <p class="lead">Service deactivated</p>
 {% endif %}
 
-{{ service.description|safe }}
+<div class="card">
+    <div class="card-body">
+        {{ service.description|safe }}
+    </div>
+</div>
+
 
 {% endblock %}
