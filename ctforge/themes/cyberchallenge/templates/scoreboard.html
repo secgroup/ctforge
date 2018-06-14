@@ -20,26 +20,32 @@
         <table class="table scoreboard"></table>
     </div>
 </div>
-<!--
-<div class="row">
-    <div class="col-md-6">
-        <div id="attack_scores" style="height:400px;"></div>
-    </div>
-    <div class="col-md-6">
-        <div id="defense_scores" style="height:400px;"></div>
-    </div>
-</div>
 <div class="row">
     <div class="col-md-12">
-        <div id="total_scores" style="height:600px;"></div>
+        <div id="global_score" class="chart"></div>
     </div>
 </div>
--->
 
 {% if rnd > 0 %}
 
+<style>
+ /* Add a counter to every td.counter in tbody */
+ table.scoreboard tbody {
+     counter-reset: rowNumber;
+ }
+
+ table.scoreboard tr {
+     counter-increment: rowNumber;
+ }
+
+ table.scoreboard tr td.counter::before {
+     content: counter(rowNumber);
+ }
+</style>
+
 <script>
  var columns = [
+     {"name": "position", "title":"#", "classes":"align-middle counter pl-4"},
      {"name": "team", "title": "Team", "classes": "text-left"},
      {% for s in services %}
      {
@@ -117,9 +123,10 @@
 
              var rows = data.scores.map(function (t) {
                  var row = {
-                     team: $("<td>").addClass("align-middle p-3 pl-5")
-                                     .append($("<div>").text(t.name))
-                                     .append($("<small>").text(t.ip)),
+                     team: $("<td>")
+                         .addClass("align-middle")
+                         .append($("<div>").addClass("font-weight-bold").text(t.name))
+                         .append($("<small>").text(t.ip)),
                      score: renderScore(t)};
                  Object.keys(t.services).forEach(function (s) {
                      row[s] = renderService(t.services[s]);
@@ -152,6 +159,12 @@
      }, 1000);
  });
 </script>
+
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/ad_charts.js') }}"></script>
 
 {% endif %}
 

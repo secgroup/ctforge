@@ -1044,7 +1044,7 @@ def scoreboard():
 
     # get the list of services
     with db_conn.cursor() as cur:
-        cur.execute('SELECT id, name, active FROM services')
+        cur.execute('SELECT id, name, active FROM services ORDER BY name')
         services = cur.fetchall()
 
     return render_template('scoreboard.html', rnd=rnd, rnd_duration=app.config['ROUND_DURATION'],

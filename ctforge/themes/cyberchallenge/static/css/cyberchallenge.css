@@ -234,4 +234,20 @@ table.scoreboard thead th {
 
 table.scoreboard .badge {
     padding: 10px;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 4px #313131;
+    opacity: 0.8;
+}
+
+table.scoreboard .badge.badge-danger {
+    background: #d9534f;
+}
+
+table.scoreboard .badge.badge-warning {
+    background: #f0ad4e;
+}
+
+table.scoreboard .badge.badge-info {
+    background: #5bc0de;
 }
