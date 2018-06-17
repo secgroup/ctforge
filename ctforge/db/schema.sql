@@ -111,7 +111,7 @@ CREATE TABLE flags (
 CREATE TABLE service_attacks (
     id            SERIAL,
     team_id       INT NOT NULL,
-    flag          VARCHAR(30) NOT NULL,
+    flag          VARCHAR(40) NOT NULL,
     timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE (team_id, flag),

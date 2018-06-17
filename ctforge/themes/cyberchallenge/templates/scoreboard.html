@@ -26,7 +26,7 @@
     </div>
 </div>
 
-{% if rnd > 0 %}
+{% if rnd >= 0 %}
 
 <style>
  /* Add a counter to every td.counter in tbody */
@@ -50,7 +50,7 @@
      {% for s in services %}
      {
          "name": "{{ s.name }}",
-         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}inactive{% endif %}\" role=\"button\">{{ s.name }}</a>",
+         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}disabled{% endif %}\" role=\"button\">{{ s.name }}</a>",
          "classes": "text-center",
          "type": "html"
      },

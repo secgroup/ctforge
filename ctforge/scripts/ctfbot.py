@@ -87,7 +87,7 @@ class Team:
 class Service:
     """Simple class for representing a service entity."""
 
-    def __init__(self, id, name, active, flag_lifespan):
+    def __init__(self, id, name, active, flag_lifespan, flag_id=False):
         # service id
         self.id = id
         # name of the service
@@ -96,6 +96,8 @@ class Service:
         self.active = active
         # how long a flag is valid (number of rounds)
         self.flag_lifespan = flag_lifespan
+        # whether the service supports flag ids
+        self.flag_id = flag_id
 
     def __repr__(self):
         return 'Service: {}, {}, {}'.format(self.id, self.name, self.active)
@@ -105,7 +107,7 @@ class Worker(threading.Thread):
 
     killing_time = threading.Event()
 
-    def __init__(self, n, dispatch, check, timeout=10):
+    def __init__(self, n, flag_id, dispatch, check, timeout=10):
         super(Worker, self).__init__()
         # numeric identifier of the worker
         self.n = n
@@ -116,7 +118,9 @@ class Worker(threading.Thread):
         # active flags for the pair (team, service), sorted by round id
         # in decreasing order (i.e. the first is the most recent)
         self.flags = []
+        self.flag_ids = {}
         # worker modalities
+        self.flag_id = flag_id
         self.dispatch = dispatch
         self.check = check
         # seconds to wait before killing a spawned script
@@ -135,6 +139,11 @@ class Worker(threading.Thread):
             try:
                 self.team, self.service = tasks.get_nowait()
                 # get the active flags for this team/service
+                self._get_flags()
+                # Generate Flag ids
+                if self.flag_id and self.service.flag_id:
+                    self._create_flag_id()
+                # get the updated flags with flag ids
                 self._get_flags()
                 # check whether we need to dispatch the flag or check the service
                 # status and proceed according to the given mode. The program logic
@@ -155,7 +164,7 @@ class Worker(threading.Thread):
         try:
             with db_conn.cursor() as cur:
                 cur.execute((
-                    'SELECT flag FROM flags '
+                    'SELECT flag, flag_id FROM flags '
                     'WHERE team_id = %s AND service_id = %s AND '
                     'get_current_round() - round <= %s - 1 '
                     'ORDER BY round DESC')
@@ -171,14 +180,51 @@ class Worker(threading.Thread):
             abort()
 
         self.flags = [r['flag'] for r in res]
+        self.flag_ids = { r['flag']: r['flag_id'] for r in res }
 
+    def _create_flag_id(self):
+        """Generate the flag id for the current (team, service)"""
+        
+        status, stdout = self._execute(
+            os.path.join(config['FLAGID_SCRIPT_PATH'], self.service.name), self.flags[0],
+            keep_stdout=True)
+        if status != 0:
+            logger.critical(self._logalize(
+                'Error while generating flag id for {}: non-zero exit code!'.format(self.flags[0])))
+            return
+        if not stdout:
+            logger.critical(self._logalize(
+                'Error while generating flag id for {}: stdout is empty!'.format(self.flags[0])))
+            return
+        # stdout is the flag_id
+        stdout = stdout.rstrip(b'\n') # delete trailing new-line
+        try:
+            with db_conn.cursor() as cur:
+                cur.execute((
+                    'UPDATE flags SET flag_id = %s '
+                    'WHERE flag = %s AND team_id = %s AND service_id = %s'
+                    '  AND round = get_current_round()')
+                    , [stdout.decode(), self.flags[0], self.team.id, self.service.id])
+            db_conn.commit()
+        except psycopg2.Error as e:
+            # an error occurred, no recovery possible
+            logger.critical(self._logalize('Unable to insert the flag id: {}'.format(e)))
+        else:
+            # update successful
+            logger.debug(self._logalize('Flag ID added {} -> {}'.format(self.flags[0], repr(stdout))))
+
+        
+        
     def _dispatch_flag(self):
         """Send the flag to a given team for a given service by executing an
         external script. The script is killed if it takes too long to
         complete."""
 
         # execute the script ignoring its return status
-        self._execute(os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name), self.flags[0])
+        flag =  self.flags[0]
+        flag_id = self.flag_ids[flag] if self.service.flag_id else None
+        self._execute(os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name),
+                      flag, flag_id=flag_id)
 
     def _check_service(self):
         """Check if a given service on a given host is working as expected by
@@ -197,7 +243,10 @@ class Worker(threading.Thread):
 
         # execute the script and assume the service status by the return address: run the checker using
         # one of the valid flags (selected randomly)
-        status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name), random.choice(self.flags))
+        flag =  random.choice(self.flags)
+        flag_id = self.flag_ids[flag] if self.service.flag_id else None
+        status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name),
+                               flag, flag_id=flag_id)
         if status == -1 or status > 125:
             # our fault: we don't add anything in the integrity_checks table
             return
@@ -216,18 +265,25 @@ class Worker(threading.Thread):
             # update successful
             logger.debug(self._logalize('Status added as {}'.format(status)))
 
-    def _execute(self, script_name, flag):
+    def _execute(self, script_name, flag, flag_id=None, keep_stdout=False):
         """Execute the provided script killing the process if it timeouts."""
 
         # set status of the service to corrupted by default
         status = 1
-        command = ' '.join([script_name, self.team.ip, flag, str(self.rnd)])
+        # stdout is empty by default
+        stdout = ''
+        command_lst = [script_name, self.team.ip, flag, str(self.rnd)]
+        if flag_id:
+            command_lst.append(flag_id)
+        command = ' '.join(command_lst)
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
-            # ignore stdout and stderr
-            process = subprocess.Popen([script_name, self.team.ip, flag, str(self.rnd)], preexec_fn=os.setsid,
-                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            process.communicate(timeout=self.timeout)
+            # TODO: pass flag id for the services that support it
+            # ignore stdout and stderr if not(keep_stdout)
+            process = subprocess.Popen(command_lst, preexec_fn=os.setsid,
+                                       stdout=subprocess.PIPE if keep_stdout else subprocess.DEVNULL,
+                                       stderr=subprocess.DEVNULL)
+            stdout, _ = process.communicate(timeout=self.timeout)
             status = process.returncode
         except subprocess.TimeoutExpired:
             # the remote VM could be down, this is not a critical error but we
@@ -251,6 +307,9 @@ class Worker(threading.Thread):
             status = -1
             logger.critical(self._logalize('Error while executing {}: {}'.format(command, e)))
 
+        if keep_stdout:
+            return (status, stdout)
+            
         return status
 
     def _get_curr_round(self):
@@ -280,7 +339,7 @@ def get_teams_services():
         try:
             cur.execute('SELECT id, ip, name FROM teams')
             teams = [Team(**t) for t in cur.fetchall()]
-            cur.execute('SELECT id, name, active, flag_lifespan FROM services')
+            cur.execute('SELECT id, name, active, flag_lifespan, flag_id FROM services')
             services = [Service(**s) for s in cur.fetchall() if s['active']]
         except psycopg2.Error as e:
             logger.critical('Error while querying the database, aborting: {}'.format(e))
@@ -394,6 +453,8 @@ def main():
     parser = argparse.ArgumentParser(description='Flag dispatcher and checker')
     parser.add_argument('--advance', action='store_true', default=False,
         help='Advance the current round')
+    parser.add_argument('--gen-flag-ids', dest='flag_id', action='store_true', default=False,
+        help='Generate the flag ids for the current round')
     parser.add_argument('--dispatch', action='store_true', default=False,
         help='Dispatch new flags to all the virtual machines')
     parser.add_argument('--check', action='store_true', default=False,
@@ -405,7 +466,7 @@ def main():
     parser.add_argument('-v', dest='verbose', action='store_true',
         default=False, help='Set logging level to debug')
     args = parser.parse_args()
-    if not any([args.advance, args.dispatch, args.check]):
+    if not any([args.advance, args.flag_id, args.dispatch, args.check]):
         sys.stderr.write('At least one action is required, aborting.\n')
         abort()
 
@@ -436,7 +497,7 @@ def main():
     if args.advance:
         # advance the round
         advance_round(teams, services)
-    if args.check or args.dispatch:
+    if args.flag_id or args.check or args.dispatch:
         # fill the queue of tasks, choosing the team order randomly :)
         for service in services:
             for team in random.sample(teams, len(teams)):
@@ -445,7 +506,7 @@ def main():
         # create the list of workers
         workers = []
         for i in range(n_workers):
-            worker = Worker(i, args.dispatch, args.check, args.timeout)
+            worker = Worker(i, args.flag_id, args.dispatch, args.check, args.timeout)
             workers.append(worker)
             worker.start()
 

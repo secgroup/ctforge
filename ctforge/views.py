@@ -108,23 +108,24 @@ def logout():
 
 @app.route('/api/flag_id')
 @app.route('/api/flag_id/<service>')
-@cache.cached(timeout=app.config['ROUND_DURATION'] / 2)
+@cache.cached(timeout=5)
 def flag_id(service=None):
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
         cur.execute(
-            'SELECT S.name as sname, T.name as tname, F.flag_id as flag_id '
+            'SELECT S.name as sname, T.name as tname, F.flag_id as flag_id, F.round as round '
             'FROM  teams T, services S, flags F '
-            'WHERE S.flag_id AND T.id = F.team_id AND '
+            'WHERE S.flag_id '
+            'AND T.id = F.team_id AND S.id = F.service_id AND '
             'get_current_round() - F.round <= S.flag_lifespan - 1 '
             'ORDER BY S.name, T.name, F.round DESC'
         )
         flag_ids = cur.fetchall()
 
-    data = defaultdict(dict)
+    data = defaultdict(lambda: defaultdict(list))
     for row in flag_ids:
         if (service and row['sname'] == service) or not service:
-            data[row['sname']][row['tname']] = row['flag_id']
+            data[row['sname']][row['tname']].append(row['flag_id'])
 
     return jsonify(data)
 
@@ -547,6 +548,7 @@ def submit():
                     raise ctforge.exceptions.InvalidFlag()
                 if res['expired'] == 1:
                     raise ctforge.exceptions.ExpiredFlag()
+                # TODO: config['ALWAYS_SUBMIT']
                 service_id = res['service_id']
                 # check whether the team's service is well-functioning or not
                 cur.execute(('SELECT successful '
@@ -563,6 +565,7 @@ def submit():
                              [team_id, flag])
                 db_conn.commit()
                 flash('Flag accepted!', 'success')
+                # TODO: own flag
             except psycopg2.IntegrityError:
                 # this exception is raised not only on duplicated entry, but also
                 # when key constraint fails
@@ -598,7 +601,6 @@ def submit():
     return render_template('submit.html', form=form, team_token=team_token)
 
 @app.route('/user')
-@jeopardy_mode_required
 @login_required
 def user():
     """Render a page with information about the user."""
@@ -1119,6 +1121,26 @@ def _scoreboard(rnd=None):
         'seconds_left': seconds_left,
         'scores': board
     })
+
+# Needed for scoreboard graphs (WIP)
+@app.route('/ctf_stats')
+@app.route('/ctf_stats/<int:nrounds>')
+@attackdefense_mode_required
+@cache.cached(timeout=app.config['ROUND_DURATION']/2)
+def _stats(nrounds=None):
+    db_conn = get_db_connection()
+
+    nrounds = nrounds or round_info(db_conn)[0]
+
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT T.name AS team_name, '
+                    'SR.name AS service_name, SC.attack, SC.defense.SC.sla '
+                    'FROM scores AS SC '
+                    'JOIN services AS SR ON SC.service_id = SR.id '
+                    'JOIN teams AS T ON T.id = SC.team_id '
+                    'WHERE SC.round > get_current_round() - %s', [nrounds])
+        # TODO group by team name, for each round and sum service attack,def,sla
+    assert False
 
 @app.route('/credits')
 def credits():

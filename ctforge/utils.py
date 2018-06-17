@@ -45,6 +45,7 @@ def parse_conf(fname):
             LOG_FILE = config.get('website', 'log_file', fallback=None),
             SECRET_KEY = config.get('website', 'secret_key', fallback='ChengeMeWithRandomStuffASAP'),
             BOT_LOG_FILE = config.get('flagbot', 'log_file', fallback=None),
+            FLAGID_SCRIPT_PATH = config.get('flagbot', 'flagid_script_path', fallback='~/.ctforge/bot/flagid/'),
             DISPATCH_SCRIPT_PATH = config.get('flagbot', 'dispatch_script_path', fallback='~/.ctforge/bot/dispatch/'),
             CHECK_SCRIPT_PATH = config.get('flagbot', 'check_script_path', fallback='~/.ctforge/bot/check/')
         )
@@ -52,7 +53,8 @@ def parse_conf(fname):
         sys.stderr.write('Malformed configuration file, aborting: {}\n'.format(e))
         sys.exit(1)
     # expand home
-    for k in ['LOG_FILE', 'BOT_LOG_FILE', 'DISPATCH_SCRIPT_PATH', 'CHECK_SCRIPT_PATH']:
+    for k in ['LOG_FILE', 'BOT_LOG_FILE', 'DISPATCH_SCRIPT_PATH',
+              'CHECK_SCRIPT_PATH', 'FLAGID_SCRIPT_PATH']:
         if conf[k] is not None:
             conf[k] = os.path.expanduser(conf[k])
 
