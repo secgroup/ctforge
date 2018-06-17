@@ -78,10 +78,21 @@
      return $("<td>").append([
          $("<div>").append(integrity_check),
          $("<div title='attack' style='margin-top: 5px'>").append([
-             $("<span class='fa fa-lg fa-fire' title='attack'>"), formatNumber(s.attack)]
+             $("<span class='fa fa-lg fa-fire' title='attack'>"),
+             formatNumber(s.attack),
+             $("<small>").text(' | '+s.attack_flags).append([
+                 " ",
+                 $("<span class='fa fa-flag'>")
+             ])
+         ]
          ),
          $("<div title='defense'>").append([
-             $("<span class='fa fa-lg fa-shield' title='defense'>"), formatNumber(s.defense)
+             $("<span class='fa fa-lg fa-shield' title='defense'>"),
+             formatNumber(s.defense),
+             $("<small>").text(' | '+s.defense_flags).append([
+                 " ",
+                 $("<span class='fa fa-flag'>")
+             ])
          ]),
          $("<div title='SLA'>").append([
              $("<span class='fa fa-lg fa-wrench' title='SLA'>"), formatNumber(s.sla)

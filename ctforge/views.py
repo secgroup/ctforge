@@ -1080,9 +1080,39 @@ def _scoreboard(rnd=None):
             scores[team][service] = {
                 'attack': score['attack'],
                 'defense': score['defense'],
-                'sla': score['sla']
+                'sla': score['sla'],
+                'attack_flags': 0,
+                'defense_flags': 0
             }
             ips[team] = ip
+
+        # get the flag count for each service
+        # attack
+        cur.execute(('''
+            SELECT T.name as team, S.name as service, COUNT(F.flag) as count
+            FROM service_attacks A
+                 JOIN flags F ON F.flag = A.flag
+                 JOIN teams T ON T.id = A.team_id
+                 JOIN services S ON S.id = F.service_id
+            GROUP BY T.name, S.name
+            '''))
+        for row in cur:
+            team = row['team']
+            service = row['service']
+            scores[team][service]['attack_flags'] = row['count']
+        # defense
+        cur.execute(('''
+            SELECT T.name as team, S.name as service, COUNT(F.flag) as count
+            FROM service_attacks A
+                 JOIN flags F ON F.flag = A.flag
+                 JOIN teams T ON T.id = F.team_id
+                 JOIN services S ON S.id = F.service_id
+            GROUP BY T.name, S.name
+            '''))
+        for row in cur:
+            team = row['team']
+            service = row['service']
+            scores[team][service]['defense_flags'] = -row['count']
 
         # get the status of each service
         cur.execute((
@@ -1133,13 +1163,9 @@ def _stats(nrounds=None):
     nrounds = nrounds or round_info(db_conn)[0]
 
     with db_conn.cursor() as cur:
-        cur.execute('SELECT T.name AS team_name, '
-                    'SR.name AS service_name, SC.attack, SC.defense.SC.sla '
-                    'FROM scores AS SC '
-                    'JOIN services AS SR ON SC.service_id = SR.id '
-                    'JOIN teams AS T ON T.id = SC.team_id '
-                    'WHERE SC.round > get_current_round() - %s', [nrounds])
-        # TODO group by team name, for each round and sum service attack,def,sla
+        cur.execute('''
+        ''')
+        # TODO group by team name, for each round and sum service attack,def,sla to global score
     assert False
 
 @app.route('/credits')
