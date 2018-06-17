@@ -138,10 +138,10 @@ class Worker(threading.Thread):
         while not Worker.killing_time.is_set():
             try:
                 self.team, self.service = tasks.get_nowait()
-                # get the active flags for this team/service
-                self._get_flags()
-                # Generate Flag ids
+                # generate Flag ids
                 if self.flag_id and self.service.flag_id:
+                    # get the active flags for this team/service
+                    self._get_flags()
                     self._create_flag_id()
                 # get the updated flags with flag ids
                 self._get_flags()
@@ -213,8 +213,6 @@ class Worker(threading.Thread):
             # update successful
             logger.debug(self._logalize('Flag ID added {} -> {}'.format(self.flags[0], repr(stdout))))
 
-        
-        
     def _dispatch_flag(self):
         """Send the flag to a given team for a given service by executing an
         external script. The script is killed if it takes too long to
@@ -278,7 +276,6 @@ class Worker(threading.Thread):
         command = ' '.join(command_lst)
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
-            # TODO: pass flag id for the services that support it
             # ignore stdout and stderr if not(keep_stdout)
             process = subprocess.Popen(command_lst, preexec_fn=os.setsid,
                                        stdout=subprocess.PIPE if keep_stdout else subprocess.DEVNULL,
