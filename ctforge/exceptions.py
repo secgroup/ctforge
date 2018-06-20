@@ -7,6 +7,9 @@ class InvalidToken(Exception):
 class InvalidFlag(Exception):
     pass
 
+class OwnFlag(Exception):
+    pass
+
 class ExpiredFlag(Exception):
     pass
 

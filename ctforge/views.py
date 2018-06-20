@@ -539,15 +539,17 @@ def submit():
                 team_id = res['id']
                 # get the flag that the user is trying to submit, if valid
                 # (i.e. active and not one of the flags of his team)
-                cur.execute(('SELECT service_id, get_current_round() - F.round > S.flag_lifespan - 1 AS expired '
+                cur.execute(('SELECT service_id, get_current_round() - F.round > S.flag_lifespan - 1 AS expired, team_id '
                              'FROM flags F JOIN services S ON S.id = F.service_id '
-                             'WHERE flag = %s AND team_id != %s'),
-                             [flag, team_id])
+                             'WHERE flag = %s'), [flag])
                 res = cur.fetchone()
                 if res is None:
                     raise ctforge.exceptions.InvalidFlag()
                 if res['expired'] == 1:
                     raise ctforge.exceptions.ExpiredFlag()
+                # check if the flag is owned by the same team that submitted it
+                if res['team_id'] == team_id:
+                    raise ctforge.exceptions.OwnFlag()
                 # if we need to check integrity every submit, do it
                 if not app.config['ALWAYS_SUBMIT']:
                     service_id = res['service_id']
@@ -566,7 +568,6 @@ def submit():
                              [team_id, flag])
                 db_conn.commit()
                 flash('Flag accepted!', 'success')
-                # TODO: own flag
             except psycopg2.IntegrityError:
                 # this exception is raised not only on duplicated entry, but also
                 # when key constraint fails
@@ -583,6 +584,9 @@ def submit():
             except ctforge.exceptions.InvalidFlag:
                 db_conn.rollback()
                 flash('The submitted flag is invalid!', 'error')
+            except ctforge.exceptions.OwnFlag:
+                db_conn.rollback()
+                flash('The submitted flag is your own!', 'error')
             except ctforge.exceptions.ExpiredFlag:
                 db_conn.rollback()
                 flash('The submitted flag is expired!', 'error')
