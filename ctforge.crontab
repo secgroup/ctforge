@@ -16,7 +16,7 @@ PWNLIB_NOTERM=1
 # FAST ROUNDS
 
 # DiSPATCH: every 2 minutes
-#*/2 * * * *	source /home/ctforge/.venvs/ctforge/bin/activate; ctfbot --advance --gen-flag-ids --dispatch -t 30 -n 4 -v &>> /home/ctforge/.ctforge/logs/cron.log 
+#*/2 * * * *	source /home/ctforge/.venvs/ctforge/bin/activate; ctfbot --advance --dispatch -t 30 -n 4 -v &>> /home/ctforge/.ctforge/logs/cron.log 
 # CHECK: some seconds later
 #*/2 * * * *	sleep 30; sleep $((RANDOM\%(5))); source /home/ctforge/.venvs/ctforge/bin/activate; ctfbot --check -t 30 -n 4 -v &>> /home/ctforge/.ctforge/logs/cron.log
 

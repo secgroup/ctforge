@@ -30,6 +30,7 @@ def parse_conf(fname):
 
             ATTACKDEFENSE_ACTIVE = config.getboolean('mode_attackdefense', 'active', fallback=False),
             ROUND_DURATION = config.getint('mode_attackdefense', 'round_duration', fallback=300),
+            ALWAYS_SUBMIT = config.getboolean('mode_attackdefense','always_submit', fallback=False),
             FLAG_PREFIX = config.get('mode_attackdefense', 'flag_prefix', fallback='flg{'),
             FLAG_SUFFIX = config.get('mode_attackdefense', 'flag_suffix', fallback='}'),
             FLAG_CHARS = config.get('mode_attackdefense', 'flag_chars', fallback=string.ascii_letters + string.digits),
@@ -45,7 +46,6 @@ def parse_conf(fname):
             LOG_FILE = config.get('website', 'log_file', fallback=None),
             SECRET_KEY = config.get('website', 'secret_key', fallback='ChengeMeWithRandomStuffASAP'),
             BOT_LOG_FILE = config.get('flagbot', 'log_file', fallback=None),
-            FLAGID_SCRIPT_PATH = config.get('flagbot', 'flagid_script_path', fallback='~/.ctforge/bot/flagid/'),
             DISPATCH_SCRIPT_PATH = config.get('flagbot', 'dispatch_script_path', fallback='~/.ctforge/bot/dispatch/'),
             CHECK_SCRIPT_PATH = config.get('flagbot', 'check_script_path', fallback='~/.ctforge/bot/check/')
         )
@@ -54,7 +54,7 @@ def parse_conf(fname):
         sys.exit(1)
     # expand home
     for k in ['LOG_FILE', 'BOT_LOG_FILE', 'DISPATCH_SCRIPT_PATH',
-              'CHECK_SCRIPT_PATH', 'FLAGID_SCRIPT_PATH']:
+              'CHECK_SCRIPT_PATH']:
         if conf[k] is not None:
             conf[k] = os.path.expanduser(conf[k])
 

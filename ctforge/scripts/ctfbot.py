@@ -107,7 +107,7 @@ class Worker(threading.Thread):
 
     killing_time = threading.Event()
 
-    def __init__(self, n, flag_id, dispatch, check, timeout=10):
+    def __init__(self, n, dispatch, check, timeout=10):
         super(Worker, self).__init__()
         # numeric identifier of the worker
         self.n = n
@@ -120,7 +120,6 @@ class Worker(threading.Thread):
         self.flags = []
         self.flag_ids = {}
         # worker modalities
-        self.flag_id = flag_id
         self.dispatch = dispatch
         self.check = check
         # seconds to wait before killing a spawned script
@@ -138,20 +137,17 @@ class Worker(threading.Thread):
         while not Worker.killing_time.is_set():
             try:
                 self.team, self.service = tasks.get_nowait()
-                # generate Flag ids
-                if self.flag_id and self.service.flag_id:
-                    # get the active flags for this team/service
-                    self._get_flags()
-                    self._create_flag_id()
-                # get the updated flags with flag ids
-                self._get_flags()
                 # check whether we need to dispatch the flag or check the service
                 # status and proceed according to the given mode. The program logic
                 # is not f*cked if we execute both actions. Theoretically, one
                 # could advance the round, dispatch new flags and check services
                 # with a single execution of this script
                 if self.dispatch:
+                    # get the flags for the current round
+                    self._get_flags()
                     self._dispatch_flag()
+                # get the updated flags with flag ids
+                self._get_flags()
                 if self.check:
                     self._check_service()
             except Empty:
@@ -182,47 +178,42 @@ class Worker(threading.Thread):
         self.flags = [r['flag'] for r in res]
         self.flag_ids = { r['flag']: r['flag_id'] for r in res }
 
-    def _create_flag_id(self):
-        """Generate the flag id for the current (team, service)"""
-        
-        status, stdout = self._execute(
-            os.path.join(config['FLAGID_SCRIPT_PATH'], self.service.name), self.flags[0],
-            keep_stdout=True)
-        if status != 0:
-            logger.critical(self._logalize(
-                'Error while generating flag id for {}: non-zero exit code!'.format(self.flags[0])))
-            return
-        if not stdout:
-            logger.critical(self._logalize(
-                'Error while generating flag id for {}: stdout is empty!'.format(self.flags[0])))
-            return
-        # stdout is the flag_id
-        stdout = stdout.rstrip(b'\n') # delete trailing new-line
-        try:
-            with db_conn.cursor() as cur:
-                cur.execute((
-                    'UPDATE flags SET flag_id = %s '
-                    'WHERE flag = %s AND team_id = %s AND service_id = %s'
-                    '  AND round = get_current_round()')
-                    , [stdout.decode(), self.flags[0], self.team.id, self.service.id])
-            db_conn.commit()
-        except psycopg2.Error as e:
-            # an error occurred, no recovery possible
-            logger.critical(self._logalize('Unable to insert the flag id: {}'.format(e)))
-        else:
-            # update successful
-            logger.debug(self._logalize('Flag ID added {} -> {}'.format(self.flags[0], repr(stdout))))
-
     def _dispatch_flag(self):
         """Send the flag to a given team for a given service by executing an
         external script. The script is killed if it takes too long to
         complete."""
 
-        # execute the script ignoring its return status
+        # execute the script, getting the return status and the stdout
         flag =  self.flags[0]
-        flag_id = self.flag_ids[flag] if self.service.flag_id else None
-        self._execute(os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name),
-                      flag, flag_id=flag_id)
+        status, stdout = self._execute(
+            os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name),
+            flag, keep_stdout=True)
+        if status != 0:
+            logger.critical(self._logalize(
+                'Dispatcher Error for {}: non-zero exit code!'.format(flag)))
+            return
+        # if the service supports flag ids
+        if self.service.flag_id:
+            if not stdout:
+                logger.critical(self._logalize(
+                    'Error while generating flag id for {}: stdout is empty!'.format(self.flags[0])))
+                return
+            # stdout is the flag_id
+            stdout = stdout.rstrip(b'\n') # delete trailing new-line
+            try:
+                with db_conn.cursor() as cur:
+                    cur.execute((
+                        'UPDATE flags SET flag_id = %s '
+                        'WHERE flag = %s AND team_id = %s AND service_id = %s'
+                        '  AND round = get_current_round()')
+                                , [stdout.decode(), self.flags[0], self.team.id, self.service.id])
+                    db_conn.commit()
+            except psycopg2.Error as e:
+                # an error occurred, no recovery possible
+                logger.critical(self._logalize('Unable to insert the flag id: {}'.format(e)))
+            else:
+                # update successful
+                logger.debug(self._logalize('Flag ID added {} -> {}'.format(self.flags[0], repr(stdout))))
 
     def _check_service(self):
         """Check if a given service on a given host is working as expected by
@@ -450,8 +441,6 @@ def main():
     parser = argparse.ArgumentParser(description='Flag dispatcher and checker')
     parser.add_argument('--advance', action='store_true', default=False,
         help='Advance the current round')
-    parser.add_argument('--gen-flag-ids', dest='flag_id', action='store_true', default=False,
-        help='Generate the flag ids for the current round')
     parser.add_argument('--dispatch', action='store_true', default=False,
         help='Dispatch new flags to all the virtual machines')
     parser.add_argument('--check', action='store_true', default=False,
@@ -463,7 +452,7 @@ def main():
     parser.add_argument('-v', dest='verbose', action='store_true',
         default=False, help='Set logging level to debug')
     args = parser.parse_args()
-    if not any([args.advance, args.flag_id, args.dispatch, args.check]):
+    if not any([args.advance, args.dispatch, args.check]):
         sys.stderr.write('At least one action is required, aborting.\n')
         abort()
 
@@ -494,7 +483,7 @@ def main():
     if args.advance:
         # advance the round
         advance_round(teams, services)
-    if args.flag_id or args.check or args.dispatch:
+    if args.check or args.dispatch:
         # fill the queue of tasks, choosing the team order randomly :)
         for service in services:
             for team in random.sample(teams, len(teams)):
@@ -503,7 +492,7 @@ def main():
         # create the list of workers
         workers = []
         for i in range(n_workers):
-            worker = Worker(i, args.flag_id, args.dispatch, args.check, args.timeout)
+            worker = Worker(i, args.dispatch, args.check, args.timeout)
             workers.append(worker)
             worker.start()
 

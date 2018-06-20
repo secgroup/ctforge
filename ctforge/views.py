@@ -115,7 +115,7 @@ def flag_id(service=None):
         cur.execute(
             'SELECT S.name as sname, T.name as tname, F.flag_id as flag_id, F.round as round '
             'FROM  teams T, services S, flags F '
-            'WHERE S.flag_id '
+            'WHERE S.flag_id AND F.flag_id IS NOT NULL '
             'AND T.id = F.team_id AND S.id = F.service_id AND '
             'get_current_round() - F.round <= S.flag_lifespan - 1 '
             'ORDER BY S.name, T.name, F.round DESC'
@@ -548,17 +548,18 @@ def submit():
                     raise ctforge.exceptions.InvalidFlag()
                 if res['expired'] == 1:
                     raise ctforge.exceptions.ExpiredFlag()
-                # TODO: config['ALWAYS_SUBMIT']
-                service_id = res['service_id']
-                # check whether the team's service is well-functioning or not
-                cur.execute(('SELECT successful '
-                             'FROM integrity_checks '
-                             'WHERE team_id = %s AND service_id = %s '
-                             'ORDER BY timestamp DESC LIMIT 1'),
-                             [team_id, service_id])
-                res = cur.fetchone()
-                if res is None or res['successful'] != 1:
-                    raise ctforge.exceptions.ServiceCorrupted()
+                # if we need to check integrity every submit, do it
+                if not app.config['ALWAYS_SUBMIT']:
+                    service_id = res['service_id']
+                    # check whether the team's service is well-functioning or not
+                    cur.execute(('SELECT successful '
+                                 'FROM integrity_checks '
+                                 'WHERE team_id = %s AND service_id = %s '
+                                 'ORDER BY timestamp DESC LIMIT 1'),
+                                [team_id, service_id])
+                    res = cur.fetchone()
+                    if res is None or res['successful'] != 1:
+                        raise ctforge.exceptions.ServiceCorrupted()
                 # store the attack in the database
                 cur.execute(('INSERT INTO service_attacks (team_id, flag) '
                              'VALUES (%s, %s) '),
@@ -1035,14 +1036,14 @@ def round_info(db_conn):
         seconds_left = max(
             ((res['timestamp'] + timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
 
-    return rnd, seconds_left
+    return rnd, seconds_left, res['timestamp']
 
 @app.route('/scoreboard')
 @attackdefense_mode_required
 def scoreboard():
     # get info about the current round
     db_conn = get_db_connection()
-    rnd, seconds_left = round_info(db_conn)
+    rnd, seconds_left, _ = round_info(db_conn)
 
     # get the list of services
     with db_conn.cursor() as cur:
@@ -1057,7 +1058,7 @@ def scoreboard():
 @cache.cached(timeout=2)
 def _scoreboard(rnd=None):
     db_conn = get_db_connection()
-    rnd, seconds_left = round_info(db_conn)
+    rnd, seconds_left, rnd_start_timestamp = round_info(db_conn)
 
     with db_conn.cursor() as cur:
 
@@ -1088,27 +1089,29 @@ def _scoreboard(rnd=None):
 
         # get the flag count for each service
         # attack
-        cur.execute(('''
+        cur.execute('''
             SELECT T.name as team, S.name as service, COUNT(F.flag) as count
             FROM service_attacks A
                  JOIN flags F ON F.flag = A.flag
                  JOIN teams T ON T.id = A.team_id
                  JOIN services S ON S.id = F.service_id
+            WHERE A.timestamp < %s
             GROUP BY T.name, S.name
-            '''))
+            ''', [rnd_start_timestamp])
         for row in cur:
             team = row['team']
             service = row['service']
             scores[team][service]['attack_flags'] = row['count']
         # defense
-        cur.execute(('''
+        cur.execute('''
             SELECT T.name as team, S.name as service, COUNT(F.flag) as count
             FROM service_attacks A
                  JOIN flags F ON F.flag = A.flag
                  JOIN teams T ON T.id = F.team_id
                  JOIN services S ON S.id = F.service_id
+            WHERE A.timestamp < %s
             GROUP BY T.name, S.name
-            '''))
+            ''', [rnd_start_timestamp])
         for row in cur:
             team = row['team']
             service = row['service']
