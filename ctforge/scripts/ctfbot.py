@@ -18,6 +18,7 @@ being used later during the score computation phase.
 """
 
 import os
+import re
 import sys
 import time
 import signal
@@ -48,6 +49,9 @@ logger = logging.getLogger('bot')
 tasks = Queue()
 # just one connection to the database for all the threads
 db_conn = None
+# regex used to extract flag ids from dispatcher output
+flag_id_regex = re.compile(b'<flagid>(.*?)</flagid>', re.DOTALL | re.MULTILINE)
+
 
 def abort():
     """Terminate the program after if it is not possible to proceed."""
@@ -198,23 +202,27 @@ class Worker(threading.Thread):
                 logger.critical(self._logalize(
                     'Error while generating flag id for {}: stdout is empty!'.format(self.flags[0])))
                 return
-            # TODO find the flag id <flagid></flagid>
             # stdout is the flag_id
-            stdout = stdout.rstrip(b'\n') # delete trailing new-line
+            flag_ids = flag_id_regex.findall(stdout)
+            flag_id = flag_ids[0].decode().strip()
+            if len(flag_ids) == 0 or len(flag_ids) > 1:
+                logger.critical(self._logalize(
+                    'Error while generating flag id for {}: multiple or no flag ids found!'.format(self.flags[0])))
+                return
             try:
                 with db_conn.cursor() as cur:
                     cur.execute((
                         'UPDATE flags SET flag_id = %s '
                         'WHERE flag = %s AND team_id = %s AND service_id = %s'
                         '  AND round = get_current_round()')
-                                , [stdout.decode(), self.flags[0], self.team.id, self.service.id])
+                                , [flag_id, self.flags[0], self.team.id, self.service.id])
                     db_conn.commit()
             except psycopg2.Error as e:
                 # an error occurred, no recovery possible
                 logger.critical(self._logalize('Unable to insert the flag id: {}'.format(e)))
             else:
                 # update successful
-                logger.debug(self._logalize('Flag ID added {} -> {}'.format(self.flags[0], repr(stdout))))
+                logger.debug(self._logalize('Flag ID added {} -> {}'.format(self.flags[0], repr(flag_id))))
 
     def _check_service(self):
         """Check if a given service on a given host is working as expected by
