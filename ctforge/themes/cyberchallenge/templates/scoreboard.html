@@ -95,7 +95,9 @@
              ])
          ]),
          $("<div title='SLA'>").append([
-             $("<span class='fa fa-lg fa-wrench' title='SLA'>"), formatNumber(s.sla)
+             $("<span class='fa fa-lg fa-wrench' title='SLA'>"),
+             formatNumber(s.sla),
+             $("<small>").text(' | '+(s.sla_percentage | 0)+" %")
          ])
      ]);
  }

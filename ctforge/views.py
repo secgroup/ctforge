@@ -1121,6 +1121,22 @@ def _scoreboard(rnd=None):
             service = row['service']
             scores[team][service]['defense_flags'] = -row['count']
 
+        # get total sla for each service
+        cur.execute('''
+            SELECT T.name as team, S.name as service,
+                   count(case C.successful when TRUE then 1 else NULL end) AS successful,
+                   count(*) as total
+            FROM integrity_checks C
+                 JOIN teams T ON T.id = C.team_id
+                 JOIN services S ON S.id = C.service_id
+            WHERE C.timestamp < %s
+            GROUP BY T.name, S.name
+        ''', [rnd_start_timestamp])
+        for row in cur:
+            team = row['team']
+            service = row['service']
+            scores[team][service]['sla_percentage'] = row['successful'] / row['total'] * 100
+
         # get the status of each service
         cur.execute((
             'SELECT T.name AS team_name, S.name AS service_name, C.timestamp, C.successful '

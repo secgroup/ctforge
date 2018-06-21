@@ -198,6 +198,7 @@ class Worker(threading.Thread):
                 logger.critical(self._logalize(
                     'Error while generating flag id for {}: stdout is empty!'.format(self.flags[0])))
                 return
+            # TODO find the flag id <flagid></flagid>
             # stdout is the flag_id
             stdout = stdout.rstrip(b'\n') # delete trailing new-line
             try:
