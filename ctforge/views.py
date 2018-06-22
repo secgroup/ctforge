@@ -1040,7 +1040,7 @@ def round_info(db_conn):
         seconds_left = max(
             ((res['timestamp'] + timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
 
-    return rnd, seconds_left, res['timestamp']
+    return rnd, seconds_left, res['timestamp'] if res is not None else 0
 
 @app.route('/scoreboard')
 @attackdefense_mode_required
@@ -1076,7 +1076,7 @@ def _scoreboard(rnd=None):
             'FROM scores AS SC '
             'JOIN services AS SR ON SC.service_id = SR.id '
             'JOIN teams AS T ON T.id = SC.team_id '
-            'WHERE SC.round = get_current_round() - 1'))
+            'WHERE SC.round = GREATEST(get_current_round() - 1, 0)'))
 
         for score in cur:
             team = score['team_name']

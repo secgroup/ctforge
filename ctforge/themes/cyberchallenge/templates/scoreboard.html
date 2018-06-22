@@ -4,7 +4,7 @@
 
 {% from "_macros.html" import get_status_badge %}
 
-<h1>CTF Scoreboard</h1>
+<h1>Scoreboard</h1>
 <p>
 {% if rnd > 0 %}
     Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
@@ -130,6 +130,7 @@
              current_round = data.round;
              if (seconds_left <= 0) {
                  seconds_left = data.seconds_left;
+                 updateCountdown();
              }
 
              var rows = data.scores.map(function (t) {
