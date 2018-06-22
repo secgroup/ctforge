@@ -6,11 +6,11 @@ var defaultGraphSettings = {
 var defaultChartSettings = {
     "categoryAxis": {
         "minPeriod": "ss",
-        "parseDates": true
+        "parseDates": false,
+        "title": "Round"
     },
-    "categoryField": "date",
+    "categoryField": "round",
     "chartCursor": {
-        "categoryBalloonDateFormat": "JJ:NN:SS",
         "categoryBalloonText": "[[category]]",
         "enabled": true
     },
@@ -21,7 +21,6 @@ var defaultChartSettings = {
         "dragIconHeight": 22,
         "dragIconWidth": 22
     },
-    "dataDateFormat": "YYYY-MM-DD HH:NN:SS",
     "fontFamily": "Monda",
     "fontSize": 14,
     "legend": {
@@ -32,12 +31,17 @@ var defaultChartSettings = {
     "theme": "dark",
     "titles": [{
         "size": 15,
-        "text": ""
+        "text": "Global Score"
     }],
     "type": "serial",
     "valueAxes": [{
-        "title": ""
-    }]
+        "title": "Points"
+    }],
+    "numberFormatter": {
+        "precision": 2,
+        "decimalSeparator": ".",
+        "thousandsSeparator": ""
+    }
 };
 
 function makeChart(divId, data, populate) {
@@ -50,12 +54,20 @@ function compareByDate(o1, o2) {
     return o1.date - o2.date;
 }
 
-function teamsChart(chart, teams) {
-    chart.titles[0].text = "Global Score (top 10)";
-    chart.valueAxes[0].title = "Points";
+function scoresChart(chart, scores) {
     chart.graphs = [];
     chart.dataProvider = [];
 
-    if (teams.length === 0) return;
-
+    for (var team in scores) {
+        var g = $.extend(true, {}, defaultGraphSettings);
+        g.balloonText = "[[title]]\n[[value]]pts";
+        g.title = g.valueField = team;
+        chart.graphs.push(g);
+        for (round in scores[team]) {
+            var s = { round: round | 0 };
+            s[g.valueField] = scores[team][round];
+            chart.dataProvider.push(s);
+        }
+        chart.dataProvider.sort(function (a,b) { return a.round - b.round; });
+    }
 }

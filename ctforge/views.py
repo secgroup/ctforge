@@ -1059,7 +1059,7 @@ def scoreboard():
 
 @app.route('/ctf_scoreboard')
 @attackdefense_mode_required
-@cache.cached(timeout=2)
+@cache.cached(timeout=4)
 def _scoreboard(rnd=None):
     db_conn = get_db_connection()
     rnd, seconds_left, rnd_start_timestamp = round_info(db_conn)
@@ -1179,7 +1179,7 @@ def _scoreboard(rnd=None):
 @app.route('/ctf_stats')
 @app.route('/ctf_stats/<int:nrounds>')
 @attackdefense_mode_required
-@cache.cached(timeout=app.config['ROUND_DURATION']/2)
+@cache.cached(timeout=10)
 def _stats(nrounds=None):
     db_conn = get_db_connection()
 
@@ -1187,9 +1187,18 @@ def _stats(nrounds=None):
 
     with db_conn.cursor() as cur:
         cur.execute('''
-        ''')
-        # TODO group by team name, for each round and sum service attack,def,sla to global score
-    assert False
+        SELECT S.round AS round, T.name AS team, SUM(S.attack) + SUM(S.defense) + SUM(S.sla) AS score
+        FROM scores S JOIN teams T ON S.team_id = T.id
+        WHERE S.round > get_current_round() - %s
+        GROUP BY T.name, S.round
+        ORDER BY S.round DESC
+        ''', [nrounds])
+
+        scores = defaultdict(dict)
+        for row in cur:
+            scores[row['team']][row['round']] = row['score']
+
+    return jsonify(scores)
 
 @app.route('/credits')
 def credits():

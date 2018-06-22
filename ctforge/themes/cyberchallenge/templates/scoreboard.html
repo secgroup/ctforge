@@ -20,13 +20,11 @@
         <table class="table scoreboard"></table>
     </div>
 </div>
-<div class="row">
+<div class="row mt-5">
     <div class="col-md-12">
         <div id="global_score" class="chart"></div>
     </div>
 </div>
-
-{% if rnd >= 0 %}
 
 <style>
  /* Add a counter to every td.counter in tbody */
@@ -153,6 +151,12 @@
          });
      }
 
+     function updateChart() {
+         $.getJSON("/ctf_stats", function (data) {
+             makeChart('global_score', data, scoresChart);
+         });
+     }
+
      function updateCountdown() {
          seconds_left--;
          var s = seconds_left % 3600;
@@ -164,9 +168,11 @@
 
      updateCountdown();
      updateTable();
+     updateChart();
      setInterval(function () {
          if (seconds_left <= 0 || seconds_left % update_period == 0) {
              updateTable();
+             updateChart();
          }
          updateCountdown();
      }, 1000);
@@ -179,6 +185,5 @@
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/ad_charts.js') }}"></script>
 
-{% endif %}
 
 {% endblock %}
