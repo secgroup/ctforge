@@ -173,6 +173,8 @@
      setInterval(function () {
          if (seconds_left <= 0 || seconds_left % update_period == 0) {
              updateTable();
+         }
+         if (seconds_left <= 0 || seconds_left % (update_period * 10) == 0) {
              updateChart();
          }
          updateCountdown();
