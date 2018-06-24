@@ -190,7 +190,8 @@ class Worker(threading.Thread):
         # execute the script, getting the return status and the stdout
         flag =  self.flags[0]
         status, stdout = self._execute(
-            os.path.join(config['DISPATCH_SCRIPT_PATH'], self.service.name),
+            os.path.join(config['BOT_SCRIPT_PATH'],
+                         self.service.name, 'dispatch'),
             flag, keep_stdout=True)
         if status != 0:
             logger.critical(self._logalize(
@@ -243,7 +244,8 @@ class Worker(threading.Thread):
         # one of the valid flags (selected randomly)
         flag =  random.choice(self.flags)
         flag_id = self.flag_ids[flag] if self.service.flag_id else None
-        status = self._execute(os.path.join(config['CHECK_SCRIPT_PATH'], self.service.name),
+        status = self._execute(os.path.join(config['BOT_SCRIPT_PATH'],
+                                            self.service.name, 'check'),
                                flag, flag_id=flag_id)
         if status == -1 or status > 125:
             # our fault: we don't add anything in the integrity_checks table
@@ -306,7 +308,7 @@ class Worker(threading.Thread):
 
         if keep_stdout:
             return (status, stdout)
-            
+
         return status
 
     def _get_curr_round(self):

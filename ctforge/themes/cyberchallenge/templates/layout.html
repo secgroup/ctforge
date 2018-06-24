@@ -53,13 +53,13 @@
                         <a class="nav-link" href="{{ url_for('rules') }}">Rules</a></li>
                     {% endif %}
                     {% if config.ATTACKDEFENSE_ACTIVE %}
-                    <li class="nav-item {% if request.path == url_for('scoreboard') %}active{% endif %}"><a class="nav-link" href="{{ url_for('scoreboard') }}">A/D Scoreboard</a></li>
+                    <li class="nav-item {% if request.path == url_for('scoreboard') %}active{% endif %}"><a class="nav-link" href="{{ url_for('scoreboard') }}">Scoreboard</a></li>
                     {% endif %}
                     {% if config.ATTACKDEFENSE_ACTIVE %}
                     <li class="nav-item {% if request.path == url_for('teams') %}active{% endif %}"><a class="nav-link" href="{{ url_for('teams') }}">Teams</a></li>
                     {% endif %}
                     {% if config.ATTACKDEFENSE_ACTIVE %}
-                    <li class="nav-item {% if request.path == url_for('design') %}active{% endif %}"><a class="nav-link" href="{{ url_for('design') }}">A/D Rules</a></li>
+                    <li class="nav-item {% if request.path == url_for('design') %}active{% endif %}"><a class="nav-link" href="{{ url_for('design') }}">Rules</a></li>
                     {% endif %}
                     <li class="nav-item {% if request.path == url_for('credits') %}active{% endif %}"><a class="nav-link" href="{{ url_for('credits') }}">Credits</a></li>
                 </ul>
