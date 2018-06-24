@@ -285,7 +285,7 @@ class Worker(threading.Thread):
                 del env['VIRTUAL_ENV']
             except KeyError:
                 pass
-            
+
             # ignore stdout and stderr if not(keep_stdout)
             process = subprocess.Popen(command_lst, preexec_fn=os.setsid,
                                        stdout=subprocess.PIPE if keep_stdout else subprocess.DEVNULL,

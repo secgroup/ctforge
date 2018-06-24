@@ -80,24 +80,26 @@
          $("<div title='attack' style='margin-top: 5px'>").append([
              $("<span class='fa fa-lg fa-fire' title='attack'>"),
              formatNumber(s.attack),
-             $("<small>").text(' | '+s.attack_flags).append([
+             $("<small>").text(' ( '+s.attack_flags).append([
                  " ",
-                 $("<span class='fa fa-flag'>")
+                 $("<span class='fa fa-flag'>"),
+                 " )"
              ])
          ]
          ),
          $("<div title='defense'>").append([
              $("<span class='fa fa-lg fa-shield' title='defense'>"),
              formatNumber(s.defense),
-             $("<small>").text(' | '+s.defense_flags).append([
+             $("<small>").text(' ( '+s.defense_flags).append([
                  " ",
-                 $("<span class='fa fa-flag'>")
+                 $("<span class='fa fa-flag'>"),
+                 " )"
              ])
          ]),
          $("<div title='SLA'>").append([
              $("<span class='fa fa-lg fa-wrench' title='SLA'>"),
              formatNumber(s.sla),
-             $("<small>").text(' | '+(s.sla_percentage | 0)+" %")
+             $("<small>").text(' ( '+(s.sla_percentage | 0)+" % )")
          ])
      ]);
  }
@@ -155,7 +157,7 @@
      }
 
      function updateChart() {
-         $.getJSON("/ctf_stats", function (data) {
+         $.getJSON("/ctf_stats/300", function (data) {
              makeChart('global_score', data, scoresChart);
          });
      }

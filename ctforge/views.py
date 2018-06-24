@@ -1175,7 +1175,6 @@ def _scoreboard(rnd=None):
         'scores': board
     })
 
-# Needed for scoreboard graphs (WIP)
 @app.route('/ctf_stats')
 @app.route('/ctf_stats/<int:nrounds>')
 @attackdefense_mode_required
@@ -1189,7 +1188,7 @@ def _stats(nrounds=None):
         cur.execute('''
         SELECT S.round AS round, T.name AS team, SUM(S.attack) + SUM(S.defense) + SUM(S.sla) AS score
         FROM scores S JOIN teams T ON S.team_id = T.id
-        WHERE S.round > get_current_round() - %s
+        WHERE S.round >= get_current_round() - %s
         GROUP BY T.name, S.round
         ORDER BY S.round DESC
         ''', [nrounds])
