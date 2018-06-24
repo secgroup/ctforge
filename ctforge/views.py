@@ -1038,7 +1038,7 @@ def round_info(db_conn):
     if rnd >= 1:
         # get seconds left till new round
         seconds_left = max(
-            ((res['timestamp'] + timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
+            int(((res['timestamp'] + timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).total_seconds()), 0)
 
     return rnd, seconds_left, res['timestamp'] if res is not None else 0
 

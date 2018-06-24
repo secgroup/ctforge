@@ -9,7 +9,9 @@
 {% if rnd > 0 %}
     Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
     Current round <span id="rnd-current">{{ rnd }}</span>.
-    Next round starting in <span id="countdown"></span>
+    <span id="countdown-container">
+        Next round starting in <span id="countdown"></span>
+    </span>
 {% else %}
     Attack/defense CTF is coming soon
 {% endif %}
@@ -165,6 +167,9 @@
          var minutes = Math.floor(s / 60);
          var seconds = s % 60;
          $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
+         if (seconds_left < 0) $("#countdown-container").hide()
+         else $("#countdown-container").show()
+
      }
 
      updateCountdown();
