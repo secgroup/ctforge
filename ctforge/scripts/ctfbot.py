@@ -21,6 +21,7 @@ import os
 import re
 import sys
 import time
+import copy
 import signal
 import random
 import argparse
@@ -278,10 +279,18 @@ class Worker(threading.Thread):
         command = ' '.join(command_lst)
         try:
             logger.debug(self._logalize('Executing {}'.format(command)))
+            # Do not inherit python virtualenv
+            env = copy.deepcopy(os.environ)
+            try:
+                del env['VIRTUAL_ENV']
+            except KeyError:
+                pass
+            
             # ignore stdout and stderr if not(keep_stdout)
             process = subprocess.Popen(command_lst, preexec_fn=os.setsid,
                                        stdout=subprocess.PIPE if keep_stdout else subprocess.DEVNULL,
-                                       stderr=subprocess.DEVNULL)
+                                       stderr=subprocess.DEVNULL,
+                                       env=env)
             stdout, _ = process.communicate(timeout=self.timeout)
             status = process.returncode
         except subprocess.TimeoutExpired:
