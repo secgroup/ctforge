@@ -450,6 +450,8 @@ def main():
 
     # parse command line options, the round parameter is required
     parser = argparse.ArgumentParser(description='Flag dispatcher and checker')
+    parser.add_argument('-c', '--conf', dest='conf', type=str,
+        default='ctforge.conf', help='Configuration file')
     parser.add_argument('--advance', action='store_true', default=False,
         help='Advance the current round')
     parser.add_argument('--dispatch', action='store_true', default=False,
@@ -466,6 +468,17 @@ def main():
     if not any([args.advance, args.dispatch, args.check]):
         sys.stderr.write('At least one action is required, aborting.\n')
         abort()
+
+    # Read the configuration if specified
+    if args.conf is not None:
+        print('[*] Reading configuration from {}'.format(args.conf))
+        sys.stdout.flush()
+
+        try:
+            config = utils.parse_conf(args.conf)
+        except Exception:
+            sys.stderr.write('Invalid configuration file, aborting!')
+            sys.exit(1)
 
     # register the killer handler
     signal.signal(signal.SIGINT, interrupt)
