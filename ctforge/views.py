@@ -994,7 +994,7 @@ def writeup(id, md=0):
 
 @app.route('/service/<name>')
 @attackdefense_mode_required
-@login_required
+# @login_required # Needed if the description contains download links
 def service(name):
     """Display information about a service."""
 
