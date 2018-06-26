@@ -8,15 +8,15 @@
 
 <h1>Scoreboard</h1>
 <p>
-{% if rnd > 0 %}
+    {% if rnd > 0 %}
     Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
     Current round <span id="rnd-current">{{ rnd }}</span>.
     <span id="countdown-container">
         Next round starting in <span id="countdown"></span>
     </span>
-{% else %}
+    {% else %}
     Attack/defense CTF is coming soon
-{% endif %}
+    {% endif %}
 </p>
 
 <div class="row">
@@ -183,7 +183,7 @@
          if (seconds_left <= 0 || seconds_left % update_period == 0) {
              updateTable();
          }
-         if (seconds_left <= 0 || seconds_left % (update_period * 10) == 0) {
+         if (seconds_left % (update_period * 10) == 0) {
              updateChart();
          }
          updateCountdown();

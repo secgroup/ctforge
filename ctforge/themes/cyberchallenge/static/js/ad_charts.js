@@ -44,10 +44,13 @@ var defaultChartSettings = {
     }
 };
 
+var adChart = null;
+
 function makeChart(divId, data, populate) {
-    var chart = $.extend(true, {}, defaultChartSettings);
-    populate(chart, data);
-    AmCharts.makeChart(divId, chart);
+    if (adChart) adChart.clear();
+    adChart = $.extend(true, {}, defaultChartSettings);
+    populate(adChart, data);
+    AmCharts.makeChart(divId, adChart);
 }
 
 function compareByDate(o1, o2) {
