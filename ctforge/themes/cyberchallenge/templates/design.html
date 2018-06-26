@@ -1,8 +1,8 @@
 {% extends "layout.html" %}
-{% block title %}CTF Design{% endblock %}
+{% block title %}CTF Rules{% endblock %}
 {% block content %}
 
-<h1>CTF Design</h1>
+<h1>CTF Rules</h1>
 <style>
  .md-out img {
      display: block;
@@ -18,8 +18,6 @@
 <div class="row">
     <div class="col-sm-12 md-out">
         {% filter markdown %}
-CTF Rules
-=========
 The CCIT CTF Finals '18 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defence format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website (although no VPN is required to play this CTF).
 
 Access to the competition is granted to the 8 teams of universities involved in the CyberChallenge.IT project. Every team is composed by 4 selected participants of each local CCIT CTF that took place on Jun 7. Teams are required to declare a captain among them who will be in charge of handling the communication between her/his team and the organisers.
@@ -46,7 +44,7 @@ All the slides that will be used on stage by participants must be submitted in P
 
 Network and Setup
 -----------------
-The game is played within the `10.10.0.0/16` subnet. Each team has its own vulnerable machine located at `10.10.<team_id>.1`, while players connecting to the game network are assigned an ip in the range `10.10.<team_id>.150` - `10.10.<team_id>.200`. VMs can also be reached via the DNS name `team<team_id>`. All vulnerable VMs will be hosted by organisers and will have enough resources in terms of CPU and memory to run the pre-installed services (expect a standard Linux distro with around 6 cores / 6GB ram / 30GB hd). 
+The game is played within the `10.10.0.0/16` subnet. Each team has its own vulnerable machine located at `10.10.<team_id>.1`, while players connecting to the game network are assigned an ip in the range `10.10.<team_id>.150` - `10.10.<team_id>.200`. All vulnerable VMs will be hosted by organisers and will have enough resources in terms of CPU and memory to run the pre-installed services (expect a standard Linux distro with around 6 cores / 6GB ram / 30GB hd). 
 
 ![Network Map](/static/img/netowrk-map.png)
 
