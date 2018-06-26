@@ -113,19 +113,19 @@ def flag_id(service=None):
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
         cur.execute(
-            'SELECT S.name as sname, T.name as tname, F.flag_id as flag_id, F.round as round '
+            'SELECT S.name as sname, T.ip as ip, F.flag_id as flag_id, F.round as round '
             'FROM  teams T, services S, flags F '
             'WHERE S.flag_id AND F.flag_id IS NOT NULL '
             'AND T.id = F.team_id AND S.id = F.service_id AND '
             'get_current_round() - F.round <= S.flag_lifespan - 1 '
-            'ORDER BY S.name, T.name, F.round DESC'
+            'ORDER BY S.name, T.ip, F.round DESC'
         )
         flag_ids = cur.fetchall()
 
     data = defaultdict(lambda: defaultdict(list))
     for row in flag_ids:
         if (service and row['sname'] == service) or not service:
-            data[row['sname']][row['tname']].append(row['flag_id'])
+            data[row['sname']][row['ip']].append(row['flag_id'])
 
     return jsonify(data)
 
