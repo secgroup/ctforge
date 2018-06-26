@@ -1208,6 +1208,7 @@ def design():
     return render_template('design.html')
 
 @app.route('/rules')
+@jeopardy_mode_required
 def rules():
     return render_template('rules.html')
 
