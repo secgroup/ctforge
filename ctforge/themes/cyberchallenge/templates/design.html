@@ -18,7 +18,7 @@
 <div class="row">
     <div class="col-sm-12 md-out">
         {% filter markdown %}
-The CCIT CTF Finals '18 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defence format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website (although no VPN is required to play this CTF).
+The CCIT CTF Finals '18 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defense format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website (although no VPN is required to play this CTF).
 
 Access to the competition is granted to the 8 teams of universities involved in the CyberChallenge.IT project. Every team is composed by 4 selected participants of each local CCIT CTF that took place on Jun 7. Teams are required to declare a captain among them who will be in charge of handling the communication between her/his team and the organisers.
 
@@ -39,7 +39,7 @@ Talks
 -----
 Following the experience of the European Cyber Security Challenge 2017 (ECSC17), the CyberChallenge.IT committee decided to recognize the importance of soft-skills by evaluating short talks as part of the score achieved by each team. Teams are required to provide a short presentation of 10 minutes focusing on one of the services exploited during the CTF. Presentations will be provided in Italian and evaluated by a jury in terms of clarity, correctness and - most importantly - ability of presenting the problem to a non-technical audience.
 
-All the slides that will be used on stage by participants must be submitted in PDF format to the organisers before the start of the session at 5:15pm.
+All the slides that will be used on stage by participants must be submitted in PDF format to the organisers before the start of the session at 5:15pm. Aspect ratio must be 4:3.
 
 
 Network and Setup
@@ -136,13 +136,40 @@ r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag}
 
 Flags are considered expired after 5 rounds. It means that teams have up to 10 minutes to steal a flag and submit it. At the same time, the check bot will try to retrieve one of the last 5 flags from a service to check if the intended functionalities have been preserved and mark it as _up_.
 
-Some (but not all) services come with flag IDs. Flag IDs are identifiers that help you access the flags that are still valid (like usernames or database IDs), without having to search through all of them. The current set of IDs will be provided in JSON format at `https://10.20.0.1/api/flag_id`, while IDs of a specific service will be published at `https://10.20.0.1/api/flag_id/<service_name>`.
+Some (but not all) services come with flag IDs. Flag IDs are identifiers that help you access the flags that are still valid (like usernames or database IDs), without having to search through all of them. The current set of IDs will be provided in JSON format at `https://10.20.0.1/api/flag_id` in the following format:
+
+```json
+{  
+   "service_name_1":{  
+      "10.10.1.1":[  
+         "flag_id_1",
+         "flag_id_2",
+         "flag_id_3",
+         "flag_id_4",
+         "flag_id_5"
+      ],
+      "10.10.2.1":[ 
+         ...
+      ],
+      ...
+   },
+   "service_name_2":{  
+      "10.10.1.1":[  
+         ...
+      ],
+      ...
+   }
+}
+```
+
+IDs of a specific service will be published at `https://10.20.0.1/api/flag_id/<service_name>`.
 
 
 Technical and Human Behaviour
 -----------------------------
 We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:
 
+* Limit Internet access from your device: we only have 30GB of traffic to use during the CTF, overall
 * No attacks against the infrastructure including denial-of-service (DoS), floods, DNS poisoning, ARP spoofing, MITM, etc...
 * The only permitted attack targets are the vulnerable machines! Players are not allowed to attack each other (e.g., you can't break into rivals' laptops)
 * Destructive behavior and unfair practices are severely prohibited. These include removing flags or deleting files on compromised hosts, creating fake flags to break legitimate attacks
