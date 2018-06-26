@@ -1004,7 +1004,7 @@ def service(name):
         cur.execute('SELECT * FROM services WHERE name = %s',
                     [name])
         service = cur.fetchone()
-    if service is None:
+    if service is None or not service['active']:
         abort(404)
     return render_template('service.html', service=service)
 
