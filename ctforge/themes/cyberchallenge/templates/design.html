@@ -44,7 +44,7 @@ All the slides that will be used on stage by participants must be submitted in P
 
 Network and Setup
 -----------------
-The game is played within the `10.10.0.0/16` subnet. Each team has its own vulnerable machine located at `10.10.<team_id>.1`, while players connecting to the game network are assigned an ip in the range `10.10.<team_id>.150` - `10.10.<team_id>.200`. All vulnerable VMs will be hosted by organisers and will have enough resources in terms of CPU and memory to run the pre-installed services (expect a standard Linux distro with around 6 cores / 6GB ram / 30GB hd). 
+The game is played within the `10.10.0.0/16` subnet. Each team has its own vulnerable machine located at `10.10.<team_id>.1`, while players connecting to the game network are assigned an ip in the range `10.10.<team_id>.150` - `10.10.<team_id>.200`. All vulnerable VMs will be hosted by organisers and will have enough resources in terms of CPU and memory to run the pre-installed services (expect a standard Linux distro with around 6 cores / 6GB ram / 30GB hd). Scoreboard is reachable at [http://10.20.0.1/](http://10.20.0.1/) or [http://monitor.cyberchallenge.it](http://monitor.cyberchallenge.it).
 
 ![Network Map](/static/img/netowrk-map.png)
 
@@ -54,7 +54,11 @@ Internet access is granted to install new software on the VM and on the laptops 
 
 Beware that if you mess up your vulnerable machine, all we can do is reset it to its original state (backup your exploits, tools and patches!).
 
-There could be some ssh backup keys deployed by organisers on all vulnerable boxes. Feel free to remove them, but that will make life harder for you in case of hotfixes to be released. Legitimate public keys will be announced as part of the rules.
+There is a ssh backup keys deployed by organisers on all vulnerable boxes. Feel free to remove it, but that will make life harder for you in case of hotfixes to be released. The legitimate key is:
+
+```
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICbqrzR9/jEdc7kJ0uTEpPdH3ZCuu3MYzpAFzlWuSbmf root@gameserver
+```
 
 
 Scoring
