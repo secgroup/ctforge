@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block title %}Not Found{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+<div class="row text-center"><span class="glyphicon glyphicon-question-sign huge-icon" aria-hidden="true"></span></div>
+<h1>Not Found</h1>
+<p class="lead">Page not found, <a href="{{ url_for('index') }}">go somewhere nice</a></p>
+{% endblock %}
+{% block footer %}{% endblock %}

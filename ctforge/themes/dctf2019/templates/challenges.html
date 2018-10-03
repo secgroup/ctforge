@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% block title %}Challenges{% endblock %}
+{% block content %}
+
+<h1>Challenges</h1>
+
+{% if config.JEOPARDY_BONUS %}
+<p>Bonus points: +3, +2, +1 to the first, second, third solver of each challenge</p>
+{% endif %}
+
+<div class="card">
+    {% if settings['ctf_running'] %}
+        {% if settings['time_enabled'] %}
+        <div  class="card-body h3">
+            <i class="fa fa-clock-o"></i>
+            <div class="float-right">
+                TIME LEFT &nbsp;
+                <span id="countdown">00:00:00</span>
+            </div>
+        </div>
+        <script>
+         $(document).ready(function () {
+             var seconds_left = {{ settings['seconds_left'] }};
+             var d2 = function (n) {
+                 var str = n+"";
+                 return "00".substring(0, 2 - str.length) + str;
+             }
+             var update_time = function () {
+                 seconds_left--;
+                 var hours = Math.floor(seconds_left / 3600),
+                     minutes = Math.floor((seconds_left % 3600) / 60),
+                     seconds = (seconds_left % 3600) % 60;
+                 $("#countdown").text(d2(hours)+":"+d2(minutes)+":"+d2(seconds));
+                 if (seconds_left <= 0)
+                     window.location.reload();
+             };
+             update_time();
+             setInterval(update_time, 1000);
+         });
+        </script>
+        {% endif %}
+    {% else %}
+        <div class="card-body text-center mx-auto h5">
+        {% if settings['time_enabled'] %}
+            {% if settings['ctf_ended'] %}
+              The CTF is over! <br>
+              You can still submit flags, however you won't be awarded any points.
+            {% else %}
+              The CTF starts at {{ settings['start_time'] }}
+            {% endif %}
+        {% else %}
+          The CTF is coming soon!
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+
+<div class="row">
+    {% if settings['ctf_running'] or settings['ctf_ended'] %}
+      {% if challenges %}
+        {% for chal in challenges %}
+        <div class="col-md-3 col-sm-6">
+            <a href="{{ url_for('challenge', name=chal.name) }}" class="chall-tile {% if not chal.active %} inactive {% endif %}" >
+                <span class="points">{{ chal.points }} <small>pts</small></span>
+                <span class="solvers">{{ chal.solvers }} <small>solver(s)</small></span>
+                <h3 class="title">
+                    {% if chal.solved %}
+                    <span class="fa fa-check-circle"
+                          style="background:none;" aria-hidden="true" ></span>
+                    {% endif %}
+                    {{ chal.name }}
+                </h3>
+                <p class="description">{{ chal.tags }}</p>
+            </a>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p class="d-block w-100 h4 text-center mt-4">No Challenges</p>
+      {% endif %}
+    {% endif %}
+</div>
+
+{% endblock %}

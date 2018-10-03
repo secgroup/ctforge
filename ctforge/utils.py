@@ -24,6 +24,7 @@ def parse_conf(fname):
             DB_PASSWORD = config.get('database', 'password', fallback='ctforge'),
 
             SHOW_NAMES = config.getboolean('DEFAULT', 'show_names', fallback=True),
+            REGISTRATION_KEY = config.get('DEFAULT', 'registration_key', fallback='ctforge'),
 
             JEOPARDY_ACTIVE = config.getboolean('mode_jeopardy', 'active', fallback=True),
             JEOPARDY_BONUS = config.getboolean('mode_jeopardy', 'bonus', fallback=True),

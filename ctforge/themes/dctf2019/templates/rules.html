@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% block title %}CTF Design{% endblock %}
+{% block content %}
+
+<h1>CTF Rules</h1>
+<p>
+    The DCTF 2019 is a security competitions for students who attend the <a href="https://www.unive.it/data/insegnamento/274860">Security course</a> at Ca' Foscari University.
+    It is organized by the <a href="https://secgroup.github.io">c00kies@venice</a> hacking team under the direction of prof. Riccardo Focardi.
+</p>
+
+<h2>Schedule</h2>
+<p>
+    The contest is expected to take place for the entire duration of the course.<br>
+    In each lab session a new challenge will be released and a discussion on the problem will take place on the course Slack.
+</p>
+
+<h2>Scoring</h2>
+<p>
+    Each challenge is worth a certain amount of points in the range <code>0-500</code> according to the expected difficulty.
+    Besides solving the challenges, you are expected to write a small report and submit it using the provided form
+    within a limited amout of time (usually a week), that will be announced at the release of every challenge.
+    The CTF platform will provide a template for every writeup, asking for particular details an/or the submission of the code.
+    <u>The writeups that do not follow the template will not be evaluated</u>.
+</p>
+<p>
+    After the submission of the writeup you will be assigned a grade (0 or 1) and a feedback on the solution.
+    Every positively graded callenge will grant a <b>bonus</b> on the exam score of <code>0.5</code> points.
+</p>
+<p>
+    Before solving any of the other challenges, you are required to accept an <code>agreement</code> on the responsible use of the abilities
+    you will acquire during this lab.
+</p>
+
+<h3>Flags</h3>
+<p>
+    The aim of each challenge is to get a string (called flag) that proves a successful exploitation.
+    All flags will have different formats but they will be easily recongnizable.
+</p>
+
+<h3>Technical and Human Behaviour</h3>
+<p>We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:</p>
+<ul>
+    <li>No attacks against the infrastructure (this website and challenges) including denial-of-service (DOS), floods, DNS poisoning, ARP spoofing, MITM, etc...</li>
+    <li>Don't try to bruteforce flags by doing an unreasonable number of attempts in the flag submission page. We guarantee our flags to be unguessable&trade;.</li>
+    <li>Vulnerability/network scanners are useless for these challenges and not allowed. Do something better.</li>
+    <li>If you find a way to hack into a service/challenge more easily than intended, please report it to the organizers.</li>
+    <li>Sharing flags, exploits or hints is severely prohibited and will grant you the exclusion from the competition.</li>
+</ul>
+<p>
+    Rules anyway may change as more issues are raised by the participants. Also, the organizers keep the right to change them at any time.
+    Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask to us on slack.
+</p>
+
+<h3>Communication</h3>
+<p>
+    We invite everyone attending the contest to join us on slack.
+    Challenge discussion will happen there and it will be the main platform for the interaction with the organizers.
+</p>
+
+<h3>And remember to...</h3>
+<p>...have fun and hack all the things!!!!!11</p>
+
+{% endblock %}

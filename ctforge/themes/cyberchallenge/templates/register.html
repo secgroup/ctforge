@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block title %}Login{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-sm-8">
+        <form class="form-signin" action="{{ url_for('register') }}" method="post">
+            <h2 class="form-signin-heading">User Registration</h2>
+            {{ form.csrf_token }}
+
+            {{ form.regkey.label(class="control-label") }}
+            {{ form.regkey(placeholder="Registration Token", class="form-control", type="text", required=True) }}
+
+            {{ form.name.label(class="control-label") }}
+            {{ form.name(placeholder="Name", class="form-control", type="text", required=True) }}
+
+            {{ form.surname.label(class="control-label") }}
+            {{ form.surname(placeholder="Surname", class="form-control", type="text", required=True) }}
+
+            {{ form.nickname.label(class="control-label") }}
+            {{ form.nickname(placeholder="Nickname", class="form-control", type="text", required=True) }}
+            
+            {{ form.mail.label(class="control-label") }}
+            {{ form.mail(placeholder="Email address", class="form-control", type="email", required=True) }}
+
+            {{ form.password.label(class="control-label") }}
+            {{ form.password(placeholder="Password", class="form-control", required=True) }}
+            
+            {{ form.password_ver.label(class="control-label") }}
+            {{ form.password_ver(placeholder="Password (verification)", class="form-control", required=True) }}
+
+            <br/>
+            <button class="btn btn-lg btn-dark" type="submit">Register</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+{% block footer %}{% endblock %}
+

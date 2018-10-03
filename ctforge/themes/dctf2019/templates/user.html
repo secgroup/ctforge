@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block title %}User Profile{% endblock %}
+{% block content %}
+
+<h1>User Profile</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <table class="table">
+            <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
+            <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
+            {% if user.affiliation %}
+            <tr><td>Affiliation:</td><td>{{ user.affiliation }}</td></tr>
+            {% endif %}
+        </table>
+    </div>
+    <div class="col-md-4">
+        {% if config['JEOPARDY_ACTIVE'] %}
+        <a class="btn btn-dark d-block mb-3"
+           href="ssh://seclab.dais.unive.it:2222">
+            <i class="fa fa-terminal"></i>
+            Testbed
+        </a>
+        {% endif %}
+        <a class="btn btn-dark d-block mb-3"
+           target="_blank"
+           href="https://seclabunive.slack.com/">
+            <i class="fa fa-slack"></i>
+            Join on Slack
+        </a>
+    </div>
+</div>
+{% if config['JEOPARDY_ACTIVE'] %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Solved Challenges</h2>
+
+        {% if challenges|length > 0 %}
+        <table class="table">
+            <thead><tr><td>Challenge</td><td>Score</td><td>Time</td></tr></thead>
+            <tbody>
+            {% for chal in challenges %}
+                <tr>
+                    <td>{{ chal.name }}</td><td>{{ chal.points }}</td><td>{{ chal.timestamp }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <h3 align="center">No Challenges</h3>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

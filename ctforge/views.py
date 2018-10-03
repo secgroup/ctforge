@@ -99,6 +99,27 @@ def login():
 
     return render_template('login.html', form=form)
 
+@app.route('/register', methods=['POST', 'GET'])
+def register():
+    form = ctforge.forms.RegistrationForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if app.config['REGISTRATION_KEY'] != form.regkey.data:
+                flash('Invalid registration token!', 'error')
+                return redirect(url_for('register'))
+            if form.password.data != form.password_ver.data:
+                flash('Wrong password!', 'error')
+                return redirect(url_for('register'))
+
+            query_handler((
+                'INSERT INTO users (name, surname, nickname, mail, password) '
+                'VALUES (%s, %s, %s, %s, %s)'),
+                (form.name.data, form.surname.data, form.nickname.data, form.mail.data,
+                 bcrypt.hashpw(form.password.data, bcrypt.gensalt())))
+            return redirect(url_for('index'))
+
+    return render_template('register.html', form=form)
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -485,7 +506,8 @@ def edit_evaluation(challenge_id, user_id):
                     [user_id, challenge_id, form.grade.data, form.feedback.data])
             else:
                 # only allow if not yet graded
-                if evaluation['grade'] is None:
+                # (or not ;P)
+                if True or evaluation['grade'] is None:
                     query_handler((
                         'UPDATE challenges_evaluations '
                         'SET grade = %s, feedback = %s, timestamp = NOW() '

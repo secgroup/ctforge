@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block title %}Flag Submission Service{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+        <form class="form-submit" action="{{ url_for('submit') }}" method="post">
+            <h2>Enter Your Flag</h2>
+            {{ form.team_token.label(class="sr-only") }}
+            {{ form.team_token(value=team_token) }}
+            <div class="form-group">
+                {{ form.flag.label(class="sr-only") }}
+                {{ form.flag(placeholder="Flag", class="form-control", required=True) }}
+            </div>
+            <button class="btn btn-dark" type="submit">Submit</button>
+        </form>
+    </div>
+    <div class="col-md-2"></div>
+</div>
+
+{% endblock %}

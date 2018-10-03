@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+{% from "_macros.html" import render_inline_fields %}
+
+
+<h2>{{ action }} {{ target }}</h2>
+<div class="row d-block-inline float-right">
+    {% if return_to is defined %}
+    <a href="{{ return_to }}">
+    {% else %}
+    <a href="{{ url_for('admin', tab=target ~ 's') }}">
+    {% endif %}
+        <button type="button" class="btn btn-secondary">
+            <span class="fa fa-arrow-left" aria-hidden="true"></span> back
+        </button>
+    </a>
+</div>
+<div class="row">
+    <div class="col-md-10">
+        <form class="form-horizontal" action="{{ request.path }}" method="post">
+            {{ form.hidden_tag() }}
+            {{ render_inline_fields(form) }}
+            <div class="form-group">
+                <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+    <div class="col-md-2">
+    </div>
+</div>
+
+{% endblock %}
+{% block footer %}{% endblock %}

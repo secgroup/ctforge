@@ -8,6 +8,17 @@ class LoginForm(FlaskForm):
     mail = StringField('mail', validators=[validators.DataRequired()])
     password = PasswordField('Password', validators=[validators.DataRequired()])
 
+class RegistrationForm(FlaskForm):
+    regkey = StringField('Registration Token', validators=[validators.DataRequired()])
+    name = StringField('Name', validators=[validators.DataRequired()])
+    surname = StringField('Surname', validators=[validators.DataRequired()])
+    nickname = StringField('Nickname', validators=[validators.Optional()])
+    mail = StringField('Mail', validators=[validators.DataRequired()])
+    # affiliation = StringField('affiliation', validators=[validators.Optional()])
+    password = PasswordField('Password', validators=[validators.DataRequired()])
+    password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
+
+
 class ServiceFlagForm(FlaskForm):
     team_token = HiddenField('team_token', validators=[validators.DataRequired()])
     flag = StringField('flag', validators=[validators.DataRequired()])

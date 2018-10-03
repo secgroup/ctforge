@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block title %}Teams{% endblock %}
+{% block content %}
+
+<h1>Teams</h1>
+
+<div class="row">
+    {% for team in teams %}
+    <div class="col-md-4">
+        <h2 class="text-center">{{ team.name }} (team{{ team.id }})</h2>
+        <table class="table" id="team-{{ team.id }}">
+            <thead><tr>
+                {% if config.SHOW_NAMES %}
+                <td>Name</td><td>Surname</td>
+                {% endif %}
+                <td>Nickname</td></tr></thead>
+            <tbody>
+              {% for user in users %}
+                {% if team.id == user.team_id %}
+                <tr id="user-{{ user.id }}">
+                    {% if config.SHOW_NAMES %}
+                    <td>{{ user.name }}</td><td>{{ user.surname }}</td>
+                    {% endif %}
+                    <td>{{ user.nickname }}</td></tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
