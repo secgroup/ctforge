@@ -382,15 +382,15 @@ def edit_evaluation(challenge_id, user_id):
                     [user_id, challenge_id, form.grade.data, form.feedback.data])
             else:
                 # only allow if not yet graded
-                if evaluation['grade'] is None:
-                    query_handler((
-                        'UPDATE challenges_evaluations '
-                        'SET grade = %s, feedback = %s, timestamp = NOW() '
-                        'WHERE user_id = %s AND challenge_id = %s'),
-                        [form.grade.data, form.feedback.data, user_id, challenge_id])
-                else:
-                    flash('Cannot modify a writeup evaluation once a grade has been set!',
-                          'error')
+                #if evaluation['grade'] is None:
+                query_handler((
+                    'UPDATE challenges_evaluations '
+                    'SET grade = %s, feedback = %s, timestamp = NOW() '
+                    'WHERE user_id = %s AND challenge_id = %s'),
+                    [form.grade.data, form.feedback.data, user_id, challenge_id])
+                #else:
+                #    flash('Cannot modify a writeup evaluation once a grade has been set!',
+                #          'error')
         else:
             flash_errors(form)
     else:
@@ -444,16 +444,16 @@ def submit():
                     raise ctforge.exceptions.InvalidFlag()
                 service_id = res['service_id']
                 # check whether the team's service is well-functioning or not
-                cur.execute(('SELECT I.successful, I.timestamp '
-                             'FROM active_flags AS A '
-                             'JOIN integrity_checks AS I '
-                             'ON A.flag = I.flag '
-                             'WHERE A.team_id = %s AND A.service_id = %s '
-                             'ORDER BY I.timestamp DESC LIMIT 1'),
-                             [team_id, service_id])
-                res = cur.fetchone()
-                if res is None or res['successful'] != 1:
-                    raise ctforge.exceptions.ServiceCorrupted()
+                #cur.execute(('SELECT I.successful, I.timestamp '
+                #             'FROM active_flags AS A '
+                #             'JOIN integrity_checks AS I '
+                #             'ON A.flag = I.flag '
+                #             'WHERE A.team_id = %s AND A.service_id = %s '
+                #             'ORDER BY I.timestamp DESC LIMIT 1'),
+                #             [team_id, service_id])
+                #res = cur.fetchone()
+                #if res is None or res['successful'] != 1:
+                #    raise ctforge.exceptions.ServiceCorrupted()
                 # store the attack in the database
                 cur.execute(('INSERT INTO service_attacks (team_id, flag) '
                              'VALUES (%s, %s) '),
@@ -571,7 +571,7 @@ def _challenges():
         users[ca['user_id']] = '{} {}'.format(ca['name'], ca['surname'])
         attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
 
-    # compute the bonus: +3 for firt shot, +2 to second and +1 to third
+    # compute the bonus: +1 for firt shot, +0.5 to second and third
     bonus_aux = dict()
     for (c, u), t in attacks.items():
         try:
@@ -582,8 +582,11 @@ def _challenges():
     for c in bonus_aux.keys():
         bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
         for i in range(len(bonus_aux[c])):
-            bonus[(c, bonus_aux[c][i][0])] = 3 - i
-            if i >= 2:
+            if i == 0:
+                bonus[(c, bonus_aux[c][i][0])] = 1
+            elif i == 1 or i == 2:
+                bonus[(c, bonus_aux[c][i][0])] = 0.5
+            else:
                 break
 
     # compute the scoreboard as a list of dictionaries
@@ -591,18 +594,22 @@ def _challenges():
     for u, uv in users.items():
         score = {'user': uv, 'points': 0}
         score['challenges'] = dict()
+        solved_all = True
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
-                # only add the bonus points if the challenge score is > 0
+                # only add the bonus points if the challenge is not agreement
                 points = cv['points']
-                if points > 0:
+                if cv['name'] != 'agreement':
                     points += bonus.get((c, u), 0)
                 score['points'] += points
             except KeyError:
                 timestamp = None
                 points = 0
+                solved_all = False
             score['challenges'][c] = {'timestamp': timestamp, 'points': points}
+        if solved_all:
+            score['points'] +=  1
         scoreboard.append(score)
     # sort the scoreboard by total points
     scoreboard = sorted(scoreboard, key=lambda x: x['points'], reverse=True)

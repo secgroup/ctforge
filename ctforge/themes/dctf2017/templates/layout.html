@@ -42,9 +42,7 @@
                     {% endif %}
                     {% if config.ATTACKDEFENSE_ACTIVE %}
                         <li {% if request.path == url_for('scoreboard') %}class="active"{% endif %}><a href="{{ url_for('scoreboard') }}">CTF Scoreboard</a></li>
-                    {% endif %}
                         <li {% if request.path == url_for('design') %}class="active"{% endif %}><a href="{{ url_for('design') }}">CTF Design</a></li>
-                    {% if config.ATTACKDEFENSE_ACTIVE %}
                         <li {% if request.path == url_for('teams') %}class="active"{% endif %}><a href="{{ url_for('teams') }}">Teams</a></li>
                     {% endif %}
                         <li {% if request.path == url_for('credits') %}class="active"{% endif %}><a href="{{ url_for('credits') }}">Credits</a></li>

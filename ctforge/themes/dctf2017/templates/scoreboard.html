@@ -77,7 +77,7 @@ $(document).ready(function() {
     var countdown = document.getElementById("countdown");
     
     setInterval(function () {
-        if(seconds_left <= 0 || seconds_left % 600 == 0) {
+        if(seconds_left <= 0 || seconds_left % 20 == 0) {
             window.location.reload(true);
         }
         

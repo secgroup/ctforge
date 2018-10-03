@@ -2,7 +2,7 @@
 {% block title %}{{ challenge.name }}{% endblock %}
 {% block content %}
 
-<h2>{{ challenge.name }} <span class="text-muted">({{ challenge.points }} points)
+<h2>{{ challenge.name }} <span class="text-muted"><!-- ({{ challenge.points }} points) -->
 {% if solved %}
     <span class="glyphicon glyphicon-ok alert-info" aria-hidden="true" style="background: none"></span>
 {% endif %}
