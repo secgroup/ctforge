@@ -644,14 +644,8 @@ def user():
                 'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY C.name', [current_user.id])
     challenges = cur.fetchall()
 
-    try:
-        with open(os.path.expanduser('~/.ctforge/client.ovpn'), 'r') as f:
-            vpn = base64.b64encode(f.read().encode()).decode()
-    except FileNotFoundError as e:
-        app.logger.error(e)
-        vpn = ""
 
-    return render_template('user.html', user=user, challenges=challenges, vpn_encoded=vpn)
+    return render_template('user.html', user=user, challenges=challenges)
 
 
 
