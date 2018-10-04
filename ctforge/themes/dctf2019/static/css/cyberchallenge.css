@@ -8,10 +8,11 @@
 
 
 body {
-   min-height: 500px;
-   padding-top: 70px;
-   background: url('/static/img/bg.jpg') no-repeat center center fixed;
-   background-size: cover;
+    min-height: 500px;
+    padding-top: 70px;
+    background: url('/static/img/bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    color: #b8c3c5;
 }
 
 pre, code, textarea.form-control {
