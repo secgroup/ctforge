@@ -1,3 +1,7 @@
+body {
+    color: #b8c3c5;
+}
+
 textarea.form-control {
     width: 100%;
     min-height: 500px;
