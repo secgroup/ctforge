@@ -190,7 +190,7 @@ table.scoreboard span.alert-danger {
     text-decoration: none;
 }
 .chall-tile.inactive {
-    opacity: 0.4;
+    opacity: 0.55;
 }
 .chall-tile .title {
     color: #2AA198;
