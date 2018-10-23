@@ -838,11 +838,11 @@ def _challenges():
             score['challenges'][cv['name']] = {
                 'timestamp': timestamp, 'points': points, 'grade': grade}
         scoreboard.append(score)
-    # sort the scoreboard by total points or, in case of a tie, by the time of the
-    # last submission
+    # sort the scoreboard by total points, number of solved challenges
+    # or, in case of a tie, by the time of the last submission
     def sorting_key(u):
         timestamps = [c['timestamp'] for c in u['challenges'].values() if c['timestamp'] is not None]
-        return u['points'], datetime.now() - max(timestamps)
+        return u['points'], len(timestamps), datetime.now() - max(timestamps)
 
     scoreboard.sort(key=sorting_key, reverse=True)
 
