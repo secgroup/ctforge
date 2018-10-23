@@ -780,7 +780,7 @@ def _challenges():
         'WHERE NOT admin AND NOT hidden '
         'ORDER BY timestamp ASC '))
     challenge_attacks = cur.fetchall()
-    cur.close()
+    # cur.close()
     # map user id to a string representing his name and surname
     users = dict()
     # map the pair challenge id and user id to the timestamp
@@ -793,6 +793,14 @@ def _challenges():
             'affiliation': ca['affiliation']
         }
         attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
+
+    cur.execute((
+        'SELECT user_id, challenge_id, grade FROM challenges_evaluations'))
+    challenge_evaluations = cur.fetchall()
+    cur.close()
+    evaluations = dict()
+    for ev in challenge_evaluations:
+        evaluations[(ev['challenge_id'], ev['user_id'])] = ev['grade']
 
     bonus = dict()
     if app.config['JEOPARDY_BONUS']:
@@ -817,15 +825,18 @@ def _challenges():
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
+                grade = evaluations.get((c,u), 0)
                 # only add the bonus points if the challenge score is > 0
                 points = cv['points']
                 if points > 0:
                     points += bonus.get((c, u), 0)
-                score['points'] += points
+                if grade > 0:
+                    score['points'] += points
             except KeyError:
                 timestamp = None
                 points = 0
-            score['challenges'][cv['name']] = {'timestamp': timestamp, 'points': points}
+            score['challenges'][cv['name']] = {
+                'timestamp': timestamp, 'points': points, 'grade': grade}
         scoreboard.append(score)
     # sort the scoreboard by total points or, in case of a tie, by the time of the
     # last submission

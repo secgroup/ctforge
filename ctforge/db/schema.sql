@@ -44,7 +44,7 @@ CREATE TABLE challenges (
     name              VARCHAR(45) NOT NULL,
     description       TEXT NOT NULL,
     flag              VARCHAR(120) NOT NULL,
-    points            INT NOT NULL,
+    points            FLOAT NOT NULL,
     tags              TEXT NOT NULL DEFAULT '', 
     active            BOOLEAN NOT NULL DEFAULT FALSE,
     hidden            BOOLEAN NOT NULL DEFAULT TRUE,
