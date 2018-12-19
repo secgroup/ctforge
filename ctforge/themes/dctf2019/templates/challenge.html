@@ -89,7 +89,7 @@
                 {% if evaluation %}
                     <h3>Evaluation</h3>
                         <p>Feedback</p>
-                        <pre><code>{{ evaluation.feedback }}</code></pre>
+                        <pre><code style="white-space: pre-wrap;">{{ evaluation.feedback }}</code></pre>
                     {% if graded %}
                         <p>Grade <span class="big">{{ evaluation.grade }}</span>/1</p>
                     {% endif %}
