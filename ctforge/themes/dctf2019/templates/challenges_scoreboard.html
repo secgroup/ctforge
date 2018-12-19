@@ -127,7 +127,7 @@
                  {% if affiliations|length > 1 %}
                  affiliation: u.affiliation,
                  {% endif %}
-                 points: u.points
+                 points: u.points.toFixed(2)
              };
              Object.keys(u.challenges).forEach(function (c) {
                  var entry = $("<span>").attr("aria-hidden", "true");
