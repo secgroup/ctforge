@@ -138,7 +138,7 @@
                      row[escapeHTML(c)] = $("<td>").append(
                          (u.challenges[c].grade > 0) ?
                          entry.addClass("alert-info").attr("title", u.challenges[c].timestamp)
-                              .text(u.challenges[c].points) :
+                              .text(u.challenges[c].points * u.challenges[c].grade) :
                          entry.addClass("fa fa-check alert-info")
                               .attr("title", u.challenges[c].timestamp));
                  }

@@ -831,7 +831,7 @@ def _challenges():
                 if points > 0:
                     points += bonus.get((c, u), 0)
                 if grade > 0:
-                    score['points'] += points
+                    score['points'] += points * grade # bonus = grade * max_points
             except KeyError:
                 timestamp = None
                 points = 0
