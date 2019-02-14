@@ -27,9 +27,9 @@ setup(
         'Flask-Misaka>=0.4.1',
         'py-bcrypt>=0.4',
         'psycopg2-binary>=2.6.1',
-        'Flask-Cache>=0.13'
+        'Flask-Cache==0.13w'
     ],
-    dependency_links=['https://github.com/wert310/flask-cache/tarball/master#egg=Flask-Cache-0.13'],
+    dependency_links=['https://github.com/wert310/flask-cache/tarball/master#egg=Flask-Cache-0.13w'],
     classifiers=[
         'Private :: Do Not Upload'
     ]
