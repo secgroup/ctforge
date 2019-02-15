@@ -77,7 +77,7 @@ CREATE TABLE writeups (
 CREATE TABLE challenges_evaluations (
     user_id       INT NOT NULL,
     challenge_id  INT NOT NULL,
-    grade         INT,
+    grade         FLOAT,
     feedback      TEXT,
     timestamp     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, challenge_id),
