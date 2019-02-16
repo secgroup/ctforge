@@ -28,8 +28,10 @@ The game is played within the `10.0.0.0/16` subnet. Each team has its own vulner
 
 The _gameserver_ is responsible for dispatching flags to the vulnerable machines, checking services integrity, hosting the scoreboard and updating scores. Participants are asked to attack vulnerable machines of other teams to retrieve proofs of successful exploitation (flags). Flags must be submitted to the flag submission service hosted by the organisers to score points. At the same time, teams must defend the vulnerable services installed on their VMs. Teams can do whatever they want within their network segment.
 
-The VMs
-
+The VMs are *not* connected to the Internet. The only allowed traffic is towards the
+ubuntu mirrors to make you download additional software. Everything else must be copied
+manually using ssh.
+        
 Beware that if you mess up your vulnerable machine, all we can do is reset it to its original state (backup your exploits, tools and patches!).
 
 There are ssh backup keys deployed by organisers on all vulnerable boxes. Do not remove them!  
