@@ -644,8 +644,15 @@ def user():
                 'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY C.name', [current_user.id])
     challenges = cur.fetchall()
 
+    vpn = ""
+    if current_user.team_id:
+        try:
+            with open(os.path.expanduser('~/openvpn/openvpn-team{:02d}.conf.gz'.format(current_user.team_id)), 'rb') as f:
+                vpn = base64.b64encode(f.read()).decode()
+        except FileNotFoundError as e:
+            app.logger.error(e)
 
-    return render_template('user.html', user=user, challenges=challenges)
+    return render_template('user.html', user=user, challenges=challenges, vpn_encoded=vpn)
 
 
 

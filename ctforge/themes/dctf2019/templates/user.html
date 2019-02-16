@@ -22,6 +22,16 @@
             Testbed
         </a>
         {% endif %}
+        {% if config['ATTACKDEFENSE_ACTIVE'] and user.team_id %}
+        <a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %} mb-3"
+           download="team-{{ user.team_id }}.ovpn.gz"
+           {% if vpn_encoded %}
+           href="data:application/octet-stream;base64,{{ vpn_encoded }}"
+           {% endif %}>
+            <i class="fa fa-download"></i>
+            team-{{ user.team_id }}.ovpn.gz
+        </a>
+        {% endif %}
         <a class="btn btn-dark d-block mb-3"
            target="_blank"
            href="https://seclabunive.slack.com/">
