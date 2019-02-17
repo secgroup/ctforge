@@ -108,11 +108,11 @@ As an example, we provide a simple python snippet that accounts for the submissi
 #!/usr/bin/python
 import requests
 
-url = 'https://10.0.254.2/submit'
+url = 'http://10.0.254.2/submit'
 team_token = '<your_token>'
 stolen_flag = 'flg{abcdefghilmnopqrstuvz0123}'
 
-r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag}
+r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag})
 ```
 
 Flags are considered expired after 5 rounds. It means that teams have up to 10 minutes to steal a flag and submit it. At the same time, the check bot will try to retrieve one of the last 5 flags from a service to check if the intended functionalities have been preserved and mark it as _up_.
