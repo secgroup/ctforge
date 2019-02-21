@@ -1,0 +1,12 @@
+version: '3'
+services:
+  ctforge:
+    build: .
+    volumes:
+     - .:/ctforge
+    ports:
+     - "5000:5000"
+  postgres:
+    image: "postgres:10-alpine"
+    ports:
+     - "5432:5432"
