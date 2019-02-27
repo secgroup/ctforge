@@ -87,7 +87,7 @@ def login():
     if request.method == 'POST':
         if form.validate_on_submit():
             user = User.get(form.mail.data)
-            if user is not None and bcrypt.checkpw(form.password.data, user.password):
+            if user is not None and user.active and bcrypt.checkpw(form.password.data, user.password):
                 if login_user(user):
                     return redirect(url_for('index'))
                 else:
@@ -99,26 +99,59 @@ def login():
 
     return render_template('login.html', form=form)
 
-@app.route('/register', methods=['POST', 'GET'])
-def register():
-    form = ctforge.forms.RegistrationForm()
+# @app.route('/register', methods=['POST', 'GET'])
+# def register():
+#     form = ctforge.forms.RegistrationForm()
+#     if request.method == 'POST':
+#         if form.validate_on_submit():
+#             if app.config['REGISTRATION_KEY'] != form.regkey.data:
+#                 flash('Invalid registration token!', 'error')
+#                 return redirect(url_for('register'))
+#             if form.password.data != form.password_ver.data:
+#                 flash('Wrong password!', 'error')
+#                 return redirect(url_for('register'))
+#
+#             query_handler((
+#                 'INSERT INTO users (name, surname, nickname, mail, password) '
+#                 'VALUES (%s, %s, %s, %s, %s)'),
+#                 (form.name.data, form.surname.data, form.nickname.data, form.mail.data,
+#                  bcrypt.hashpw(form.password.data, bcrypt.gensalt())))
+#             return redirect(url_for('index'))
+
+#     return render_template('register.html', form=form)
+
+@app.route('/activate/<token>', methods=['POST', 'GET'])
+def activate(token=None):
+    # get the disabled user corresponding to the provided token
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute((
+            'SELECT id, mail '
+            'FROM users '
+            'WHERE active = FALSE AND token = %s'), [token])
+        user = cur.fetchone()
+    if user is None:
+        flash('Invalid token!', 'error')
+        return redirect(url_for('index'))
+    # initialize the form
+    form = ctforge.forms.ActivateUserForm()
+
     if request.method == 'POST':
         if form.validate_on_submit():
-            if app.config['REGISTRATION_KEY'] != form.regkey.data:
-                flash('Invalid registration token!', 'error')
-                return redirect(url_for('register'))
             if form.password.data != form.password_ver.data:
                 flash('Wrong password!', 'error')
-                return redirect(url_for('register'))
-
             query_handler((
-                'INSERT INTO users (name, surname, nickname, mail, password) '
-                'VALUES (%s, %s, %s, %s, %s)'),
-                (form.name.data, form.surname.data, form.nickname.data, form.mail.data,
-                 bcrypt.hashpw(form.password.data, bcrypt.gensalt())))
-            return redirect(url_for('index'))
+                'UPDATE users SET nickname = %s, password = %s, '
+                '                 active = TRUE, token = NULL '
+                'WHERE id = %s'),
+                (form.nickname.data, bcrypt.hashpw(form.password.data, 
+                 bcrypt.gensalt()), user[id]))
+            flash('User activated!', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash_errors(form)
 
-    return render_template('register.html', form=form)
+    return render_template('activate.html', form=form, mail=user['mail'])
 
 @app.route('/logout')
 @login_required
@@ -198,14 +231,14 @@ def add_user():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO users (team_id, name, surname, nickname, mail, '
-                '                   affiliation, password, admin, hidden) '
+                'INSERT INTO users (team_id, name, surname, nickname, token, mail, '
+                '                   affiliation, password, active, admin, hidden) '
                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
-                (form.team_id.data, form.name.data,
-                 form.surname.data, form.nickname.data, form.mail.data,
+                (form.team_id.data, form.name.data, form.surname.data, 
+                 form.nickname.data, form.token.data, form.mail.data,
                  form.affiliation.data,
                  bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
-                 form.admin.data, form.hidden.data))
+                 form.active.data, form.admin.data, form.hidden.data))
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='users'))
@@ -222,23 +255,25 @@ def edit_user(id):
                 # update the password
                 query_handler((
                     'UPDATE users '
-                    'SET team_id = %s, name = %s, surname = %s, nickname = %s '
-                    '    mail = %s, affiliation = %s, password = %s, admin = %s, hidden = %s '
+                    'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
+                    '    token = %s, mail = %s, affiliation = %s, password = %s, '
+                    '    active = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
-                    (form.team_id.data, form.name.data,
-                     form.surname.data, form.nickname.data, form.mail.data,
+                    (form.team_id.data, form.name.data, form.surname.data, 
+                     form.nickname.data, form.token.data, form.mail.data,
                      form.affiliation.data,
                      bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
-                     form.admin.data, form.hidden.data, id))
+                     form.active.data, form.admin.data, form.hidden.data, id))
             else:
                 query_handler((
                     'UPDATE users '
                     'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
-                    '    mail = %s, affiliation = %s, admin = %s, hidden = %s '
+                    '    token = %s, mail = %s, affiliation = %s, '
+                    '    active = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
-                    (form.team_id.data, form.name.data,
-                     form.surname.data, form.nickname.data, form.mail.data,
-                     form.affiliation.data, form.admin.data,
+                    (form.team_id.data, form.name.data, form.surname.data, 
+                     form.nickname.data, form.token.data, form.mail.data,
+                     form.affiliation.data, form.active.data, form.admin.data,
                      form.hidden.data, id))
         else:
             flash_errors(form)
@@ -246,7 +281,8 @@ def edit_user(id):
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
             cur.execute((
-                'SELECT id, team_id, name, surname, nickname, mail, affiliation, admin, hidden '
+                'SELECT id, team_id, name, surname, nickname, token, mail, '
+                '       affiliation, active, admin, hidden '
                 'FROM users '
                 'WHERE id = %s'), [id])
             user = cur.fetchone()

@@ -14,10 +14,14 @@ class RegistrationForm(FlaskForm):
     surname = StringField('Surname', validators=[validators.DataRequired()])
     nickname = StringField('Nickname', validators=[validators.Optional()])
     mail = StringField('Mail', validators=[validators.DataRequired()])
-    # affiliation = StringField('affiliation', validators=[validators.Optional()])
     password = PasswordField('Password', validators=[validators.DataRequired()])
     password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
 
+class ActivateUserForm(FlaskForm):
+    mail = StringField('mail', render_kw={'disabled': True})
+    nickname = StringField('Nickname', validators=[validators.DataRequired()])
+    password = PasswordField('Password', validators=[validators.DataRequired()])
+    password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
 
 class ServiceFlagForm(FlaskForm):
     team_token = HiddenField('team_token', validators=[validators.DataRequired()])
@@ -63,9 +67,11 @@ class UserForm(FlaskForm):
     name = StringField('name', validators=[validators.DataRequired()])
     surname = StringField('surname', validators=[validators.DataRequired()])
     nickname = StringField('nickname', validators=[validators.DataRequired()])
+    token = StringField('token', validators=[validators.DataRequired()])
     mail = StringField('mail', validators=[validators.DataRequired()])
     affiliation = StringField('affiliation', validators=[validators.Optional()])
     password = StringField('password')
+    active = BooleanField('active')
     admin = BooleanField('admin')
     hidden = BooleanField('hidden')
 

@@ -37,16 +37,16 @@ def db_create_procedures():
     db_conn.close()
 
 def db_add_admin(name, surname, nickname, mail, affiliation, password):
-    db_add_user(name, surname, nickname, mail, affiliation, password, admin=True, hidden=True)
+    db_add_user(name, surname, nickname, mail, affiliation, password, active=True, admin=True, hidden=True)
 
-def db_add_user(name, surname, nickname, mail, affiliation, password, admin=False, hidden=False, team_id=None):
+def db_add_user(name, surname, nickname, mail, affiliation, password, active=False, admin=False, hidden=False, team_id=None):
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
         cur.execute((
-            'INSERT INTO users (team_id, name, surname, nickname, mail, affiliation, password, admin, hidden) '
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
+            'INSERT INTO users (team_id, name, surname, nickname, mail, affiliation, password, active, admin, hidden) '
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'),
             [team_id, name, surname, nickname, mail, affiliation, bcrypt.hashpw(password, bcrypt.gensalt()),
-             admin, hidden])
+             active, admin, hidden])
     db_conn.commit()
     db_conn.close()
 
