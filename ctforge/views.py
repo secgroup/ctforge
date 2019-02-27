@@ -125,11 +125,15 @@ def activate(token=None):
     # get the disabled user corresponding to the provided token
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
-        cur.execute((
-            'SELECT id, mail '
-            'FROM users '
-            'WHERE active = FALSE AND token = %s'), [token])
-        user = cur.fetchone()
+        try:
+            cur.execute((
+                'SELECT id, mail '
+                'FROM users '
+                'WHERE active = FALSE AND token = %s'), [token])
+            user = cur.fetchone()
+        except psycopg2.DataError:
+            flash('Malformed token!', 'error')
+            return redirect(url_for('index'))
     if user is None:
         flash('Invalid token!', 'error')
         return redirect(url_for('index'))
@@ -145,13 +149,13 @@ def activate(token=None):
                 '                 active = TRUE, token = NULL '
                 'WHERE id = %s'),
                 (form.nickname.data, bcrypt.hashpw(form.password.data, 
-                 bcrypt.gensalt()), user[id]))
+                 bcrypt.gensalt()), user['id']))
             flash('User activated!', 'success')
             return redirect(url_for('login'))
         else:
             flash_errors(form)
 
-    return render_template('activate.html', form=form, mail=user['mail'])
+    return render_template('activate.html', form=form, token=token, mail=user['mail'])
 
 @app.route('/logout')
 @login_required
@@ -231,12 +235,11 @@ def add_user():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO users (team_id, name, surname, nickname, token, mail, '
+                'INSERT INTO users (team_id, name, surname, nickname, mail, '
                 '                   affiliation, password, active, admin, hidden) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
-                (form.team_id.data, form.name.data, form.surname.data, 
-                 form.nickname.data, form.token.data, form.mail.data,
-                 form.affiliation.data,
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'),
+                (form.team_id.data, form.name.data, form.surname.data,
+                 form.nickname.data, form.mail.data, form.affiliation.data,
                  bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
                  form.active.data, form.admin.data, form.hidden.data))
         else:
@@ -256,11 +259,11 @@ def edit_user(id):
                 query_handler((
                     'UPDATE users '
                     'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
-                    '    token = %s, mail = %s, affiliation = %s, password = %s, '
+                    '    mail = %s, affiliation = %s, password = %s, '
                     '    active = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data, form.surname.data, 
-                     form.nickname.data, form.token.data, form.mail.data,
+                     form.nickname.data, form.mail.data,
                      form.affiliation.data,
                      bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
                      form.active.data, form.admin.data, form.hidden.data, id))
@@ -268,11 +271,11 @@ def edit_user(id):
                 query_handler((
                     'UPDATE users '
                     'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
-                    '    token = %s, mail = %s, affiliation = %s, '
+                    '    mail = %s, affiliation = %s, '
                     '    active = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data, form.surname.data, 
-                     form.nickname.data, form.token.data, form.mail.data,
+                     form.nickname.data, form.mail.data,
                      form.affiliation.data, form.active.data, form.admin.data,
                      form.hidden.data, id))
         else:

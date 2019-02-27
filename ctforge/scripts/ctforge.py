@@ -16,12 +16,12 @@ from ctforge.database import db_connect
 from ctforge import app, utils, database
 
 def db_create_schema():
-    db_conn = database.db_connect('postgres')
-    db_conn.autocommit = True
-    with db_conn.cursor() as cur:
-        cur.execute('DROP DATABASE IF EXISTS {}'.format(app.config['DB_NAME']))
-        cur.execute("CREATE DATABASE {} WITH ENCODING 'UTF8'".format(app.config['DB_NAME']))
-    db_conn.close()
+    # db_conn = database.db_connect('postgres')
+    # db_conn.autocommit = True
+    # with db_conn.cursor() as cur:
+    #     cur.execute('DROP DATABASE IF EXISTS {}'.format(app.config['DB_NAME']))
+    #     cur.execute("CREATE DATABASE {} WITH ENCODING 'UTF8'".format(app.config['DB_NAME']))
+    # db_conn.close()
 
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
