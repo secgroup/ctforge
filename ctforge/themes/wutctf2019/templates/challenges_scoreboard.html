@@ -80,7 +80,7 @@
          "type": "html"
      },
      {% endfor %}
-     {"name": "points", "title": "Bonus", "classes": "text-right", "type": "number"},
+     {"name": "points", "title": "Points", "classes": "text-right", "type": "number"},
      {"name": "index", "type": "number", "sorted": true, "direction": "DESC", "visible": false}
  ];
 
@@ -136,11 +136,8 @@
                          entry.addClass("fa fa-remove alert-danger").css("background", "none"));
                  else {
                      row[escapeHTML(c)] = $("<td>").append(
-                         (u.challenges[c].grade > 0) ?
                          entry.addClass("alert-info").attr("title", u.challenges[c].timestamp)
-                              .text(u.challenges[c].points * u.challenges[c].grade) :
-                         entry.addClass("fa fa-check alert-info")
-                              .attr("title", u.challenges[c].timestamp));
+                              .text(u.challenges[c].points));
                  }
 
              });
