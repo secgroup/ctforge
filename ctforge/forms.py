@@ -18,9 +18,8 @@ class RegistrationForm(FlaskForm):
     password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
 
 class ActivateUserForm(FlaskForm):
-    mail = StringField('mail', render_kw={'disabled': True})
-    nickname = StringField('Nickname', validators=[validators.DataRequired()])
-    password = PasswordField('Password', validators=[validators.DataRequired()])
+    nickname = StringField('Nickname', validators=[validators.DataRequired(), validators.Length(min=5, message="nick must be at least 5 chars long")])
+    password = PasswordField('Password', validators=[validators.DataRequired(), validators.Length(min=10, message="password must be at least 10 chars long")])
     password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
 
 class ServiceFlagForm(FlaskForm):
@@ -66,7 +65,7 @@ class UserForm(FlaskForm):
     team_id = IntegerField('team_id', validators=[validators.Optional()])
     name = StringField('name', validators=[validators.DataRequired()])
     surname = StringField('surname', validators=[validators.DataRequired()])
-    nickname = StringField('nickname', validators=[validators.DataRequired()])
+    nickname = StringField('nickname', validators=[validators.Optional()])
     token = StringField('token', validators=[validators.Optional(), validators.UUID()], render_kw={'disabled': True})
     mail = StringField('mail', validators=[validators.DataRequired()])
     affiliation = StringField('affiliation', validators=[validators.Optional()])

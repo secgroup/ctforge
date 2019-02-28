@@ -131,7 +131,7 @@ def activate(token=None):
                 'FROM users '
                 'WHERE active = FALSE AND token = %s'), [token])
             user = cur.fetchone()
-        except psycopg2.DataError:
+        except psycopg2.Error:
             flash('Malformed token!', 'error')
             return redirect(url_for('index'))
     if user is None:
@@ -144,14 +144,19 @@ def activate(token=None):
         if form.validate_on_submit():
             if form.password.data != form.password_ver.data:
                 flash('Wrong password!', 'error')
-            query_handler((
-                'UPDATE users SET nickname = %s, password = %s, '
-                '                 active = TRUE, token = NULL '
-                'WHERE id = %s'),
-                (form.nickname.data, bcrypt.hashpw(form.password.data, 
-                 bcrypt.gensalt()), user['id']))
-            flash('User activated!', 'success')
-            return redirect(url_for('login'))
+            try:
+                with db_conn.cursor() as cur:
+                    cur.execute((
+                        'UPDATE users SET nickname = %s, password = %s, '
+                        '                 active = TRUE, token = NULL '
+                        'WHERE id = %s'),
+                        (form.nickname.data, bcrypt.hashpw(form.password.data, 
+                         bcrypt.gensalt()), user['id']))
+                    flash('User activated!', 'success')
+                    return redirect(url_for('login'))
+            except psycopg2.Error:
+                db_conn.rollback()
+                flash('Activation failed, try a different nickname', 'error')
         else:
             flash_errors(form)
 
