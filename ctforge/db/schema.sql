@@ -27,7 +27,7 @@ CREATE TABLE users (
     team_id       INT NULL,
     name          VARCHAR(45) NOT NULL,
     surname       VARCHAR(45) NOT NULL,
-    nickname      VARCHAR(45) NOT NULL,
+    nickname      VARCHAR(45) DEFAULT NULL,
     token         UUID DEFAULT uuid_generate_v4(),
     mail          VARCHAR(70) NOT NULL,
     affiliation   VARCHAR(100) NULL,

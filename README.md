@@ -4,8 +4,32 @@ Forge your own CTF.
 
 CTForge is the framework developed by the hacking team from University of Venice to easily host jeopardy and attack-defense [CTF security competitions](https://ctftime.org/ctf-wtf/). It provides the software components for running the game, namely the website and the checkbot (optional). The website is the primary interface used by players to access the game rules, the challenges/services descriptions and the scoreboard. In case of an attack-defense game mode the checkbot will, cyclically, store new flags in each team and retrieve them to ensure that everything is working properly.
 
+Testing and Development
+-----------------------
+Development and quick testing can be done using docker. 
+
+Enter the root ctforge directory and build the images:
+
+    $ docker-compose up --build
+
+Then open another shell and initialize CTForge with:
+
+    $ ./docker_init.sh
+
+If everything is working, CTForge should be running at `http://localhost:5000`. Users can be quickly imported and activated using the `ctforge` script that is part of the installation:
+
+    $ docker exec -ti ctforge_ctforge_1 ctforge import_users -u /ctforge/test/test.csv -a test
+    $ docker exec -ti ctforge_ctforge_1 ctforge send_activation_links -u <email> -p <password>
+
+Changes to the CTForge codebase should be automatically propagated to the running instance. If this is not the case, it is enough to re-install CTForge inside the docker image:
+
+    $ docker exec -ti ctforge_ctforge_1 sh -c "cd /ctforge; python setup.py install"
+
+
 Setup
 -----
+This section must be updated.
+
 Depending on the desired game mode, requirements and setup may change. Instructions below are for a basic install of ctforge in jeopardy mode using the built-in webserver. Remember that deploying ctforge in production requires a real webserver like [nginx](http://nginx.org/) paired with [uWSGI](https://github.com/unbit/uwsgi).
 
 Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, the [PostgreSQL](http://www.postgresql.org/) DBMS is needed. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 16.04, although we use [Gentoo](https://wiki.gentoo.org/wiki/Hardened_Gentoo) on production hosts).

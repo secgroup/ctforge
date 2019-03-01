@@ -143,20 +143,21 @@ def activate(token=None):
     if request.method == 'POST':
         if form.validate_on_submit():
             if form.password.data != form.password_ver.data:
-                flash('Wrong password!', 'error')
-            try:
-                with db_conn.cursor() as cur:
-                    cur.execute((
-                        'UPDATE users SET nickname = %s, password = %s, '
-                        '                 active = TRUE, token = NULL '
-                        'WHERE id = %s'),
-                        (form.nickname.data, bcrypt.hashpw(form.password.data, 
-                         bcrypt.gensalt()), user['id']))
-                    flash('User activated!', 'success')
-                    return redirect(url_for('login'))
-            except psycopg2.Error:
-                db_conn.rollback()
-                flash('Activation failed, try a different nickname', 'error')
+                flash('Password mismatch, try again', 'error')
+            else:
+                try:
+                    with db_conn.cursor() as cur:
+                        cur.execute((
+                            'UPDATE users SET nickname = %s, password = %s, '
+                            '                 active = TRUE, token = NULL '
+                            'WHERE id = %s'),
+                            (form.nickname.data, bcrypt.hashpw(form.password.data, 
+                             bcrypt.gensalt()), user['id']))
+                        flash('User activated!', 'success')
+                        return redirect(url_for('login'))
+                except psycopg2.Error:
+                    db_conn.rollback()
+                    flash('Activation failed, try a different nickname', 'error')
         else:
             flash_errors(form)
 
@@ -675,6 +676,15 @@ def submit():
 @login_required
 def user():
     """Render a page with information about the user."""
+
+    def load_file(pathname):
+        try:
+            with open(pathname, 'rb') as f:
+               return base64.b64encode(f.read()).decode()
+        except FileNotFoundError as e:
+            app.logger.error(e)
+
+
     db_conn = get_db_connection()
     cur = db_conn.cursor()
     cur.execute('SELECT * FROM users WHERE id = %s', [current_user.id])
@@ -685,19 +695,18 @@ def user():
         return redirect(url_for('index'))
 
     cur.execute('SELECT * FROM challenges C JOIN challenge_attacks A '
-                'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY C.name', [current_user.id])
+                'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY A.timestamp', [current_user.id])
     challenges = cur.fetchall()
+
+    ssh = "testtest"
+    # ssh = load_file(os.path.expanduser('~/openvpn/openvpn-team{:02d}.conf.gz'.format(current_user.team_id)), 'rb')
 
     vpn = ""
     if current_user.team_id:
-        try:
-            with open(os.path.expanduser('~/openvpn/openvpn-team{:02d}.conf.gz'.format(current_user.team_id)), 'rb') as f:
-                vpn = base64.b64encode(f.read()).decode()
-        except FileNotFoundError as e:
-            app.logger.error(e)
+        vpn = load_file(os.path.expanduser('~/openvpn/openvpn-team{:02d}.conf.gz'.format(current_user.team_id)), 'rb')
 
-    return render_template('user.html', user=user, challenges=challenges, vpn_encoded=vpn)
-
+    return render_template('user.html', user=user, challenges=challenges, 
+                           ssh_encoded=ssh, vpn_encoded=vpn)
 
 
 @app.route('/team')
@@ -740,6 +749,7 @@ def team():
 
     return render_template('team.html', team=team, members=members, attacks=attacks)
 
+
 @app.route('/challenges_scoreboard')
 @jeopardy_mode_required
 def challenges_scoreboard():
@@ -766,6 +776,7 @@ def challenges_scoreboard():
     return render_template('challenges_scoreboard.html',
                            challenges=challenges, affiliations=affiliations,
                            settings=jeopardy)
+
 
 @app.route('/challenges')
 @login_required
