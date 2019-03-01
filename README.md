@@ -2,7 +2,7 @@ CTForge
 =======
 Forge your own CTF.
 
-CTForge is the framework developed by the hacking team from University of Venice to easily host jeopardy and attack-defense [CTF security competitions](https://ctftime.org/ctf-wtf/). It provides the software components for running the game, namely the website and the checkbot (optional). The website is the primary interface used by players to access the game rules, the challenges/services descriptions and the scoreboard. In case of an attack-defense game mode the checkbot will, cyclically, store new flags in each team and retrieve them to ensure that everything is working properly.
+CTForge is the framework developed to easily host jeopardy and attack-defense [CTF security competitions](https://ctftime.org/ctf-wtf/). The framework aims to be simple and modular enough to be easily modifiably to fit the organizers' needs. CTForge provides the software components for running the game, namely the website and the checkbot (optional). The website is the primary interface used by players to access the game rules, the challenges/services descriptions and the scoreboard. In case of an attack-defense game mode the checkbot will, cyclically, store new flags in each team and retrieve them to ensure that everything is working properly.
 
 Testing and Development
 -----------------------
@@ -86,7 +86,6 @@ Feel free to start editing your theme from the default theme `dctf2017` (under t
     (ctforge)$ ./setup.py install
 
 
-Contacts
---------
-CTForge is developed by [Marco Squarcina](https://minimalblue.com) aided by all the guys from [c00kies@venice](https://secgroup.github.io/).
-
+Credits
+-------
+CTForge has been initially developed by [Marco Squarcina](https://minimalblue.com) aided by all the guys from [c00kies@venice](https://secgroup.github.io/) to host security competitions as part of the Security course at [Ca' Foscari](https://www.unive.it) university. The project has received several contributions in the years but it is still actively maintained by the original group of people.
