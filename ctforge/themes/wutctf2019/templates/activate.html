@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}User Activation{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-sm-8">
+        <form class="form-signin" action="{{ url_for('activate', token=token) }}" method="post">
+            <h2 class="form-signin-heading">Activate user {{ mail }}</h2>
+            {{ form.csrf_token }}
+
+            {{ form.nickname.label(class="control-label") }}
+            {{ form.nickname(placeholder="Nickname", class="form-control", type="text", required=True) }}
+
+            {{ form.password.label(class="control-label") }}
+            {{ form.password(placeholder="Password", class="form-control", required=True) }}
+            
+            {{ form.password_ver.label(class="control-label") }}
+            {{ form.password_ver(placeholder="Password (verification)", class="form-control", required=True) }}
+
+            <br/>
+            <button class="btn btn-lg btn-dark" type="submit">Activate</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+{% block footer %}{% endblock %}
+

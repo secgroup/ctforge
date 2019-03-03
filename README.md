@@ -88,4 +88,4 @@ Feel free to start editing your theme from the default theme `dctf2017` (under t
 
 Credits
 -------
-CTForge has been initially developed by [Marco Squarcina](https://minimalblue.com) aided by all the guys from [c00kies@venice](https://secgroup.github.io/) to host security competitions as part of the Security course at [Ca' Foscari](https://www.unive.it) university. The project has received several contributions in the years but it is still actively maintained by the original group of people.
+CTForge has been initially developed by [Marco Squarcina](https://minimalblue.com) aided by all the guys from [c00kies](https://secgroup.github.io/) to host security competitions as part of the Security course at [Ca' Foscari](https://www.unive.it) university. The project has received several contributions in the years but it is still actively developed by the original group of people.
