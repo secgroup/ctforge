@@ -54,7 +54,7 @@ table {
 .jumbotron {
     background: transparent url("/static/img/head.png") no-repeat top center;
     background-size: contain;
-    height: 350px;
+    height: 120px;
 }
 
 .lead strong {
