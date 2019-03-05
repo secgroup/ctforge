@@ -698,15 +698,10 @@ def user():
                 'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY A.timestamp', [current_user.id])
     challenges = cur.fetchall()
 
-    ssh = "testtest"
-    # ssh = load_file(os.path.expanduser('~/openvpn/openvpn-team{:02d}.conf.gz'.format(current_user.team_id)), 'rb')
-
-    vpn = ""
-    if current_user.team_id:
-        vpn = load_file(os.path.expanduser('~/openvpn/openvpn-team{:02d}.conf.gz'.format(current_user.team_id)), 'rb')
+    ssh = load_file('/ctforge/test/keys/wutctf-{}_ed25519'.format(current_user.id))
 
     return render_template('user.html', user=user, challenges=challenges, 
-                           ssh_encoded=ssh, vpn_encoded=vpn)
+                           ssh_encoded=ssh)
 
 
 @app.route('/team')

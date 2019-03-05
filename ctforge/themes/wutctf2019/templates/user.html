@@ -10,37 +10,26 @@
             <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
             <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
             {% if user.affiliation %}
-            <tr><td>Affiliation:</td><td>{{ user.affiliation }}</td></tr>
+            <tr><td>Course:</td><td>{{ user.affiliation }}</td></tr>
             {% endif %}
         </table>
     </div>
     <div class="col-md-4">
-        {% if config['JEOPARDY_ACTIVE'] %}
         <a class="btn btn-dark d-block mb-3"
            href="ssh://seclab.dais.unive.it:2222">
             <i class="fa fa-terminal"></i>
-            Testbed
+            testbed
         </a>
-        {% endif %}
-        {% if config['ATTACKDEFENSE_ACTIVE'] and user.team_id %}
-        <a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %} mb-3"
-           download="team-{{ user.team_id }}.ovpn.gz"
-           {% if vpn_encoded %}
-           href="data:application/octet-stream;base64,{{ vpn_encoded }}"
+        <a class="btn btn-dark d-block mb-3"
+           download="wutctf-{{ user.id }}_ed25519"
+           {% if ssh_encoded %}
+           href="data:application/octet-stream;base64,{{ ssh_encoded }}"
            {% endif %}>
             <i class="fa fa-download"></i>
-            team-{{ user.team_id }}.ovpn.gz
-        </a>
-        {% endif %}
-        <a class="btn btn-dark d-block mb-3"
-           target="_blank"
-           href="https://seclabunive.slack.com/">
-            <i class="fa fa-slack"></i>
-            Join on Slack
+            wutctf-{{ user.id }}_ed25519
         </a>
     </div>
 </div>
-{% if config['JEOPARDY_ACTIVE'] %}
 <div class="row">
     <div class="col-md-12">
         <h2>Solved Challenges</h2>
@@ -61,6 +50,5 @@
         {% endif %}
     </div>
 </div>
-{% endif %}
 
 {% endblock %}
