@@ -1285,11 +1285,8 @@ def _stats(nrounds=None):
 
     return jsonify(scores)
 
-@app.route('/credits')
-def credits():
-    return render_template('credits.html')
-
 @app.route('/design')
+@attackdefense_mode_required
 def design():
     return render_template('design.html')
 
