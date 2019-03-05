@@ -32,7 +32,7 @@ This section must be updated.
 
 Depending on the desired game mode, requirements and setup may change. Instructions below are for a basic install of ctforge in jeopardy mode using the built-in webserver. Remember that deploying ctforge in production requires a real webserver like [nginx](http://nginx.org/) paired with [uWSGI](https://github.com/unbit/uwsgi).
 
-Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, the [PostgreSQL](http://www.postgresql.org/) DBMS is needed. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 16.04, although we use [Gentoo](https://wiki.gentoo.org/wiki/Hardened_Gentoo) on production hosts).
+Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, the [PostgreSQL](http://www.postgresql.org/) DBMS is needed. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 18.04).
 
 Install the aforementioned packages
 
@@ -40,12 +40,14 @@ Install the aforementioned packages
 
 Add a database user with the permission to create new databases
 
-    $ sudo service postgresql start
+    $ sudo systemctl start postgresql
     $ sudo -u postgres createuser -d -P ctforge
 
-Download and unpack the CTForge source code
+Create a user that will run the platform, then download and unpack the CTForge source code
 
-    $ git clone git@github.com:secgroup/ctforge.git
+    $ sudo useradd -s /bin/bash -m -U ctforge
+    $ sudo -u ctforge -i
+    $ git clone https://github.com/secgroup/ctforge.git
     $ cd ctforge
 
 Now prepare the Python virtualenv
