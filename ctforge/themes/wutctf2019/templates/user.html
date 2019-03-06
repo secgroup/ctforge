@@ -9,6 +9,7 @@
         <table class="table">
             <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
             <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
+            <tr><td>Username (on testbed):</td><td>stud{{ user.id }}</td></tr>
             {% if user.affiliation %}
             <tr><td>Course:</td><td>{{ user.affiliation }}</td></tr>
             {% endif %}
@@ -16,9 +17,9 @@
     </div>
     <div class="col-md-4">
         <a class="btn btn-dark d-block mb-3"
-           href="ssh://10.3.0.4:22">
+	   href="ssh://stud{{ user.id }}@10.3.0.4:22">
             <i class="fa fa-terminal"></i>
-            testbed
+            testbed (10.3.0.4)
         </a>
         <a class="btn btn-dark d-block mb-3"
            download="wutctf-{{ user.id }}_ed25519"
@@ -26,7 +27,7 @@
            href="data:application/octet-stream;base64,{{ ssh_encoded }}"
            {% endif %}>
             <i class="fa fa-download"></i>
-            wutctf-{{ user.id }}_ed25519
+            ssh private key
         </a>
     </div>
 </div>
