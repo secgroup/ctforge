@@ -698,7 +698,7 @@ def user():
                 'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY A.timestamp', [current_user.id])
     challenges = cur.fetchall()
 
-    ssh = load_file('/ctforge/test/keys/wutctf-{}_ed25519'.format(current_user.id))
+    ssh = load_file('/home/ctforge/keys/wutctf-{}_ed25519'.format(current_user.id))
 
     return render_template('user.html', user=user, challenges=challenges, 
                            ssh_encoded=ssh)
