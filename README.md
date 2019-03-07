@@ -28,20 +28,20 @@ Changes to the CTForge codebase should be automatically propagated to the runnin
 
 Setup
 -----
-This section must be updated.
-
 Depending on the desired game mode, requirements and setup may change. Instructions below are for a basic install of ctforge in jeopardy mode using the built-in webserver. Remember that deploying ctforge in production requires a real webserver like [nginx](http://nginx.org/) paired with [uWSGI](https://github.com/unbit/uwsgi).
 
 Since CTForge is entirely written in Python, a working Python 3 installation is required. Additionally, the [PostgreSQL](http://www.postgresql.org/) DBMS is needed. Detailed steps for configuring and installing the software on a server are provided below (tested on Ubuntu 18.04).
 
 Install the aforementioned packages
 
-    $ sudo apt install python3-dev postgresql postgresql-contrib postgresql-server-dev-all
+    $ sudo apt install virtualenv python3-dev postgresql postgresql-contrib postgresql-server-dev-all
 
 Add a database user with the permission to create new databases
 
     $ sudo systemctl start postgresql
     $ sudo -u postgres createuser -d -P ctforge
+    $ sudo -u postgres createdb -U postgres -O ctforge -E UTF8 ctforge
+    $ sudo -u postgres psql -U postgres -d ctforge --command 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
 
 Create a user that will run the platform, then download and unpack the CTForge source code
 
@@ -81,11 +81,51 @@ Install the framework in development mode for now, adjust the configuration file
 
 Now you can run the site and edit your custom theme, the application will automatically reload upon file modifications:
 
-    (ctforge)$ ctforge run
+    (ctforge)$ ctforge run -H 0.0.0.0
 
 Feel free to start editing your theme from the default theme `dctf2017` (under the `themes/` folder). When you are done editing the template, install the package using:
 
     (ctforge)$ ./setup.py install
+
+For production deployment it is recommended to use nginx and uwsgi:
+
+    $ sudo apt install uwsgi uwsgi-plugin-python3 nginx
+
+Put the following into `/etc/uwsgi/apps-enabled/ctforge.ini`:
+
+    [uwsgi]
+    uid = ctforge
+    gid = ctforge
+    chmod-socket = 660
+    chown-socket = ctforge:www-data
+    socket = /run/uwsgi/app/ctforge/socket
+    master = true
+    processes = 4
+    enable-threads = true
+    vhost = true
+    venv = /home/ctforge/.venvs/ctforge
+    chdir = /home/ctforge/.ctforge
+    plugins = python36
+    module = ctforge
+    callable = app
+    harakiri = 30
+    logto = /var/log/nginx/ctforge_uwsgi.log
+
+And edit the webserver configuration at `/etc/nginx/sites-enabled/default`:
+
+    server {
+            listen 443 ssl default_server;
+
+            access_log /var/log/nginx/ctforge_access_log;
+            error_log /var/log/nginx/ctforge_error_log;
+
+            add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+            location / {
+                    include uwsgi_params;
+                    uwsgi_pass unix:/run/uwsgi/app/ctforge/socket;
+            }
+    }
 
 
 Credits
