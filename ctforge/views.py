@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import bcrypt
 import time
 import json
@@ -144,6 +145,8 @@ def activate(token=None):
         if form.validate_on_submit():
             if form.password.data != form.password_ver.data:
                 flash('Password mismatch, try again', 'error')
+            elif re.search('admin|r00t|root', form.nickname.data, flags=re.IGNORECASE):
+                flash('Invalid nickname', 'error')
             else:
                 try:
                     with db_conn.cursor() as cur:
