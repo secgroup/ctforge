@@ -191,7 +191,7 @@ def send_activation_links(args):
             'Subject: {}\n\n'
             '{}').format(
                 from_email, user['mail'], subject, body.format(
-                    user['name'], 'http://localhost:5000/activate/{}'.format(
+                    user['name'], 'https://wutctf.space/activate/{}'.format(
                         user['token']
                     )
                 )
