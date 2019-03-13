@@ -194,6 +194,9 @@ def imp_chal(chal_info_file, public_folder):
 def send_activation_links(args):
 
     def send_email(from_email, from_password, to_email, email_text):
+        import unicodedata
+
+        email_text = unicodedata.normalize('NFKD', email_text).encode('ascii', 'ignore')
         try:
             server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
             server.ehlo()
