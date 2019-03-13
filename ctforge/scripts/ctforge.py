@@ -215,9 +215,18 @@ def send_activation_links(args):
     
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
-        cur.execute(
-            'SELECT * FROM users WHERE active = FALSE AND token IS NOT NULL')
+        if args.mails:
+            cur.execute('SELECT * FROM users WHERE active = FALSE AND token IS NOT NULL AND mail = ANY(%s)',
+                        [args.mails])
+        else:
+            cur.execute('SELECT * FROM users WHERE active = FALSE AND token IS NOT NULL')
         users = cur.fetchall()
+
+    if args.mails:
+        mails = {user['mail'] for user in users}
+        for mail in args.mails:
+            if mail not in mails:
+                print('[!] Skipping {}: either the mail is not in the DB or the user is already active'.format(mail))
 
     for user in users:
         email_text = (
@@ -267,6 +276,7 @@ def parse_args():
     parser_send_act_link = subparsers.add_parser('send_activation_links', help='Send activation links to users via mail')
     parser_send_act_link.add_argument('-u', '--user', type=str, help='Email address used to send links', required=True)
     parser_send_act_link.add_argument('-p', '--password', type=str, help='Password of the account used to send emails', required=True)
+    parser_send_act_link.add_argument('-m', '--mails', nargs='+', help='Send the email only to these addresses')
 
     parser_challenge = subparsers.add_parser('import_challenge', help='Import Challenge')
     parser_challenge.add_argument('challenge', type=argparse.FileType('r'), help='Challenges folder in which each subdirectory contains an `info.json` file')
