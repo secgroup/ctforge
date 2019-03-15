@@ -213,6 +213,7 @@ def send_activation_links(args):
     body = (
         'Hello {},\n\n'
         'please click on the link below to activate your profile:\n\n{}\n\n'
+        'The basic access authentication credentials are user: wutctf2019, password: wutctf2019\n\n'
         'Try to be polite when setting a nickname, '
         'it will identify you on the public scoreboard.\n\nHack the planet!')
     
