@@ -192,6 +192,7 @@ def imp_chal(chal_info_file, public_folder):
     print('Done.')
 
 def send_activation_links(args):
+    from time import sleep
 
     def send_email(from_email, from_password, to_email, email_text):
         import unicodedata
@@ -232,7 +233,10 @@ def send_activation_links(args):
             if mail not in mails:
                 print('[!] Skipping {}: either the mail is not in the DB or the user is already active'.format(mail))
 
-    for user in users:
+    for n, user in enumerate(users):
+        # wait 10 seconds every 20 mails to avoid too many consecutive connections to Google
+        if n > 0 and n % 20 == 0:
+            sleep(10)
         email_text = (
             'From: {}+noreply\n'
             'To: {}\n'
