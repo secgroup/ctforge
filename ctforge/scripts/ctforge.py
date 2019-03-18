@@ -236,7 +236,7 @@ def send_activation_links(args):
     for n, user in enumerate(users):
         # wait 10 seconds every 20 mails to avoid too many consecutive connections to Google
         if n > 0 and n % 20 == 0:
-            sleep(10)
+            sleep(60)
         email_text = (
             'From: {}+noreply\n'
             'To: {}\n'
