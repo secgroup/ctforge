@@ -904,7 +904,7 @@ def _challenges():
     # or, in case of a tie, by the time of the last submission
     def sorting_key(u):
         timestamps = [c['timestamp'] for c in u['challenges'].values() if c['timestamp'] is not None]
-        return u['points'], len(timestamps), datetime.now() - max(timestamps)
+        return u['points'], len(timestamps), None if len(timestamps) == 0 else datetime.now() - max(timestamps)
 
     scoreboard.sort(key=sorting_key, reverse=True)
 
