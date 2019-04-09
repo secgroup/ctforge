@@ -185,7 +185,7 @@
              // we need an exact match. The exactMatch option doesn't seem to be really helpful here:
              //     https://fooplugins.github.io/FooTable/docs/components/filtering.html#options
              // The simplest way to fix the issue is to override the `match` method with a new one doing the equality
-             // checks.
+             // check.
              filter.match = function (str) { return this.query._value === str };
              self.addFilter(filter);
              data_filter = filter_by_affiliation(selected);

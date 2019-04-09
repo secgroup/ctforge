@@ -826,7 +826,7 @@ def _challenges():
     db_conn = get_db_connection()
     cur = db_conn.cursor()
     # get the challenges
-    cur.execute('SELECT * FROM challenges')
+    cur.execute('SELECT * FROM challenges WHERE NOT hidden')
     res = cur.fetchall()
     chals = {c['id']: c for c in res} if len(res) != 0 else dict()
     # get only the users who solved at least one challenge that are not admin
@@ -886,7 +886,7 @@ def _challenges():
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
-                grade = evaluations.get((c,u), 0)
+                # grade = evaluations.get((c,u), 0)
                 # only add the bonus points if the challenge score is > 0
                 points = cv['points']
                 if points > 0:
