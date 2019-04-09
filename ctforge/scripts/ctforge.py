@@ -234,7 +234,7 @@ def send_activation_links(args):
                 print('[!] Skipping {}: either the mail is not in the DB or the user is already active'.format(mail))
 
     for n, user in enumerate(users):
-        # wait 10 seconds every 20 mails to avoid too many consecutive connections to Google
+        # wait 60 seconds every 20 mails to avoid too many consecutive connections to Google
         if n > 0 and n % 20 == 0:
             sleep(60)
         email_text = (
