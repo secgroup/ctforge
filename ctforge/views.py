@@ -934,7 +934,7 @@ def challenge(name):
                 [name])
     challenge = cur.fetchone()
     # if the challenge is not valid abort
-    if challenge is None or challenge['hidden']:
+    if challenge is None or (challenge['hidden'] and not current_user.admin):
         cur.close()
         abort(404)
 
