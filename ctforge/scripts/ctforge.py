@@ -250,6 +250,21 @@ def send_activation_links(args):
             )
         send_email(from_email, from_password, user['mail'], email_text)
 
+def create_csv_grading(args):
+    db_conn = db_connect()
+
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT DISTINCT w.user_id '
+                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id '
+                    'WHERE c.name = %s', [args.challenge])
+        users_id = cur.fetchall()
+
+    with open(args.csv, 'w', newline='') as f:
+        fields = ['user_id', 'grade', 'excellent', 'unusual', 'comment']
+        writer = csv.DictWriter(f, fieldnames=fields, delimiter='\t', quotechar='"')
+        writer.writeheader()
+        writer.writerows(users_id)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
@@ -286,9 +301,14 @@ def parse_args():
     parser_send_act_link.add_argument('-p', '--password', type=str, help='Password of the account used to send emails', required=True)
     parser_send_act_link.add_argument('-m', '--mails', nargs='+', help='Send the email only to these addresses')
 
-    parser_challenge = subparsers.add_parser('import_challenge', help='Import Challenge')
+    parser_challenge = subparsers.add_parser('import_challenge', help='Import challenge')
     parser_challenge.add_argument('challenge', type=argparse.FileType('r'), help='Challenges folder in which each subdirectory contains an `info.json` file')
     parser_challenge.add_argument('--public-files-uri', default='/data/public_files/', help='Webserver public folder')
+
+    parser_export = subparsers.add_parser('export_writeups', help='Export writeups')
+    parser_export.add_argument('challenge', type=str, help='Name of the challenge')
+    parser_export.add_argument('-d', '--dir', type=str, required=True, help='Directory where to save writeups')
+    parser_export.add_argument('-f', '--csv', type=str, help='File for grading')
 
     return parser.parse_args()
 
@@ -321,6 +341,8 @@ def main():
         send_activation_links(args)
     elif args.command == 'import_challenge':
         imp_chal(args.challenge, args.public_files_uri)
+    elif args.command == 'export_writeups':
+        create_csv_grading(args)
     else:
         sys.stderr.write("... Doing nothing, bye\n")
         sys.exit(1)
