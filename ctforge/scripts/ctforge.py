@@ -267,8 +267,6 @@ def imp_grades(args):
                 for line in reader:
                     cur.execute('INSERT INTO challenges_evaluations (user_id, challenge_id, grade) '
                                 'VALUES (%s, %s, %s)', [line['user_id'], chall_id, line['grade']])
-                    if cur.rowcount != 1:
-                        print('[!] User {} (mail {}) not in the DB!'.format(u['name'] + ' ' + u['surname'], u['mail']))
             except psycopg2.Error as e:
                 db_conn.rollback()
                 sys.stderr.write('Database error: {}'.format(e))
