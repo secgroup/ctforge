@@ -10,7 +10,7 @@ import bcrypt
 import json
 import psycopg2
 import smtplib
-from shutil import copy2
+from shutil import copy2, rmtree
 from getpass import getpass
 from ctforge.database import db_connect
 
@@ -250,6 +250,34 @@ def send_activation_links(args):
             )
         send_email(from_email, from_password, user['mail'], email_text)
 
+def export_writeups(args):
+    rmtree(args.dir, ignore_errors=True)
+    os.mkdir(args.dir)
+
+    db_conn = db_connect()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT id FROM challenges WHERE name = %s', [args.challenge])
+        chall_id = cur.fetchone()['id']
+
+        cur.execute('SELECT DISTINCT user_id FROM writeups WHERE challenge_id = %s', [chall_id])
+        users = cur.fetchall()
+
+    for u in users:
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT name, surname, mail FROM users WHERE id = %s', [u['user_id']])
+            usr = cur.fetchone()
+
+            cur.execute(
+                'SELECT writeup, timestamp FROM writeups '
+                'WHERE user_id = %s AND challenge_id = %s ORDER BY timestamp DESC',
+                [u['user_id'], chall_id])
+            writeups = cur.fetchall()
+
+        with open('{}/writeup-{}.txt'.format(args.dir, u['user_id']), 'w') as f:
+            f.write('{} {} ({})\n\n'.format(usr['name'], usr['surname'], usr['mail']))
+            f.write('\n\n*-*-*-*-*-*-*-*-*-*-*\n\n'.join(
+                'Submission time: {}\n{}'.format(w['timestamp'], w['writeup']) for w in writeups))
+
 def create_csv_grading(args):
     db_conn = db_connect()
 
@@ -265,6 +293,11 @@ def create_csv_grading(args):
         writer.writeheader()
         writer.writerows(users_id)
 
+def exp_writeups(args):
+    if args.dir is not None:
+        export_writeups(args)
+    if args.csv is not None:
+        create_csv_grading(args)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
@@ -307,7 +340,7 @@ def parse_args():
 
     parser_export = subparsers.add_parser('export_writeups', help='Export writeups')
     parser_export.add_argument('challenge', type=str, help='Name of the challenge')
-    parser_export.add_argument('-d', '--dir', type=str, required=True, help='Directory where to save writeups')
+    parser_export.add_argument('-d', '--dir', type=str, help='Directory where to save writeups')
     parser_export.add_argument('-f', '--csv', type=str, help='File for grading')
 
     return parser.parse_args()
@@ -342,7 +375,7 @@ def main():
     elif args.command == 'import_challenge':
         imp_chal(args.challenge, args.public_files_uri)
     elif args.command == 'export_writeups':
-        create_csv_grading(args)
+        exp_writeups(args)
     else:
         sys.stderr.write("... Doing nothing, bye\n")
         sys.exit(1)
