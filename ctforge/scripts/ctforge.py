@@ -250,6 +250,34 @@ def send_activation_links(args):
             )
         send_email(from_email, from_password, user['mail'], email_text)
 
+def imp_grades(args):
+    db_conn = db_connect()
+
+    print('[*] Importing grades...')
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT id FROM challenges WHERE name = %s', [args.challenge])
+        chall_id = cur.fetchone()['id']
+
+        with open(args.csv, 'r', newline='') as f:
+            fields = ['user_id', 'grade', 'excellent', 'unusual', 'comment']
+            reader = csv.DictReader(f, fieldnames=fields, delimiter='\t', quotechar='"')
+
+            next(reader, None)
+            try:
+                for line in reader:
+                    cur.execute('INSERT INTO challenges_evaluations (user_id, challenge_id, grade) '
+                                'VALUES (%s, %s, %s)', [line['user_id'], chall_id, line['grade']])
+                    if cur.rowcount != 1:
+                        print('[!] User {} (mail {}) not in the DB!'.format(u['name'] + ' ' + u['surname'], u['mail']))
+            except psycopg2.Error as e:
+                db_conn.rollback()
+                sys.stderr.write('Database error: {}'.format(e))
+            else:
+                db_conn.commit()
+                print('[*] Done.')
+
+    db_conn.close()
+
 def export_writeups(args):
     rmtree(args.dir, ignore_errors=True)
     os.mkdir(args.dir)
@@ -338,6 +366,10 @@ def parse_args():
     parser_challenge.add_argument('challenge', type=argparse.FileType('r'), help='Challenges folder in which each subdirectory contains an `info.json` file')
     parser_challenge.add_argument('--public-files-uri', default='/data/public_files/', help='Webserver public folder')
 
+    parser_grades = subparsers.add_parser('import_grades', help='Import grades from CSV file')
+    parser_grades.add_argument('challenge', type=str, help='Name of the challenge')
+    parser_grades.add_argument('csv', type=str, help='File containing grades')
+
     parser_export = subparsers.add_parser('export_writeups', help='Export writeups')
     parser_export.add_argument('challenge', type=str, help='Name of the challenge')
     parser_export.add_argument('-d', '--dir', type=str, help='Directory where to save writeups')
@@ -374,6 +406,8 @@ def main():
         send_activation_links(args)
     elif args.command == 'import_challenge':
         imp_chal(args.challenge, args.public_files_uri)
+    elif args.command == 'import_grades':
+        imp_grades(args)
     elif args.command == 'export_writeups':
         exp_writeups(args)
     else:
