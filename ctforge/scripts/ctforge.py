@@ -256,7 +256,7 @@ def create_csv_grading(args):
     with db_conn.cursor() as cur:
         cur.execute('SELECT DISTINCT w.user_id '
                     'FROM writeups w JOIN challenges c ON w.challenge_id = c.id '
-                    'WHERE c.name = %s', [args.challenge])
+                    'WHERE c.name = %s ORDER BY w.user_id', [args.challenge])
         users_id = cur.fetchall()
 
     with open(args.csv, 'w', newline='') as f:
