@@ -260,7 +260,7 @@ def imp_grades(args):
 
         with open(args.csv, 'r', newline='') as f:
             fields = ['user_id', 'grade', 'excellent', 'unusual', 'comment']
-            reader = csv.DictReader(f, fieldnames=fields, delimiter='\t', quotechar='"')
+            reader = csv.DictReader(f, fieldnames=fields, delimiter='|', quotechar='"')
 
             next(reader, None)
             try:
@@ -315,7 +315,7 @@ def create_csv_grading(args):
 
     with open(args.csv, 'w', newline='') as f:
         fields = ['user_id', 'grade', 'excellent', 'unusual', 'comment']
-        writer = csv.DictWriter(f, fieldnames=fields, delimiter='\t', quotechar='"')
+        writer = csv.DictWriter(f, fieldnames=fields, delimiter='|', quotechar='"')
         writer.writeheader()
         writer.writerows(users_id)
 
