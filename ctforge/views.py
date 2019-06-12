@@ -545,25 +545,13 @@ def edit_evaluation(challenge_id, user_id):
     if request.method == 'POST':
         form = ctforge.forms.AdminWriteupForm()
         if form.validate_on_submit():
-            if evaluation['feedback'] is None:
-                # do a fresh insert
-                query_handler((
-                    'INSERT INTO challenges_evaluations '
-                    '    (user_id, challenge_id, grade, feedback) '
-                    'VALUES (%s, %s, %s, %s) '),
-                    [user_id, challenge_id, form.grade.data, form.feedback.data])
-            else:
-                # only allow if not yet graded
-                # (or not ;P)
-                if True or evaluation['grade'] is None:
-                    query_handler((
-                        'UPDATE challenges_evaluations '
-                        'SET grade = %s, feedback = %s, timestamp = NOW() '
-                        'WHERE user_id = %s AND challenge_id = %s'),
-                        [form.grade.data, form.feedback.data, user_id, challenge_id])
-                else:
-                    flash('Cannot modify a writeup evaluation once a grade has been set!',
-                          'error')
+            query_handler((
+                'INSERT INTO challenges_evaluations '
+                '    (user_id, challenge_id, grade, feedback) '
+                'VALUES (%s, %s, %s, %s) '
+                'ON CONFLICT (user_id, challenge_id) '
+                'DO UPDATE SET (grade, feedback) = (EXCLUDED.grade, EXCLUDED.feedback)'),
+                [user_id, challenge_id, form.grade.data, form.feedback.data])
         else:
             flash_errors(form)
     else:
