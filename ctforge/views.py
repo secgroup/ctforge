@@ -550,7 +550,7 @@ def edit_evaluation(challenge_id, user_id):
                 '    (user_id, challenge_id, grade, feedback) '
                 'VALUES (%s, %s, %s, %s) '
                 'ON CONFLICT (user_id, challenge_id) '
-                'DO UPDATE SET (grade, feedback) = (EXCLUDED.grade, EXCLUDED.feedback)'),
+                'DO UPDATE SET (grade, feedback, timestamp) = (EXCLUDED.grade, EXCLUDED.feedback, NOW())'),
                 [user_id, challenge_id, form.grade.data, form.feedback.data])
         else:
             flash_errors(form)
