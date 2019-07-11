@@ -1,69 +1,95 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
 {% extends "layout.html" %}
-{% block title %}Challenge Scoreboard{% endblock %}
+{% block title %}Challenges{% endblock %}
 {% block content %}
 
-{% from "_macros.html" import get_jqplot_code %}
+<style>
+ .chall-tile {
+     display: block;
+     padding: 4px;
+     margin-top: 30px;
+     line-height: 1.42857143;
+     background-color: #e3e3e3;
+     border: 1px solid #ddd;
+     border-radius: 4px;
+     -webkit-transition: border .2s ease-in-out;
+     -o-transition: border .2s ease-in-out;
+     transition: border .2s ease-in-out;
+     padding: 9px;
+     color: #333;
+     clear:both;
+ }
+ .chall-tile:hover {
+     color: #333;
+     text-decoration: none;
+ }
+ .chall-tile:active, .chall-tile:visited, .chall-tile:enabled, .chall-tile:link, .chall-tile:hover{
+     color: #333;
+     text-decoration: none;
+ }
+ .chall-tile.inactive {
+     opacity: 0.6;
+ }
+ .chall-tile h3 {
+     white-space: nowrap;
+     text-overflow: ellipsis;
+     overflow: hidden;
+     height: 27px;
+     line-height: 24px;
+     text-align: center;
+     margin-top: 10px;
+ }
+ .chall-tile .solvers {
+     float: right;
+ }
+ .chall-tile .description {
+     text-align: center;
+ }
+</style>
 
-<h1>Challenge Scoreboard</h1>
 
+<h1>Challenges</h1>
+
+{% if config.JEOPARDY_BONUS %}
 <p>Bonus points: +3, +2, +1 to the first, second, third solver of each challenge</p>
+{% endif %}
 
 <div class="row">
-    <div class="col-md-12">
-        <!-- Table -->
-        <table class="table scoreboard sortable" data-sorting="true">
-            <thead>
-                <tr>
-                    <td class="text-left">User</td>
-                {% for c, cv in challenges.items() %}
-                    <td class="text-center">
-                        <a href="{{ url_for('challenge', name=cv.name) }}" title="{{ cv.points }} points" class="btn btn-lg btn-default {% if not cv.active %}inactive{% endif %}" role="button">
-                            {{ cv.name }}
-                        </a>
-                    </td>
-                {% endfor %}
-                    <td class="text-right">Total</td>
-                </tr>
-            </thead>
-            <tbody>
-            {% for score in scoreboard %}
-                <tr>
-                    <td class="text-left">{{ score.user }}</td>
-                {% for c, cv in challenges.items() %}
-                    <td class="text-center">
-                    {% if score.challenges[c].timestamp %}
-                        <span class="alert-info" aria-hidden="true" title="{{ score.challenges[c].timestamp }}">{{ score.challenges[c].points }}</span>
-                    {% else %}
-                        <span class="glyphicon glyphicon-remove alert-danger" aria-hidden="true" style="background: none"></span>
-                    {% endif %}
-                    </td>
-                {% endfor %}
-                    <td class="text-right">{{ score.points }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    {% for chal in challenges %}
+    <div class="col-md-3 col-sm-6">
+        <a href="{{ url_for('challenge', name=chal.name) }}" class="chall-tile {% if not chal.active %} inactive {% endif %}" >
+            <span class="points">{{ chal.points }} <small>pts</small></span>
+            <span class="solvers">{{ chal.solvers }} <small>solver(s)</small></span>
+            <h3 class="title">
+                {% if chal.solved %}
+                <span class="glyphicon glyphicon-ok alert-info"
+                      style="background:none;" aria-hidden="true" ></span>
+                {% endif %}
+                {{ chal.name }}
+            </h3>
+            <p class="description">{{ chal.tags }}</p>
+        </a>
     </div>
+    {% endfor %}
 </div>
-<div class="row">
-    <div class="col-md-12">
-        <div id="users_time" class="chart"></div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-md-12">
-        <div id="challenges_time" class="chart"></div>
-    </div>
-</div>
-<script>
-$(document).ready(function() {
-    AmCharts.makeChart("users_time", {{ users_graph|tojson|safe }});
-    AmCharts.makeChart("challenges_time", {{ challenges_graph|tojson|safe }});
-});
-</script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
-<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
 
 {% endblock %}

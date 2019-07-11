@@ -1,14 +1,41 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# CTForge: Forge your own CTF.
+
+# Copyright (C) 2016-2019  Marco Squarcina
+# Copyright (C) 2016-2019  Mauro Tempesta
+# Copyright (C) 2016-2019  Lorenzo Veronese
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+import io
+import os
 import bcrypt
-import datetime
+import math
+import time
+import json
+import base64
 import psycopg2
 import psycopg2.extras
-from copy import deepcopy
-from flask import request, render_template, redirect, url_for, flash, abort, jsonify
+from flask import request, render_template, redirect, url_for, flash, abort, jsonify, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
+from collections import defaultdict
+from datetime import datetime, timedelta
+from base64 import b64decode
 
 from ctforge import app, csrf, login_manager, cache
 from ctforge.users import User
@@ -102,6 +129,29 @@ def logout():
     flash('Logged out!', 'success')
     return redirect(url_for('index'))
 
+@app.route('/api/flag_id')
+@app.route('/api/flag_id/<service>')
+@cache.cached(timeout=5)
+def flag_id(service=None):
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute(
+            'SELECT S.name as sname, T.ip as ip, F.flag_id as flag_id, F.round as round '
+            'FROM  teams T, services S, flags F '
+            'WHERE S.flag_id AND F.flag_id IS NOT NULL '
+            'AND T.id = F.team_id AND S.id = F.service_id AND '
+            'get_current_round() - F.round <= S.flag_lifespan - 1 '
+            'ORDER BY S.name, T.ip, F.round DESC'
+        )
+        flag_ids = cur.fetchall()
+
+    data = defaultdict(lambda: defaultdict(list))
+    for row in flag_ids:
+        if (service and row['sname'] == service) or not service:
+            data[row['sname']][row['ip']].append(row['flag_id'])
+
+    return jsonify(data)
+
 @app.route('/admin')
 @app.route('/admin/<tab>')
 @admin_required
@@ -127,7 +177,7 @@ def admin(tab='users'):
         # get the challenge writeups
         cur.execute((
             'SELECT W.id AS id, C.id AS challenge_id, U.id AS user_id, U.mail AS mail, '
-            '       U.name AS name, U.surname AS surname, C.name AS challenge, '
+            '       U.name AS name, U.surname AS surname, U.nickname AS nickname, C.name AS challenge, '
             '       W.timestamp AS timestamp, E.feedback IS NOT NULL AS feedback, '
             '       E.grade AS grade, W.timestamp > E.timestamp AS updated '
             'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
@@ -143,7 +193,6 @@ def admin(tab='users'):
                             challenges=challenges, evaluations=evaluations,
                             tab=tab)
 
-
 @app.route('/admin/user/new', methods=['GET', 'POST'])
 @admin_required
 def add_user():
@@ -151,11 +200,12 @@ def add_user():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO users (team_id, name, surname, mail, '
-                '                   password, admin, hidden) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
+                'INSERT INTO users (team_id, name, surname, nickname, mail, '
+                '                   affiliation, password, admin, hidden) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 (form.team_id.data, form.name.data,
-                 form.surname.data, form.mail.data,
+                 form.surname.data, form.nickname.data, form.mail.data,
+                 form.affiliation.data,
                  bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
                  form.admin.data, form.hidden.data))
         else:
@@ -174,21 +224,23 @@ def edit_user(id):
                 # update the password
                 query_handler((
                     'UPDATE users '
-                    'SET team_id = %s, name = %s, surname = %s, '
-                    '    mail = %s, password = %s, admin = %s, hidden = %s '
+                    'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
+                    '    mail = %s, affiliation = %s, password = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data,
-                     form.surname.data, form.mail.data,
+                     form.surname.data, form.nickname.data, form.mail.data,
+                     form.affiliation.data,
                      bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
                      form.admin.data, form.hidden.data, id))
             else:
                 query_handler((
                     'UPDATE users '
-                    'SET team_id = %s, name = %s, surname = %s, '
-                    '    mail = %s, admin = %s, hidden = %s '
+                    'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
+                    '    mail = %s, affiliation = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data,
-                     form.surname.data, form.mail.data, form.admin.data,
+                     form.surname.data, form.nickname.data, form.mail.data,
+                     form.affiliation.data, form.admin.data,
                      form.hidden.data, id))
         else:
             flash_errors(form)
@@ -196,7 +248,7 @@ def edit_user(id):
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
             cur.execute((
-                'SELECT id, team_id, name, surname, mail, admin, hidden '
+                'SELECT id, team_id, name, surname, nickname, mail, affiliation, admin, hidden '
                 'FROM users '
                 'WHERE id = %s'), [id])
             user = cur.fetchone()
@@ -218,7 +270,7 @@ def add_team():
             query_handler((
                 'INSERT INTO teams (ip, name, token, poc) '
                 'VALUES (%s, %s, %s, %s)'),
-                (form.ip.data, form.name.data, form.token.data, 
+                (form.ip.data, form.name.data, form.token.data,
                  form.poc.data))
         else:
             flash_errors(form)
@@ -236,7 +288,7 @@ def edit_team(id):
             query_handler((
                 'UPDATE teams SET ip = %s, name = %s, token = %s, poc = %s '
                 'WHERE id = %s'),
-                (form.ip.data, form.name.data, form.token.data, 
+                (form.ip.data, form.name.data, form.token.data,
                  form.poc.data, id))
         else:
             flash_errors(form)
@@ -261,9 +313,10 @@ def add_service():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO services (name, description, active) '
-                'VALUES (%s, %s, %s)'),
-                (form.name.data, form.description.data, form.active.data))
+                'INSERT INTO services (name, description, active, flag_lifespan,flag_id) '
+                'VALUES (%s, %s, %s, %s, %s)'),
+                (form.name.data, form.description.data, form.active.data,
+                 form.flag_lifespan.data, form.flag_id.data))
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='services'))
@@ -278,9 +331,11 @@ def edit_service(id):
         form = ctforge.forms.ServiceForm()
         if form.validate_on_submit():
             query_handler((
-                'UPDATE services SET name = %s, description = %s, active = %s '
+                'UPDATE services SET name = %s, description = %s, '
+                'active = %s, flag_lifespan = %s, flag_id = %s '
                 'WHERE id = %s'),
-                (form.name.data, form.description.data, form.active.data, id))
+                (form.name.data, form.description.data, form.active.data,
+                 form.flag_lifespan.data, form.flag_id.data, id))
         else:
             flash_errors(form)
     else:
@@ -296,6 +351,80 @@ def edit_service(id):
                                    action='edit')
     return redirect(url_for('admin', tab='services'))
 
+@cache.memoize(timeout=5)
+def get_jeopardy_settings():
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT SUBSTRING(name, 10, LENGTH(name)) AS name, value '
+                    'FROM ctf_config WHERE name LIKE \'jeopardy_%\'')
+        config = { v['name']: v['value'] for v in cur.fetchall() }
+    fields = [
+        ('time_enabled', json.loads, False),
+        ('start_time',
+         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
+         datetime.fromtimestamp(time.time())),
+        ('end_time',
+         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
+         datetime.fromtimestamp(time.time())),
+        ('ctf_running', json.loads, False),
+        ('freeze_scoreboard', json.loads, False),
+        ('freeze_time',
+         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
+         datetime.fromtimestamp(time.time())),
+    ]
+    jeopardy = {}
+    for k, from_string, default in fields:
+        try:
+            jeopardy[k] = from_string(config[k])
+        except KeyError as e:
+            jeopardy[k] = default
+
+    if jeopardy['time_enabled']:
+        now = datetime.now()
+        jeopardy['ctf_running'] = jeopardy['start_time'] <= now <= jeopardy['end_time']
+
+    return jeopardy
+
+@app.route('/admin/jeopardy_settings', methods=['GET', 'POST'])
+#@jeopardy_mode_required
+@admin_required
+def jeopardy_settings():
+    if request.method == 'POST':
+        form = ctforge.forms.JeopardyForm()
+        if form.validate_on_submit():
+            form_vals = {
+                'jeopardy_time_enabled': form.time_enabled.data,
+                'jeopardy_start_time': form.start_time.data,
+                'jeopardy_end_time': form.end_time.data,
+                'jeopardy_ctf_running': form.ctf_running.data,
+                'jeopardy_freeze_scoreboard': form.freeze_scoreboard.data,
+                'jeopardy_freeze_time': form.freeze_time.data
+            }
+
+            db_conn = get_db_connection()
+            try:
+                with db_conn.cursor() as cur:
+                    cur.executemany(
+                        'INSERT INTO ctf_config (name, value) '
+                        'VALUES (%(name)s, %(value)s) '
+                        'ON CONFLICT (name) DO '
+                        'UPDATE SET value = %(value)s',
+                        [{'name':n, 'value': val} for n,val in form_vals.items()])
+                flash('Configuration updated', 'success')
+            except psycopg2.Error as e:
+                db_conn.rollback()
+                flash('Error: {}'.format(e), 'error')
+        else:
+            flash_errors(form)
+
+        return redirect(url_for('admin'))
+
+    jeopardy = get_jeopardy_settings()
+    form = ctforge.forms.JeopardyForm(**jeopardy)
+    return render_template('admin/data.html', form=form,
+                           action='edit', target='jeopardy CTF',
+                           return_to=url_for('admin'))
+
 @app.route('/admin/challenge/new', methods=['GET', 'POST'])
 @jeopardy_mode_required
 @admin_required
@@ -304,11 +433,12 @@ def add_challenge():
     if request.method == 'POST':
         if form.validate_on_submit():
             query_handler((
-                'INSERT INTO challenges (name, description, flag, points, '
-                '                        active, writeup, writeup_template) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s)'),
+                'INSERT INTO challenges (name, description, flag, points, tags, '
+                '                        active, hidden, writeup, writeup_template) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, form.writeup.data, 
+                 form.points.data, form.tags.data,
+                 form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data])
         else:
             flash_errors(form)
@@ -326,10 +456,12 @@ def edit_challenge(id):
             query_handler((
                 'UPDATE challenges '
                 'SET name = %s, description = %s, flag = %s, points = %s, '
-                '    active = %s, writeup = %s, writeup_template = %s '
+                '    tags = %s, active = %s, hidden = %s, '
+                '    writeup = %s, writeup_template = %s '
                 'WHERE id = %s'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.active.data, form.writeup.data, 
+                 form.points.data, form.tags.data,
+                 form.active.data, form.hidden.data, form.writeup.data,
                  form.writeup_template.data, id])
         else:
             flash_errors(form)
@@ -355,7 +487,7 @@ def edit_evaluation(challenge_id, user_id):
     db_conn = db_connect()
     with db_conn.cursor() as cur:
         cur.execute((
-            'SELECT U.mail AS mail, U.name, U.surname, C.name AS challenge, '
+            'SELECT U.mail AS mail, U.name, U.surname, U.nickname, C.name AS challenge, '
             '       W.timestamp AS timestamp, W.writeup AS writeup, E.grade, E.feedback '
             'FROM writeups AS W '
             'JOIN challenges AS C ON W.challenge_id = C.id '
@@ -436,24 +568,29 @@ def submit():
                 team_id = res['id']
                 # get the flag that the user is trying to submit, if valid
                 # (i.e. active and not one of the flags of his team)
-                cur.execute(('SELECT service_id FROM active_flags '
-                             'WHERE flag = %s AND team_id != %s'),
-                             [flag, team_id])
+                cur.execute(('SELECT service_id, get_current_round() - F.round > S.flag_lifespan - 1 AS expired, team_id '
+                             'FROM flags F JOIN services S ON S.id = F.service_id '
+                             'WHERE flag = %s'), [flag])
                 res = cur.fetchone()
                 if res is None:
                     raise ctforge.exceptions.InvalidFlag()
-                service_id = res['service_id']
-                # check whether the team's service is well-functioning or not
-                cur.execute(('SELECT I.successful, I.timestamp '
-                             'FROM active_flags AS A '
-                             'JOIN integrity_checks AS I '
-                             'ON A.flag = I.flag '
-                             'WHERE A.team_id = %s AND A.service_id = %s '
-                             'ORDER BY I.timestamp DESC LIMIT 1'),
-                             [team_id, service_id])
-                res = cur.fetchone()
-                if res is None or res['successful'] != 1:
-                    raise ctforge.exceptions.ServiceCorrupted()
+                if res['expired'] == 1:
+                    raise ctforge.exceptions.ExpiredFlag()
+                # check if the flag is owned by the same team that submitted it
+                if res['team_id'] == team_id:
+                    raise ctforge.exceptions.OwnFlag()
+                # if we need to check integrity every submit, do it
+                if not app.config['ALWAYS_SUBMIT']:
+                    service_id = res['service_id']
+                    # check whether the team's service is well-functioning or not
+                    cur.execute(('SELECT successful '
+                                 'FROM integrity_checks '
+                                 'WHERE team_id = %s AND service_id = %s '
+                                 'ORDER BY timestamp DESC LIMIT 1'),
+                                [team_id, service_id])
+                    res = cur.fetchone()
+                    if res is None or res['successful'] != 1:
+                        raise ctforge.exceptions.ServiceCorrupted()
                 # store the attack in the database
                 cur.execute(('INSERT INTO service_attacks (team_id, flag) '
                              'VALUES (%s, %s) '),
@@ -476,6 +613,12 @@ def submit():
             except ctforge.exceptions.InvalidFlag:
                 db_conn.rollback()
                 flash('The submitted flag is invalid!', 'error')
+            except ctforge.exceptions.OwnFlag:
+                db_conn.rollback()
+                flash('The submitted flag is your own!', 'error')
+            except ctforge.exceptions.ExpiredFlag:
+                db_conn.rollback()
+                flash('The submitted flag is expired!', 'error')
             except ctforge.exceptions.ServiceCorrupted:
                 db_conn.rollback()
                 flash('Your service is corrupted, fix it before submitting flags!', 'error')
@@ -490,6 +633,34 @@ def submit():
         else:
             flash_errors(form)
     return render_template('submit.html', form=form, team_token=team_token)
+
+@app.route('/user')
+@login_required
+def user():
+    """Render a page with information about the user."""
+    db_conn = get_db_connection()
+    cur = db_conn.cursor()
+    cur.execute('SELECT * FROM users WHERE id = %s', [current_user.id])
+    user = cur.fetchone()
+    if user is None:
+        cur.close()
+        flash('Your user id is does not match any user', 'error')
+        return redirect(url_for('index'))
+
+    cur.execute('SELECT * FROM challenges C JOIN challenge_attacks A '
+                'ON C.id = A.challenge_id WHERE A.user_id = %s ORDER BY C.name', [current_user.id])
+    challenges = cur.fetchall()
+
+    try:
+        with open(os.path.expanduser('~/.ctforge/client.ovpn'), 'r') as f:
+            vpn = base64.b64encode(f.read().encode()).decode()
+    except FileNotFoundError as e:
+        app.logger.error(e)
+        vpn = ""
+
+    return render_template('user.html', user=user, challenges=challenges, vpn_encoded=vpn)
+
+
 
 @app.route('/team')
 @attackdefense_mode_required
@@ -515,35 +686,102 @@ def team():
     # for each service get the number of attacks suffered and inflicted the
     # user's team
     cur.execute((
-        'SELECT S.name AS service_name, '
-        '       COUNT(A.flag) AS suffered, '
-        '       (SELECT COUNT(A1.flag) '
-        '        FROM active_flags AS F1 '
-        '        JOIN service_attacks AS A1 ON F1.flag = A1.flag '
-        '        WHERE A1.team_id = F.team_id AND F1.service_id = F.service_id '
-        '       ) AS inflicted '
-        'FROM services AS S '
-        'JOIN active_flags AS F ON S.id = F.service_id '
-        'LEFT JOIN service_attacks AS A ON F.flag = A.flag '
-        'WHERE F.team_id = %s '
-        'GROUP BY F.team_id, F.service_id, S.name'),
-        [current_user.team_id])
+        '''SELECT S.id, S.name AS service_name,
+           (SELECT COUNT(A.flag)
+            FROM flags AS F JOIN service_attacks AS A ON F.flag = A.flag
+            WHERE F.service_id = S.id AND A.team_id = %s AND A.timestamp >= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+           ) AS inflicted,
+           (SELECT COUNT(A.flag)
+            FROM flags AS F JOIN service_attacks AS A ON F.flag = A.flag
+            WHERE F.service_id = S.id AND F.team_id = %s AND A.timestamp >= CURRENT_TIMESTAMP - INTERVAL '15 minutes'
+           ) AS suffered
+           FROM services AS S
+        '''), [current_user.team_id, current_user.team_id])
     attacks = cur.fetchall()
     cur.close()
 
     return render_template('team.html', team=team, members=members, attacks=attacks)
 
-@app.route('/challenges')
+@app.route('/challenges_scoreboard')
 @jeopardy_mode_required
-def challenges():
+def challenges_scoreboard():
     """Display the challenge scoreboard."""
+    @cache.memoize(timeout=5)
+    def challenge_list():
+        db_conn = get_db_connection()
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
+            challenges = cur.fetchall()
+            cur.execute('SELECT DISTINCT affiliation FROM users')
+            affiliations = [ v['affiliation'] for v in cur.fetchall()
+                             if v['affiliation'] ]
+        return (challenges, affiliations)
 
-    challenges_data = _challenges()
+    jeopardy = get_jeopardy_settings()
+    if jeopardy['time_enabled']:
+        now = datetime.now()
+        jeopardy['ctf_ended'] = now >= jeopardy['end_time']
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
 
-    return render_template('challenges.html', **challenges_data)
+    if jeopardy['freeze_scoreboard']:
+        jeopardy['freeze_time'] =  jeopardy['freeze_time'].strftime("%H:%M:%S (%d/%m/%Y)")
 
-@cache.cached(timeout=30)
+    challenges, affiliations = challenge_list()
+    return render_template('challenges_scoreboard.html',
+                           challenges=challenges, affiliations=affiliations,
+                           settings=jeopardy)
+
+@app.route('/challenges')
+@login_required
+def challenges():
+    """ Display the list of challenges with score and solvers """
+
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+
+    @cache.memoize(timeout=5)
+    def challenges_attacks():
+        db_conn = get_db_connection()
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY name')
+            challenges = cur.fetchall()
+            cur.execute('SELECT A.*, U.id as user_id, U.hidden as user_hidden '
+                        'FROM challenge_attacks as A '
+                        'LEFT JOIN users as U ON A.user_id = U.id')
+            attacks = cur.fetchall()
+        return (challenges, attacks)
+
+    challenges, attacks = challenges_attacks()
+    for chal in challenges:
+        chal_attacks = [a for a in attacks if a['challenge_id'] == chal['id']]
+        chal_solved = [a for a in chal_attacks if a['user_id'] == current_user.id]
+        chal['solved'] = bool(chal_solved)
+        chal['solved_time'] = None if not chal_solved else chal_solved[0]['timestamp']
+        chal['solvers'] = sum( 1 for x in chal_attacks if not x['user_hidden'] )
+
+    if jeopardy['time_enabled']:
+        jeopardy['ctf_ended'] = now >= jeopardy['end_time']
+        jeopardy['seconds_left'] = int((jeopardy['end_time'] - now).total_seconds())
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
+
+    return render_template('challenges.html', challenges=challenges,
+                           settings=jeopardy)
+
+
+@app.route('/scoreboard_jeopardy')
+@cache.cached(timeout=5)
 def _challenges():
+
+    # if the ctf is not running return the empty object
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+    if not jeopardy['ctf_running'] and (jeopardy['time_enabled'] and now < jeopardy['end_time']):
+        return jsonify([])
+
+    scoreboard_time = now
+    if jeopardy['freeze_scoreboard']:
+        scoreboard_time = jeopardy['freeze_time']
+
     db_conn = get_db_connection()
     cur = db_conn.cursor()
     # get the challenges
@@ -554,13 +792,13 @@ def _challenges():
     # and not hidden, sorted by timestamp. Along with the users get the
     # information about the solved challenges
     cur.execute((
-        'SELECT U.id AS user_id, U.name AS name, U.surname AS surname, '
-        '       U.admin AS admin, U.hidden AS hidden, '
+        'SELECT U.id AS user_id, U.name AS name, U.surname AS surname, U.nickname AS nickname, '
+        '       U.admin AS admin, U.hidden AS hidden, U.affiliation AS affiliation, '
         '       CA.challenge_id AS challenge_id, CA.timestamp AS timestamp '
         'FROM users AS U JOIN challenge_attacks AS CA '
         'ON U.id = CA.user_id '
-        'WHERE NOT admin AND NOT hidden '
-        'ORDER BY timestamp ASC '))
+        'WHERE NOT hidden AND CA.timestamp <= %s '
+        'ORDER BY timestamp ASC '), [scoreboard_time])
     challenge_attacks = cur.fetchall()
     cur.close()
     # map user id to a string representing his name and surname
@@ -568,29 +806,52 @@ def _challenges():
     # map the pair challenge id and user id to the timestamp
     attacks = dict()
     for ca in challenge_attacks:
-        users[ca['user_id']] = '{} {}'.format(ca['name'], ca['surname'])
+        users[ca['user_id']] = {
+            'name': '{} {} ({})'.format(ca['name'], ca['surname'], ca['nickname']) \
+                    if app.config['SHOW_NAMES'] \
+                    else '{}'.format(ca['nickname']),
+            'affiliation': ca['affiliation']
+        }
         attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
 
-    # compute the bonus: +3 for firt shot, +2 to second and +1 to third
-    bonus_aux = dict()
-    for (c, u), t in attacks.items():
-        try:
-            bonus_aux[c].append((u, t))
-        except KeyError:
-            bonus_aux[c] = [(u, t)]
     bonus = dict()
-    for c in bonus_aux.keys():
-        bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
-        for i in range(len(bonus_aux[c])):
-            bonus[(c, bonus_aux[c][i][0])] = 3 - i
-            if i >= 2:
-                break
+    if app.config['JEOPARDY_BONUS']:
+        # compute the bonus: +3 for firt shot, +2 to second and +1 to third
+        bonus_aux = dict()
+        for (c, u), t in attacks.items():
+            try:
+                bonus_aux[c].append((u, t))
+            except KeyError:
+                bonus_aux[c] = [(u, t)]
+        for c in bonus_aux.keys():
+            bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
+            for i in range(len(bonus_aux[c])):
+                bonus[(c, bonus_aux[c][i][0])] = 3 - i
+                if i >= 2:
+                    break
+
+    # Get released hints and update bonus to have negative values
+    with db_conn.cursor() as cur:
+        cur.execute(
+            'SELECT FLOOR(H.penalty * 0.01 * C.points) as penalty, '
+            '       C.id as challenge_id, P.release_time '
+            'FROM hint_polls P '
+            'JOIN hints H ON P.hint_id = H.id '
+            'JOIN challenges C ON H.challenge_id = C.id '
+            'WHERE P.release_time IS NOT NULL '
+            'ORDER BY P.id DESC')
+        released_hints = cur.fetchall()
+    penalties = defaultdict(list)
+    for row in released_hints:
+        penalties[row['challenge_id']].append(row)
+    for (c,u), t in attacks.items():
+        penalty = sum( int(p['penalty']) for p in penalties[c] if p['release_time'] < t)
+        bonus[(c,u)] = -penalty
 
     # compute the scoreboard as a list of dictionaries
     scoreboard = []
     for u, uv in users.items():
-        score = {'user': uv, 'points': 0}
-        score['challenges'] = dict()
+        score = {'user': uv['name'], 'affiliation': uv['affiliation'], 'points': 0, 'challenges': {}}
         for c, cv in chals.items():
             try:
                 timestamp = attacks[(c, u)]
@@ -602,142 +863,33 @@ def _challenges():
             except KeyError:
                 timestamp = None
                 points = 0
-            score['challenges'][c] = {'timestamp': timestamp, 'points': points}
+            score['challenges'][cv['name']] = {'timestamp': timestamp, 'points': points}
         scoreboard.append(score)
-    # sort the scoreboard by total points
-    scoreboard = sorted(scoreboard, key=lambda x: x['points'], reverse=True)
+    # sort the scoreboard by total points or, in case of a tie, by the time of the
+    # last submission
+    def sorting_key(u):
+        timestamps = [c['timestamp'] for c in u['challenges'].values() if c['timestamp'] is not None]
+        return u['points'], len(timestamps), datetime.now() - max(timestamps)
 
-    # charts computation
-    graph_template = {
-        "type": "serial",
-        "categoryField": "date",
-        "dataDateFormat": "YYYY-MM-DD HH:NN:SS",
-        "startDuration": 0.5,
-        "startEffect": "easeOutSine",
-        "fontFamily": "Monda",
-        "fontSize": 14,
-        "theme": "dark",
-        "categoryAxis": {
-            "minPeriod": "ss",
-            "parseDates": True
-        },
-        "chartCursor": {
-            "enabled": True,
-            "categoryBalloonDateFormat": "JJ:NN:SS",
-            "categoryBalloonText": "[[category]]"
+    scoreboard.sort(key=sorting_key, reverse=True)
 
-        },
-        "chartScrollbar": {
-            "enabled": True,
-            "dragIcon": "dragIconRectSmall"
-        },
-        "trendLines": [],
-        "graphs": [],
-        "guides": [],
-        "valueAxes": [
-            {
-                "id": "ValueAxis-1",
-                "title": ""
-            }
-        ],
-        "allLabels": [],
-        "balloon": {},
-        "legend": {
-            "enabled": True,
-            "useGraphSettings": True,
-            "color": "#D4D4D4",
-        },
-        "titles": [
-            {
-                "id": "Title-1",
-                "size": 15,
-                "text": ""
-            }
-        ],
-        "dataProvider": []
-    }
+    # add an index to the scoreboard row to preserve sorting
+    for i, elm in enumerate(scoreboard):
+        elm['index'] = i
 
-    date_start = app.config['DATE_START']
-    date_now = datetime.datetime.now()
-    challenges_graph_dict = {c_id: [] for c_id in chals.keys()}
-
-    # compute the chart of points over time for each user
-    users_graphs = []
-    users_data_provider = []
-    for i, board_entry in enumerate(scoreboard):
-        users_graphs.append({
-            "id": "mygraph-{}".format(i),
-            "title": board_entry['user'],
-            "valueField": "column-{}".format(i),
-            "type": "line",
-            "lineThickness": 3,
-            "balloonText": "[[title]] [[value]]pts"})
-        user_points = [[date_start.timestamp(), 0]]
-        for chal_id, chal in board_entry['challenges'].items():
-            if chal['timestamp'] is not None:
-                user_points.append([chal['timestamp'].timestamp(), chal['points']])
-                challenges_graph_dict[chal_id].append([chal['timestamp'].timestamp(), 1])
-
-        # sort the list by date
-        user_points = sorted(user_points, key=lambda x: x[0])
-        # finally add the current date to the list
-        user_points.append([date_now.timestamp(), 0])
-        # perform the sum over all the points piled up by the current user
-        for j in range(1, len(user_points)):
-            user_points[j][1] += user_points[j - 1][1]
-        # finally add the newly created list to the data_provider list
-        for ts, pt in user_points:
-            users_data_provider.append({
-                "date": datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S'),
-                "column-{}".format(i): pt
-            })
-    users_graph = deepcopy(graph_template)
-    users_graph['titles'][0]['text'] = 'Players'
-    users_graph['valueAxes'][0]['title'] = 'Points'
-    users_graph['graphs'] = users_graphs
-    users_graph['dataProvider'] = sorted(users_data_provider, key=lambda x: x['date'])
-
-    # compute the cart of challenge solvers over time for each challenge
-    challenges_graphs = []
-    challenges_data_provider = []
-
-    for i, chal in enumerate(chals.values()):
-        challenges_graphs.append({
-            "id": "mygraph-{}".format(i),
-            "title": chal['name'],
-            "valueField": "column-{}".format(i),
-            "type": "line",
-            "lineThickness": 3,
-            "balloonText": "[[title]] solved by [[value]]"})
-
-    for i, chal in enumerate(challenges_graph_dict.values()):
-        chal_aux = chal
-        chal_aux.append([date_now.timestamp(), 0])
-        chal_aux = sorted(chal_aux, key=lambda x: x[0])
-        for j in range(1, len(chal_aux)):
-            chal_aux[j][1] += chal_aux[j - 1][1]
-            # finally add the newly created list to the data_provider list
-        for ts, solvers in chal_aux:
-            challenges_data_provider.append({
-                "date": datetime.datetime.fromtimestamp(int(ts)).strftime('%Y-%m-%d %H:%M:%S'),
-                "column-{}".format(i): solvers
-            })
-
-    challenges_graph = deepcopy(graph_template)
-    challenges_graph['titles'][0]['text'] = 'Challenges'
-    challenges_graph['valueAxes'][0]['title'] = 'Solvers'
-    challenges_graph['graphs'] = challenges_graphs
-    challenges_graph['dataProvider'] = challenges_data_provider
-
-    return {'challenges': chals, 'scoreboard': scoreboard,
-            'users_graph': users_graph, 'challenges_graph': challenges_graph}
+    return jsonify(scoreboard)
 
 
-@app.route('/challenge/<name>',  methods=['GET', 'POST'])
+@app.route('/challenge/<name>', methods=['GET', 'POST'])
 @jeopardy_mode_required
 @login_required
 def challenge(name):
     """Display information about a challenge plus the flag submission form and the writeup."""
+
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+    if not jeopardy['ctf_running'] and now < jeopardy['end_time']:
+        return abort(404)
 
     db_conn = db_connect()
     cur = db_conn.cursor()
@@ -747,9 +899,20 @@ def challenge(name):
                 [name])
     challenge = cur.fetchone()
     # if the challenge is not valid abort
-    if challenge is None:
+    if challenge is None or challenge['hidden']:
         cur.close()
         abort(404)
+
+    # get penalty
+    cur.execute(
+        'SELECT SUM(FLOOR(H.penalty * 0.01 * C.points)) as penalty '
+        'FROM hint_polls P '
+        'JOIN hints H ON P.hint_id = H.id '
+        'JOIN challenges C ON H.challenge_id = C.id '
+        'WHERE P.release_time IS NOT NULL and C.id = %s',
+        [challenge['id']])
+    res = cur.fetchone()
+    penalty = int(res['penalty']) if res['penalty'] else 0
 
     # check if the current user already solved the challenge
     cur.execute(('SELECT * FROM challenge_attacks '
@@ -811,6 +974,21 @@ def challenge(name):
                 cur = db_conn.cursor()
             if flag is not None and flag_form.validate_on_submit():
                 flag = flag_form.flag.data
+
+                # Check if the user can submit flags
+                # if the ctf is over the flags are validated but the db is not updated
+                if not jeopardy['ctf_running']:
+                    if jeopardy['time_enabled']:
+                        if now >= jeopardy['end_time'] and flag == challenge['flag']:
+                            flash('Flag accepted! (No points)', 'success')
+                        else:
+                            flash('Invalid flag', 'error')
+                        return redirect(url_for('challenge', name=challenge['name']))
+                    else:
+                        flash('There is no running CTF!', 'error')
+                        return redirect(url_for('challenge', name=challenge['name']))
+
+
                 if flag == challenge['flag']:
                     try:
                         # save this attack into the db
@@ -843,9 +1021,112 @@ def challenge(name):
     db_conn.close()
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
-                           challenge=challenge, evaluation=evaluation, solved=solved, 
-                           graded=graded, writeups=writeups)
+                           challenge=challenge, evaluation=evaluation, solved=solved,
+                           graded=graded, writeups=writeups, penalty=penalty)
 
+@app.route('/hints', methods=['GET', 'POST'])
+@login_required
+def hints():
+
+    @cache.memoize(timeout=1)
+    def get_challenges():
+        with db_conn.cursor() as cur:
+            cur.execute(
+                'SELECT C.id, C.name '
+                'FROM hints H JOIN challenges C on C.id = H.challenge_id '
+                'WHERE NOT hidden AND H.id NOT IN ('
+                '  SELECT hint_id FROM hint_polls WHERE hint_id IS NOT NULL'
+                ') '
+                'GROUP BY C.id, C.name '
+                'ORDER BY C.name')
+            challenges = cur.fetchall()
+        return challenges
+
+    @cache.memoize(timeout=1)
+    def get_hints():
+        with db_conn.cursor() as cur:
+            cur.execute(
+                'SELECT FLOOR(H.penalty * 0.01 * C.points) as penalty, '
+                '       H.description, C.name, P.release_time '
+                'FROM hint_polls P '
+                'JOIN hints H ON P.hint_id = H.id '
+                'JOIN challenges C ON H.challenge_id = C.id '
+                'WHERE P.release_time IS NOT NULL '
+                'ORDER BY P.id DESC')
+            released_hints = cur.fetchall()
+        return released_hints
+
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+    db_conn = get_db_connection()
+
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT * FROM hint_polls '
+                    'WHERE release_time is NULL ORDER BY id DESC LIMIT 1')
+        current_poll = cur.fetchone()
+
+    seconds_left = 0
+    if current_poll is not None:
+        seconds_left = math.floor(
+            current_poll['duration']
+            - (now - current_poll['start_time']).total_seconds())
+        if seconds_left <= 0:
+            current_poll = None
+
+    challenges = get_challenges()
+
+    # form value for current user hint
+    if request.method == 'POST' and current_poll is not None:
+        try:
+            selected_chal = int(request.form['chal'])
+        except ValueError:
+            selected_chal = None
+        if current_poll['release_time'] is None \
+           and selected_chal in [c['id'] for c in challenges]:
+            with db_conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO hint_polls_choiches '
+                    ' (poll_id, user_id, challenge_id) '
+                    'VALUES (%(poll)s, %(id_user)s, %(id_chall)s) '
+                    'ON CONFLICT (poll_id, user_id) DO '
+                    'UPDATE SET challenge_id = %(id_chall)s',
+                    {'id_user': current_user.id, 'id_chall': selected_chal,
+                     'poll': current_poll['id']})
+
+    released_hints = get_hints()
+    with db_conn.cursor() as cur:
+        selected_chal = None
+        if current_poll is not None:
+            cur.execute('SELECT challenge_id from hint_polls_choiches '
+                        'WHERE poll_id = %s AND user_id = %s',
+                        [current_poll['id'], current_user.id])
+            selected_chal = cur.fetchone()
+            if selected_chal:
+                selected_chal = selected_chal['challenge_id']
+
+    if jeopardy['time_enabled']:
+        jeopardy['ctf_ended'] = now >= jeopardy['end_time']
+        jeopardy['seconds_left'] = int((jeopardy['end_time'] - now).total_seconds())
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
+
+    return render_template('hints.html', current_poll=current_poll, challenges=challenges, selected_chal=selected_chal, released_hints=released_hints, seconds_left=seconds_left, settings=jeopardy)
+
+@app.route('/public/<filename>')
+@login_required
+#@cache.cached(timeout=30)
+def public_file(filename):
+    """Download public file"""
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute(
+            'SELECT name, content FROM public_files WHERE name = %s', [filename])
+        row = cur.fetchone()
+    if row is not None:
+        with io.BytesIO(b64decode(row['content'])) as f:
+            return make_response((f.read(), {
+                'Content-Type': 'application/octet-stream',
+                'Content-Disposition': 'filename={}'.format(filename)}))
+    abort(404)
 
 @app.route('/writeup/<int:id>')
 @app.route('/writeup/<int:id>/<int:md>')
@@ -881,7 +1162,7 @@ def writeup(id, md=0):
 
 @app.route('/service/<name>')
 @attackdefense_mode_required
-@login_required
+# @login_required # Needed if the description contains download links
 def service(name):
     """Display information about a service."""
 
@@ -891,7 +1172,7 @@ def service(name):
         cur.execute('SELECT * FROM services WHERE name = %s',
                     [name])
         service = cur.fetchone()
-    if service is None:
+    if service is None or not service['active']:
         abort(404)
     return render_template('service.html', service=service)
 
@@ -907,131 +1188,201 @@ def teams():
         cur.execute('SELECT id, name FROM teams ORDER BY id')
         teams = cur.fetchall()
         # get users
-        cur.execute(('SELECT id, team_id, name, surname '
+        cur.execute(('SELECT id, team_id, name, surname, nickname '
                      'FROM users ORDER BY id'))
         users = cur.fetchall()
     return render_template('teams.html', teams=teams, users=users)
 
-@app.route('/scoreboard')
-@attackdefense_mode_required
-def scoreboard():
+def round_info(db_conn):
     # get the latest round
-    db_conn = get_db_connection()
     with db_conn.cursor() as cur:
-        cur.execute('SELECT id AS rnd, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
+        cur.execute('SELECT id AS round, timestamp FROM rounds ORDER BY id DESC LIMIT 1')
         res = cur.fetchone()
-    rnd = res['rnd']-1 if res is not None and res['rnd'] else 0
+    rnd = res['round'] if res is not None and res['round'] else 0
 
     # get the time left until the next round
-    date_now = datetime.datetime.now()
+    date_now = datetime.now()
     seconds_left = app.config['ROUND_DURATION']
     if rnd >= 1:
         # get seconds left till new round
-        seconds_left = max(((res['timestamp'] + datetime.timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).seconds, 0)
+        seconds_left = max(
+            int(((res['timestamp'] + timedelta(seconds=app.config['ROUND_DURATION'])) - date_now).total_seconds()), 0)
 
-    # get all the other stuff out of the cached function
-    scoreboard_data = _scoreboard(rnd)
-    
-    return render_template('scoreboard.html', rnd=rnd, time_left=seconds_left, **scoreboard_data)
+    return rnd, seconds_left, res['timestamp'] if res is not None else 0
 
-#@cache.cached(timeout=60)
-def _scoreboard(rnd):
+@app.route('/scoreboard')
+@attackdefense_mode_required
+def scoreboard():
+    # get info about the current round
     db_conn = get_db_connection()
-    cur = db_conn.cursor()
+    rnd, seconds_left, _ = round_info(db_conn)
 
-    # retrieve the service table
-    cur.execute('SELECT id, name, active FROM services')
-    services = cur.fetchall()
+    # get the list of services
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT id, name, active FROM services ORDER BY name')
+        services = cur.fetchall()
 
-    # retrieve the latest score of each team along with the team names'
-    cur.execute((
-        'SELECT T.id, T.name, T.ip, S.attack, S.defense '
-        'FROM scores as S JOIN teams as T ON S.team_id = T.id '
-        'WHERE round = %s'), [rnd])
-    results = cur.fetchall()
+    return render_template('scoreboard.html', rnd=rnd, rnd_duration=app.config['ROUND_DURATION'],
+                           time_left=seconds_left, services=services)
 
-    # start populating the board, it's a dictionary of dictionaries, see
-    # the initialization below to grasp the structure
-    board = {}
-    for r in results:
-        board[r['id']] = {
-            'team': r['name'], 'ip': r['ip'], 'id': r['id'], 
-            'attack': r['attack'], 'defense': r['defense'],
-            'ratio_attack': 0, 'ratio_defense': 0, 'position': 0,
-            'services': {}, 'attack_scores': [], 'defense_scores': [],
-            'total_scores': []
+@app.route('/ctf_scoreboard')
+@attackdefense_mode_required
+@cache.cached(timeout=4)
+def _scoreboard(rnd=None):
+    db_conn = get_db_connection()
+    rnd, seconds_left, rnd_start_timestamp = round_info(db_conn)
+    crnd =  rnd
+    
+    settings = get_jeopardy_settings()
+    if settings['freeze_scoreboard']:
+        freeze_time = settings['freeze_time']
+        # Get the nearest round to the freeze timestamp
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT id AS round, timestamp FROM rounds WHERE timestamp <= %s ORDER BY id DESC LIMIT 1', [freeze_time])
+            res = cur.fetchone()
+        rnd = res['round']
+        rnd_start_timestamp = res['timestamp']
+
+    with db_conn.cursor() as cur:
+
+        scores = defaultdict(dict)
+        ips = {}
+
+        # get the scores of each team on each service
+        cur.execute((
+            'SELECT T.name AS team_name, T.ip as team_ip, '
+            'SR.name AS service_name, SC.attack, SC.defense, SC.sla '
+            'FROM scores AS SC '
+            'JOIN services AS SR ON SC.service_id = SR.id '
+            'JOIN teams AS T ON T.id = SC.team_id '
+            'WHERE SC.round = GREATEST(%s - 1, 0)'), [rnd])
+
+        for score in cur:
+            team = score['team_name']
+            ip = score['team_ip']
+            service = score['service_name']
+            scores[team][service] = {
+                'attack': score['attack'],
+                'defense': score['defense'],
+                'sla': score['sla'],
+                'attack_flags': 0,
+                'defense_flags': 0
+            }
+            ips[team] = ip
+
+        # get the flag count for each service
+        # attack
+        cur.execute('''
+            SELECT T.name as team, S.name as service, COUNT(F.flag) as count
+            FROM service_attacks A
+                 JOIN flags F ON F.flag = A.flag
+                 JOIN teams T ON T.id = A.team_id
+                 JOIN services S ON S.id = F.service_id
+            WHERE A.timestamp < %s
+            GROUP BY T.name, S.name
+            ''', [rnd_start_timestamp])
+        for row in cur:
+            team = row['team']
+            service = row['service']
+            scores[team][service]['attack_flags'] = row['count']
+        # defense
+        cur.execute('''
+            SELECT T.name as team, S.name as service, COUNT(F.flag) as count
+            FROM service_attacks A
+                 JOIN flags F ON F.flag = A.flag
+                 JOIN teams T ON T.id = F.team_id
+                 JOIN services S ON S.id = F.service_id
+            WHERE A.timestamp < %s
+            GROUP BY T.name, S.name
+            ''', [rnd_start_timestamp])
+        for row in cur:
+            team = row['team']
+            service = row['service']
+            scores[team][service]['defense_flags'] = -row['count']
+
+        # get total sla for each service
+        cur.execute('''
+            SELECT T.name as team, S.name as service,
+                   count(case C.successful when TRUE then 1 else NULL end) AS successful,
+                   count(*) as total
+            FROM integrity_checks C
+                 JOIN teams T ON T.id = C.team_id
+                 JOIN services S ON S.id = C.service_id
+            WHERE C.timestamp < %s
+            GROUP BY T.name, S.name
+        ''', [rnd_start_timestamp])
+        for row in cur:
+            team = row['team']
+            service = row['service']
+            scores[team][service]['sla_percentage'] = row['successful'] / row['total'] * 100
+
+        check_tstamp = datetime.now()
+        if settings['freeze_scoreboard']:
+            check_tstamp = rnd_start_timestamp
+
+        # get the status of each service
+        cur.execute((
+            'SELECT T.name AS team_name, S.name AS service_name, C.timestamp, C.successful '
+            'FROM teams AS T, services AS S, LATERAL ('
+            '    SELECT IC.successful, IC.timestamp'
+            '    FROM integrity_checks IC'
+            '    WHERE IC.team_id = T.id AND IC.service_id = S.id '
+            '      AND IC.timestamp <= %s '
+            '    ORDER BY IC.timestamp DESC'
+            '    LIMIT 1'
+            ') AS C'), [check_tstamp])
+        for check in cur:
+            team = check['team_name']
+            service = check['service_name']
+            scores[team][service]['integrity'] = {
+                'status': check['successful'],
+                'timestamp': check['timestamp']
+            }
+
+    board = []
+    for name, services in scores.items():
+        entry = {
+            'name': name,
+            'ip': ips[name],
+            'services': services,
+            'attack': sum(s['attack'] for s in services.values()),
+            'defense': sum(s['defense'] for s in services.values()),
+            'sla': sum(s['sla'] for s in services.values()),
+            'score': sum(s['attack'] + s['defense'] + s['sla'] for s in services.values())
         }
+        board.append(entry)
+    board.sort(key=lambda e: e['score'], reverse=True)
 
-    # get services status
-    cur.execute((
-        'SELECT F.team_id, F.service_id, C.successful, MAX(C.timestamp) AS timestamp '
-        'FROM active_flags AS F '
-        'LEFT JOIN integrity_checks AS C ON '
-        '     (F.flag = C.flag AND C.timestamp = (SELECT MAX(timestamp) '
-        '                                         FROM integrity_checks '
-        '                                         WHERE flag = F.flag)) '
-        'GROUP BY F.team_id, F.service_id, C.successful'));
-    services_status = cur.fetchall()
-    for ss in services_status:
-        board[ss['team_id']]['services'][ss['service_id']] = (ss['successful'], ss['timestamp'])
-    # set default values
-    for team_id in board:
-        for service in services:
-            try:
-                _ = board[team_id]['services'][service['id']]
-            except KeyError:
-                board[team_id]['services'][service['id']] = (2, '???')
-    # normalize scores avoiding divisions by 0. If the score table is empty
-    # (it shouldn't, we can initialize it with 0s) assume the max scores to
-    # be 0. The scoreboard will anyway result empty since the teams are
-    # extracted from the score table
-    if len(board):
-        max_attack = max(max(team['attack'] for team in board.values()), 1)
-        max_defense = max(max(team['defense'] for team in board.values()), 1)
-    else:
-        max_attack = max_defense = 0
+    return jsonify({
+        'round': rnd,
+        'current_round': crnd,
+        'seconds_left': seconds_left,
+        'scores': board
+    })
 
-    # get the scores of all the teams during the whole game to create some
-    # nice graphs
-    cur.execute('SELECT * FROM scores ORDER BY round')
-    scores = cur.fetchall()
-    cur.close()
+@app.route('/ctf_stats')
+@app.route('/ctf_stats/<int:nrounds>')
+@attackdefense_mode_required
+@cache.cached(timeout=10)
+def _stats(nrounds=None):
+    db_conn = get_db_connection()
 
-    for s in scores:
-        board[s['team_id']]['attack_scores'].append([int(s['round']), int(s['attack'])])
-        board[s['team_id']]['defense_scores'].append([int(s['round']), int(s['defense'])])
-        board[s['team_id']]['total_scores'].append([int(s['round']), int(0.6 * s['attack'] + 0.4 * s['defense'])])
+    nrounds = nrounds or round_info(db_conn)[0]
 
-    for team in board.values():
-        team['ratio_attack'] = team['attack'] * 100 / max_attack
-        team['ratio_defense'] = team['defense'] * 100 / max_defense
-        team['score'] = 0.6 * team['ratio_attack'] + 0.4 * team['ratio_defense']
+    with db_conn.cursor() as cur:
+        cur.execute('''
+        SELECT S.round AS round, T.name AS team, SUM(S.attack) + SUM(S.defense) + SUM(S.sla) AS score
+        FROM scores S JOIN teams T ON S.team_id = T.id
+        WHERE S.round >= get_current_round() - %s
+        GROUP BY T.name, S.round
+        ORDER BY S.round DESC
+        ''', [nrounds])
 
-    # sort the board in descending order with respect to the score: the
-    # sorted structure is a list of board values, we just leave out the
-    # team id
-    sorted_board = sorted([t[1] for t in board.items()],
-                          key = lambda x: x['score'],
-                          reverse = True)
-    # add a position index to each team
-    for i, team in enumerate(sorted_board):
-        team['position'] = i+1
+        scores = defaultdict(dict)
+        for row in cur:
+            scores[row['team']][row['round']] = row['score']
 
-    # fill graph lists
-    attack_graph = []
-    defense_graph = []
-    total_graph = []
-    labels = []
-    for team in sorted_board:
-        labels.append(team['team'])
-        attack_graph.append(team['attack_scores'])
-        defense_graph.append(team['defense_scores'])
-        total_graph.append(team['total_scores'])
-
-    return {'services': services, 'board': sorted_board, 'labels': labels,
-            'attack_graph': attack_graph, 'defense_graph': defense_graph,
-            'total_graph': total_graph,
-            'min_x': 0, 'max_x': rnd, 'min_y': 0, 'max_y': None}
+    return jsonify(scores)
 
 @app.route('/credits')
 def credits():
@@ -1040,6 +1391,11 @@ def credits():
 @app.route('/design')
 def design():
     return render_template('design.html')
+
+@app.route('/rules')
+@jeopardy_mode_required
+def rules():
+    return render_template('rules.html')
 
 @app.route('/')
 def index():

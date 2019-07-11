@@ -1,0 +1,94 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}Challenge Scoreboard{% endblock %}
+{% block content %}
+
+<h1>Challenge Scoreboard</h1>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- Table filled dynamically via JS -->
+        <table class="table scoreboard" data-sorting="true"></table>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div id="users_time" class="chart"></div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <div id="challenges_time" class="chart"></div>
+    </div>
+</div>
+
+<script>
+ var columns = [
+     {"name": "user", "title": "User", "classes": "text-left"},
+     {% for chal in challenges %}
+     {
+         "name": "{{ chal.name }}",
+         "title": "<span title=\"{{ chal.points }} points\" class=\"{% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
+         "classes": "text-center",
+         "type": "html"
+     },
+     {% endfor %}
+     {"name": "points", "title": "Total", "classes": "text-right", "type": "number", "sorted": true, "direction": "DESC"}
+ ];
+
+ function updateScores(table) {
+     $.getJSON("/scoreboard_jeopardy", function (data) {
+         makeChart("users_time", data, usersChart);
+         makeChart("challenges_time", data, challengesChart);
+
+         var rows = data.map(function (u) {
+             var row = { user: u.user, points: u.points };
+             Object.keys(u.challenges).forEach(function (c) {
+                 var entry = $("<span>").attr("aria-hidden", "true");
+                 row[c] = $("<td>").append(u.challenges[c].timestamp !== null ?
+                                           entry.addClass("alert-info").attr("title", u.challenges[c].timestamp).text(u.challenges[c].points) :
+                                           entry.addClass("glyphicon glyphicon-remove alert-danger").css("background", "none"));
+             });
+             return row;
+         });
+         table.rows.load(rows);
+
+         setTimeout(function () {
+             updateScores(table)
+         }, 30000);
+     });
+ }
+
+ $(document).ready(function() {
+     var table = FooTable.init(".scoreboard", {
+         "columns": columns
+     });
+     updateScores(table);
+ });
+</script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
+<script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
+<script language="javascript" type="text/javascript" src="/static/js/charts.js"></script>
+
+{% endblock %}

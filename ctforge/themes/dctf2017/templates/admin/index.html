@@ -1,3 +1,23 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
 {% extends "layout.html" %}
 {% block title %}Admin Panel{% endblock %}
 {% block navigation %}{% endblock %}
@@ -30,13 +50,13 @@
 </ul>
 
 <div class="tab-content">
-    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'mail', 'hidden', 'admin'], 'user', 'users', class = 'active in' if tab == 'users') }}
+    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'nickname', 'mail', 'affiliation', 'hidden', 'admin'], 'user', 'users', class = 'active in' if tab == 'users') }}
 {% if config.ATTACKDEFENSE_ACTIVE %}
     {{ tabify(teams, ['id', 'ip', 'name', 'token', 'poc'], 'team', 'teams', class = 'active in' if tab == 'teams') }}
-    {{ tabify(services, ['id', 'name', 'active'], 'service', 'services', class = 'active in' if tab == 'services') }}
+    {{ tabify(services, ['id', 'name', 'flag_lifespan', 'active'], 'service', 'services', class = 'active in' if tab == 'services') }}
 {% endif %}
 {% if config.JEOPARDY_ACTIVE %}
-    {{ tabify(challenges, ['id', 'name', 'points', 'active', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
+    {{ tabify(challenges, ['id', 'name', 'points', 'active', 'hidden', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active in' if tab == 'challenges') }}
 
 
     {% set ce_keys = ['mail', 'name', 'surname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}

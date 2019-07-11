@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# CTForge: Forge your own CTF.
+
+# Copyright (C) 2016-2019  Marco Squarcina
+# Copyright (C) 2016-2019  Mauro Tempesta
+# Copyright (C) 2016-2019  Lorenzo Veronese
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 from setuptools import setup, find_packages
 
 setup(
@@ -24,11 +44,12 @@ setup(
         'Flask>=0.10.1',
         'Flask-Login>=0.3.2',
         'Flask-WTF>=0.12',
-        'Flask-Cache>=0.13.1',
         'Flask-Misaka>=0.4.1',
         'py-bcrypt>=0.4',
-        'psycopg2>=2.6.1'
+        'psycopg2-binary>=2.6.1',
+        'Flask-Cache==0.13w'
     ],
+    dependency_links=['https://github.com/wert310/flask-cache/tarball/master#egg=Flask-Cache-0.13w'],
     classifiers=[
         'Private :: Do Not Upload'
     ]
