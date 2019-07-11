@@ -1,3 +1,23 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
 {% extends "layout.html" %}
 {% block title %}User Profile{% endblock %}
 {% block content %}
@@ -25,7 +45,7 @@
         {% endif %}
         <a class="btn btn-dark d-block mb-3"
            target="_blank"
-           href="https://join.slack.com/t/cyberchallengeit-ctf/shared_invite/enQtMzc2MDMxNDc4OTYyLWUzOTdkMzIwMWYxMmFmMzJmMTllYjYwZDRmYWNhMTE5NWM4ZDdiYzU2OTJjNzE1MTQ0ZDU2NTg4OTcwMjcxYjY">
+           href="#">
             <i class="fa fa-slack"></i>
             Join on Slack
         </a>
@@ -40,11 +60,11 @@
         <table class="table">
             <thead><tr><td>Challenge</td><td>Score</td><td>Time</td></tr></thead>
             <tbody>
-            {% for chal in challenges %}
+                {% for chal in challenges %}
                 <tr>
                     <td>{{ chal.name }}</td><td>{{ chal.points }}</td><td>{{ chal.timestamp }}</td>
                 </tr>
-            {% endfor %}
+                {% endfor %}
             </tbody>
         </table>
         {% else %}

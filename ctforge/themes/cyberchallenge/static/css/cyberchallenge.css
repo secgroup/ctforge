@@ -1,4 +1,24 @@
 
+/* CTForge: Forge your own CTF.
+   
+
+   Copyright (C) 2016-2019  Marco Squarcina
+   Copyright (C) 2016-2019  Mauro Tempesta
+   Copyright (C) 2016-2019  Lorenzo Veronese
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published
+   by the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
+
 @font-face {
     font-family: 'Share Tech Mono';
     font-style: normal;
@@ -7,14 +27,24 @@
 }
 
 
+body {
+    min-height: 500px;
+    padding-top: 70px;
+    background: url('/static/img/ai.png') no-repeat center center fixed;
+    background-size: cover;
+    background-color: #272B30;
+}
+
+
 pre, code, textarea.form-control {
     padding:2px;
     font-family: 'Share Tech Mono', monospace;
-    color: #2AA198;
-    background-color: #1e434a;
+    /*color: #2AA198;
+       background-color: #1e434a;*/
     border: 0;
     border-radius:2px;
 }
+
 kbd, samp {
     font-family: 'Share Tech Mono', monospace;
 }
@@ -27,22 +57,30 @@ pre code {
 }
 
 thead, tr {
-    background-color: rgba(238, 232, 213, 0.09);
+    background-color: #32383e;
+    background-clip: border-box;
 }
 
 table {
-    background-color: rgba(238, 232, 213, 0.09);
+    background-color: #32383e;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    border-radius: 0.25rem;
 }
 .table>thead>tr>.active, .table>tbody>tr>.active, .table>tfoot>tr>.active,
 .table>thead>.active>td, .table>tbody>.active>td, .table>tfoot>.active>td,
 .table>thead>.active>th, .table>tbody>.active>th, .table>tfoot>.active>th {
-    background-color: rgba(238, 232, 213, 0.05);
+    background-color: #404448;
+    background-clip: border-box;
 }
 
+
+
 .jumbotron {
-    background: transparent url("/static/img/cyberchallenge_logo_front_ad.png") no-repeat top center;
+    background: transparent url("/static/img/cyberchallenge_logo_front.png") no-repeat top center;
     background-size: contain;
     height: 350px;
+    border: 0;
 }
 
 .lead strong {
@@ -60,14 +98,35 @@ table {
 .list-group {
     font-size: small;
 }
+
 .form-signin input,
 .form-submit input,
 .input-group-addon,
 a.list-group-item {
-    background-color: #1e434a;
-    border: 1px solid rgba(100, 100, 100, 0.2);
-    color: #fafafa;
+    background-color: #32383e;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    border-radius: 0.25rem;
+    color: #aaa;
 }
+
+.form-signin input:active,
+.form-submit input:active,
+.input-group-addon:active,
+a.list-group-item:active {
+    background-color: #46494b;
+}
+
+.form-signin input:focus,
+.form-submit input:focus,
+.input-group-addon:focus,
+a.list-group-item:focus {
+    color: #aaa;
+    background-color: #46494b;
+}
+
+
+/*
 .list-group-item.active,
 .list-group-item.active:hover,
 .list-group-item.active:active {
@@ -78,6 +137,7 @@ a.list-group-item:hover {
     background-color: rgba(50, 10, 50, 0.5);
     color: #dddddd;
 }
+*/
 
 .form-signin .form-signin-heading, .form-signin .checkbox {
     margin-bottom: 10px;
@@ -88,14 +148,14 @@ a.list-group-item:hover {
 .form-signin .form-control,
 /*.form-submit .form-control, */
 .form-signin button /*,
-.form-submit button */ {
-    position: relative;
-    font-size: 20px;
-    height: auto;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-}
+                       .form-submit button */ {
+                           position: relative;
+                           font-size: 20px;
+                           height: auto;
+                           -webkit-box-sizing: border-box;
+                           -moz-box-sizing: border-box;
+                           box-sizing: border-box;
+                       }
 .form-signin .form-control:focus {
     z-index: 2;
 }
@@ -132,7 +192,7 @@ a.list-group-item:hover {
 table.scoreboard span.alert-info {
     border-radius: 3px;
     padding: 0 2px;
-    background: #1e434a;
+    background: #0b2429;
     font-weight: bold;
     color: inherit;
     text-shadow: 0px 0px 1px #000000;
@@ -159,22 +219,23 @@ table.scoreboard span.alert-danger {
     padding: 4px;
     margin-top: 30px;
     line-height: 1.42857143;
-    border: 1px solid rgba(0, 43, 54, 0.95);
-    background-color: rgba(238, 232, 213, 0.125);
-    border-radius: 4px;
     -webkit-transition: border .2s ease-in-out;
     -o-transition: border .2s ease-in-out;
     transition: border .2s ease-in-out;
     padding: 9px;
-    color: #2AA198;
+    color: #aaa;
     clear:both;
+    background-color: #32383e;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    border-radius: 0.25rem;
 }
 .chall-tile:hover {
-    color: #2AA198;
+    color: #aaa;
     text-decoration: none;
 }
 .chall-tile:active, .chall-tile:visited, .chall-tile:enabled, .chall-tile:link, .chall-tile:hover{
-    color: #2AA198;
+    color: #aaa;
     text-decoration: none;
 }
 .chall-tile.inactive {
@@ -196,19 +257,22 @@ table.scoreboard span.alert-danger {
     margin-bottom: 0;
     padding-top: 4px;
     padding-bottom: 4px;
-    background: rgba(238, 232, 213, 0.125);
+    color: #ddd;
+    background: #515960;
     border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0.6);
 }
 
 .chall-tile:hover {
-    border: 1px solid rgba(0, 43, 54, 0.9);
-    box-shadow: 0 0 10px 1px rgba(238, 232, 213, 0.08);
+    /*border: 1px solid rgba(0, 43, 54, 0.9);*/
+    box-shadow: 0 0 10px 1px rgba(238, 232, 213, 0.15);
     transition: border 0.4s ease;
     transition: box-shadow 0.4s ease;
 }
 
 .chall-tile:active {
-    background: rgba(238, 232, 213, 0.08);
+    background: #353b42;
+    /*background: rgba(238, 232, 213, 0.08);*/
 }
 
 .chall-tile:focus {
@@ -250,4 +314,38 @@ table.scoreboard .badge.badge-warning {
 
 table.scoreboard .badge.badge-info {
     background: #5bc0de;
+}
+
+.navbar-brand {
+    border-right: 0;
+}
+
+.navbar .nav-link {
+    border-left: 0;
+    border-right: 0;
+}
+
+.navbar .nav-link:active {
+    border-left: 0;
+    border-right: 0;
+}
+
+.navbar .nav-link:hover {
+    border-left: 0;
+    border-right: 0;
+}
+
+.card-header, .card-footer {
+    color: #ddd;
+}
+
+.center {
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+
+.footable-header {
+    background-color: #515960;
+    color: #ddd;
 }

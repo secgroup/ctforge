@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# CTForge: Forge your own CTF.
+
+# Copyright (C) 2016-2019  Marco Squarcina
+# Copyright (C) 2016-2019  Mauro Tempesta
+# Copyright (C) 2016-2019  Lorenzo Veronese
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import os
 import re
 import sys
@@ -102,7 +122,7 @@ def init(args):
     try:
         copy2(args.conf, confile)
     except Exception as e:
-        sys.stderr.write('Error: "{}"\n'.format(args.conf, confile, e))
+        sys.stderr.write('Error: "{}" "{}" "{}"\n'.format(args.conf, confile, e))
 
     if app.config['LOG_FILE'] is not None:
         logfile = app.config['LOG_FILE']
@@ -123,7 +143,9 @@ def imp(args):
     if args.users:
         print('Importing users...')
         users = csv.reader(args.users, delimiter=',', quotechar='"')
-        for user in users:
+        for i,user in enumerate(users):
+            print("{}".format(i))
+            sys.stdout.flush()
             db_add_user(name=user[0], surname=user[1], nickname=user[2], mail=user[3], affiliation=user[4], password=user[5])
         args.users.close()
         print('Done!')
@@ -170,8 +192,9 @@ def parse_args():
     parser_run.add_argument('-D', '--disable-debug', dest='debug', action='store_false', help='Disable debug mode')
 
     parser_import = subparsers.add_parser('import_users', help='Import users')
-    parser_import.add_argument('-u', '--users', type=argparse.FileType('r'),
+    parser_import.add_argument('-u', '--users', type=argparse.FileType('r', encoding='UTF-8'),
                                help='A csv file of users to import. The supported format is: name, surname, nickname, mail, affiliation, password. No header and comma as separator')
+
 
     parser_challenge = subparsers.add_parser('import_challenge', help='Import Challenge')
     parser_challenge.add_argument('challenge', type=argparse.FileType('r'), help='Challenges folder in which each subdirectory contains an `info.json` file')

@@ -1,3 +1,23 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
 {% extends "layout.html" %}
 {% block title %}Challenges{% endblock %}
 {% block content %}
@@ -11,10 +31,10 @@
 <div class="card">
     {% if settings['ctf_running'] %}
         {% if settings['time_enabled'] %}
-        <div  class="card-body h3">
+        <div  class="card-body h3" title="Time Left">
             <i class="fa fa-clock-o"></i>
             <div class="float-right">
-                TIME LEFT &nbsp;
+                <!-- TIME LEFT &nbsp; -->
                 <span id="countdown">00:00:00</span>
             </div>
         </div>

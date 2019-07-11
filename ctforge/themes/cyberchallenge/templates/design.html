@@ -1,10 +1,30 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
 {% extends "layout.html" %}
 {% block title %}CTF Rules{% endblock %}
 {% block content %}
 
 <h1>CTF Rules</h1>
 <style>
- .md-out img {
+ .card-body img {
      display: block;
      margin: 0 auto;
      background: white;
@@ -15,12 +35,13 @@
  }
 </style>
 
-<div class="row">
-    <div class="col-sm-12 md-out">
-        {% filter markdown %}
-The CCIT CTF Finals '18 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defense format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website (although no VPN is required to play this CTF).
+<div class="card">
+    <div class="card-body">
 
-Access to the competition is granted to the 8 teams of universities involved in the CyberChallenge.IT project. Every team is composed by 4 selected participants of each local CCIT CTF that took place on Jun 7. Teams are required to declare a captain among them who will be in charge of handling the communication between her/his team and the organisers.
+        {% filter markdown %}
+The CCIT CTF Finals '19 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defense format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website (although no VPN is required to play this CTF).
+
+Access to the competition is granted to the 18 teams of universities involved in the CyberChallenge.IT project. Every team is composed by 4 selected participants of each local CCIT CTF that took place on Jun 6. Teams are required to declare a captain among them who will be in charge of handling the communication between her/his team and the organisers.
 
 The rules listed on this page may change as more issues are raised by the participants. Also, the organisers keep the right to change them at any time. Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask. Lastly, the aim of the CTF is not to determine the best team in terms of technological supremacy. The goal is to share experience and knowledge in the computer security and also to have some fun together.
 
@@ -31,34 +52,36 @@ The contest will take place on Jun 27 from 9:00am to 7:30pm (Italian local time)
 
 * 9:00am - 10:00am: access to the VMs is granted, but the network is closed. Teams should use this time to analyse services before everyone can attack each other
 * 10:00am - 5:00pm: the network is open! Flags are dispatched to each service by the gameserver and teams can earn points by submitting proofs of successful exploitation (flags)
-* 5:15pm - 6:30pm: 10-minute talks by each team
-* 6:30pm - 7:30pm: jury evaluation
+* 6:00pm - 7:45pm: 10-minute talks by the teams and jury evaluation
 
 
 Talks
 -----
-Following the experience of the European Cyber Security Challenge 2017 (ECSC17), the CyberChallenge.IT committee decided to recognize the importance of soft-skills by evaluating short talks as part of the score achieved by each team. Teams are required to provide a short presentation of 10 minutes focusing on one of the services exploited during the CTF. Presentations will be provided in Italian and evaluated by a jury in terms of clarity, correctness and - most importantly - ability of presenting the problem to a non-technical audience.
+Following the experience of the European Cyber Security Challenge (ECSC), the CyberChallenge.IT committee decided to recognize the importance of soft-skills by evaluating short talks as part of the score achieved by each team. Teams are required to provide a short presentation of 10 minutes focusing on one of the services exploited during the CTF. Presentations will be provided in Italian and evaluated by a jury in terms of clarity, correctness and - most importantly - ability of presenting the problem to a non-technical audience.
 
-All the slides that will be used on stage by participants must be submitted in PDF format to the organisers before the start of the session at 5:15pm. Aspect ratio must be 4:3.
+All the slides that will be used on stage by participants must be submitted in PDF format to the organisers before the start of the session at 6:00pm. Aspect ratio must be 4:3.
 
 
 Network and Setup
 -----------------
-The game is played within the `10.10.0.0/16` subnet. Each team has its own vulnerable machine located at `10.10.<team_id>.1`, while players connecting to the game network are assigned an ip in the range `10.10.<team_id>.150` - `10.10.<team_id>.200`. All vulnerable VMs will be hosted by organisers and will have enough resources in terms of CPU and memory to run the pre-installed services (expect a standard Linux distro with around 6 cores / 6GB ram / 30GB hd). Scoreboard is reachable at [http://10.20.0.1/](http://10.20.0.1/) or [http://monitor.cyberchallenge.it](http://monitor.cyberchallenge.it).
+The game is played within the `10.10.0.0/16` subnet. Each team has its own vulnerable machine located at `10.10.<team_id>.1`, while players connecting to the game network are assigned an ip in the range `10.10.<team_id>.150` - `10.10.<team_id>.200`. All vulnerable VMs will be hosted by organisers and will have enough resources in terms of CPU and memory to run the pre-installed services (expect a standard Linux distro with around 4 cores / 6GB ram / 30GB hd). Scoreboard is reachable at [http://finals.cyberchallenge.it](http://finals.cyberchallenge.it).
 
 ![Network Map](/static/img/netowrk-map.png)
 
 The _gameserver_ is responsible for dispatching flags to the vulnerable machines, checking services integrity, hosting the scoreboard and updating scores. Participants are asked to attack vulnerable machines of other teams to retrieve proofs of successful exploitation (flags). Flags must be submitted to the flag submission service hosted by the organisers to score points. At the same time, teams must defend the vulnerable services installed on their VMs. Teams can do whatever they want within their network segment.
 
-Internet access is granted to install new software on the VM and on the laptops of participants, if needed. Due to environmental constraints (remember that the competition will take place inside a museum!) the bandwidth will be limited: try to get your laptop ready with most tools already installed and avoid wasting time during the game to download large amount of data. For the same reason, organisers discourage interaction between CTF network and remote servers (e.g., starting attacks from Google cloud): large computational resources are not required to succeed at the competition.
+Internet access is granted to install new software on the VM and on the laptops of participants, if needed. Organisers discourage interaction between CTF network and remote servers (e.g., starting attacks from Google cloud): large computational resources are not required to succeed at the competition.
 
 Beware that if you mess up your vulnerable machine, all we can do is reset it to its original state (backup your exploits, tools and patches!).
 
 There is a ssh backup keys deployed by organisers on all vulnerable boxes. Feel free to remove it, but that will make life harder for you in case of hotfixes to be released. The legitimate key is:
 
 ```
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICbqrzR9/jEdc7kJ0uTEpPdH3ZCuu3MYzpAFzlWuSbmf root@gameserver
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE0buF2QXVtCXnLqAMDBJWuzO4wiZVd5UaCIb0DwJARA root@ccit2
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKNa8vn1VocqUutUgTxUAQxECpW2ew3DrRoPtJYabIu5 root@ccit1
 ```
+
+Default SSH user and password for the VM are `root:toor`.
 
 
 Scoring
@@ -121,7 +144,7 @@ Flags
 -----
 A flag is a string made up of 31 uppercase alphanumeric chars, followed by `=`. Each flag is matched by the regular expression `[A-Z0-9]{31}=`. 
 
-To manually submit a flag, click on the _flag submission service_ option in the top-right menu of the CTF portal after logging-in and enter the flag in the input form. During the CTF, anyway, you may want to automatically submit flags. To do so, you can submit stolen flags by performing an HTTP POST request to the gameserver at `10.20.0.1`. The request must contain the keys `flag` and `team_token`, where the value of the first entry is the stolen flag and `team_token` is a string that allows the server to identify your team. The token of your team can be found in your _team page_ on the CTF portal.
+To manually submit a flag, click on the _flag submission service_ option in the top-right menu of the CTF portal after logging-in and enter the flag in the input form. During the CTF, anyway, you may want to automatically submit flags. To do so, you can submit stolen flags by performing an HTTP POST request to the gameserver at `finals.cyberchallenge.it`. The request must contain the keys `flag` and `team_token`, where the value of the first entry is the stolen flag and `team_token` is a string that allows the server to identify your team. The token of your team can be found in your _team page_ on the CTF portal.
 
 **Important: do not perform user authentication while submitting flags, this is not needed and may overload our servers**.
 
@@ -131,7 +154,7 @@ As an example, we provide a simple python snippet that accounts for the submissi
 #!/usr/bin/python
 import requests
 
-url = 'https://10.20.0.1/submit'
+url = 'https://finals.cyberchallenge.it/submit'
 team_token = '<your_token>'
 stolen_flag = 'QWERTYUIOPASDFGHJKLZXCVBNM01234='
 
@@ -140,7 +163,7 @@ r = requests.post(url, data={'team_token': team_token, 'flag': stolen_flag}
 
 Flags are considered expired after 5 rounds. It means that teams have up to 10 minutes to steal a flag and submit it. At the same time, the check bot will try to retrieve one of the last 5 flags from a service to check if the intended functionalities have been preserved and mark it as _up_.
 
-Some (but not all) services come with flag IDs. Flag IDs are identifiers that help you access the flags that are still valid (like usernames or database IDs), without having to search through all of them. The current set of IDs will be provided in JSON format at `https://10.20.0.1/api/flag_id` in the following format:
+Some (but not all) services come with flag IDs. Flag IDs are identifiers that help you access the flags that are still valid (like usernames or database IDs), without having to search through all of them. The current set of IDs will be provided in JSON format at `https://finals.cyberchallenge.it/api/flag_id` in the following format:
 
 ```json
 {  
@@ -166,14 +189,13 @@ Some (but not all) services come with flag IDs. Flag IDs are identifiers that he
 }
 ```
 
-IDs of a specific service will be published at `https://10.20.0.1/api/flag_id/<service_name>`.
+IDs of a specific service will be published at `https://finals.cyberchallenge.it/api/flag_id/<service_name>`.
 
 
 Technical and Human Behaviour
 -----------------------------
 We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:
 
-* Limit Internet access from your device: we only have 30GB of traffic to use during the CTF, overall
 * No attacks against the infrastructure including denial-of-service (DoS), floods, DNS poisoning, ARP spoofing, MITM, etc...
 * The only permitted attack targets are the vulnerable machines! Players are not allowed to attack each other (e.g., you can't break into rivals' laptops)
 * Destructive behavior and unfair practices are severely prohibited. These include removing flags or deleting files on compromised hosts, creating fake flags to break legitimate attacks
@@ -185,15 +207,101 @@ Before attempting to break one of the aforementioned rules, remember that all th
 
 Communication
 -------------
-Communication between teams and organisers will be mostly handled on-site. If teams need to share a proof-of-concept with the organisers, [slack](https://cyberchallengeit-ctf.slack.com/) is the preferred method. Official announcements will be published before and during the competition on the [c00kies@venice twitter account](https://twitter.com/c00kiesATvenice).
+Communication between teams and organisers will be mostly handled on-site. If teams need to share a proof-of-concept with the organisers, [slack](https://ccit19.slack.com/) is the preferred method. Official announcements will be published before and during the competition on the `#general` channel.
 
+Tips for the CTF
+----------------
+
+## Change your password
+
+The first thing you have to do when the competition starts is to change the root password of your virtual machine: 
+since you may connect directly as root with ssh, it is enough to use the command passwd.
+
+```
+root@diff:~# passwd
+Enter new UNIX password: 
+Retype new UNIX password: 
+passwd: password updated successfully
+```
+
+## Switch user
+
+In your machine there will be a different user for each service: since it is a good habit to use root only when strictly necessary, 
+you may consider the possibility of switching to the user that owns the service on which you want to work. 
+This can be done with the command `su -` ; if you want to go back to the previous user, you can use the combination `CTRL + D` or the command `exit`.
+
+```
+root@diff:~# su - pin
+pin@diff:~$ id
+uid=1001(pin) gid=1001(pin) groups=1001(pin)
+pin@diff:~$ exit
+logout
+root@diff:~# 
+```
+
+## Files search
+
+`find` is a very powerful tool for searching files inside a given path with some particular properties: for instance you can ask to list files that belong to a given user, search for files on which you have particular permissions and so on. You can also combine different properties using logical operators.
+
+## Process management
+
+A common way to obtain complete information about the processes currently in execution on the system consists on using `ps` with options `aux`. 
+Here is an example of (part of) the result produced by the command:
+
+```
+diff@diff:~$ ps aux
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.0  0.3   3504  1764 ?        Ss   Feb11   0:02 /sbin/init
+root         2  0.0  0.0      0     0 ?        S    Feb11   0:01 [kthreadd]
+diff       238  0.0  1.6  14808  8444 ?        S    Feb11   0:01 /usr/bin/python /home/diff/challenge/server.py
+diff     17417  0.1  0.2   4936  1232 pts/2    T    18:59   0:00 nano
+diff     17418  0.0  0.2   5204  1192 pts/2    R+   18:59   0:00 ps aux
+diff     32098  0.0  1.2  12400  6256 pts/4    S+   Apr17   7:44 python -m SimpleHTTPServer
+```
+
+The fields to which you may be interested are probably `USER`, `PID` and `COMMAND` that respectively denote, for each process, the user that has started it, its process identifier and the command given to start it.
+
+You can kill a process using the command `kill` and specifying the `PID`.
+
+## Network connections
+
+Information about active network connections can be seen using `netstat` as follows:
+
+```
+diff@diff:~$ netstat -natup
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+ Active Internet connections (servers and established)
+ Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+ tcp        0      0 0.0.0.0:8000            0.0.0.0:*               LISTEN      32098/python    
+ tcp        0      0 0.0.0.0:42765           0.0.0.0:*               LISTEN      238/python      
+ tcp        0      0 0.0.0.0:42766           0.0.0.0:*               LISTEN      -               
+ tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -               
+ tcp        0    672 192.168.69.22:22        192.168.69.159:51987    ESTABLISHED -               
+ tcp6       0      0 :::22                   :::*                    LISTEN      -  
+```
+
+Column `Proto` reports the transport protocol in use, `Local Address` and `Foreign Address` denote, respectively, addresses of the parts involved in the connection, `State` is the state of the connection (except for connectionless protocols) and `PID/Program name` shows the PID and the name of the program that has created the connection. The last column shows information only of processes owned by the user that gives the command: if you want to see them all, you have to run the command as root.
+
+## Network monitoring
+
+you may want to see the traffic you’re receiving: in this case, use the `tcpdump` command:
+
+```
+$ tcpdump -i ens4 -s0 -w traffic.pcap not port 22
+```
+
+This command saves the network traffic from interface `ens4` into the `traffic.pcap` file
+that can be later analyzed with tools like [wireshark](https://www.wireshark.org/).
+
+The `not port 22` filter prevents tcpdump from saving your ssh session traffic,
+of which you are probably not interested.
 
 Credits
 -------
-This year the CTF is organised by the [c00kies@venice](https://secgroup.github.io) hacking team under the direction of the [CyberChallenge.IT](https://cyberchallenge.it) committee.
+This year the CTF is organized by [10Sec S.r.l.](mailto:info@10sec.it) and the [c00kies@venice](https://secgroup.github.io) hacking team under the direction of the [CyberChallenge.IT](https://cyberchallenge.it) committee.
 
 Organisers would like to thank [RuCTFe](https://ructfe.org/rules/) and [FAUST CTF](https://2018.faustctf.net) for inspiring part of these rules.
-
 
 And remember to...
 ------------------

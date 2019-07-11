@@ -1,19 +1,64 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
 {% extends "layout.html" %}
 {% block title %}CTF Design{% endblock %}
 {% block content %}
 
 <h1>CTF Rules</h1>
-<p>The CCIT CTF '18 is a security competition for students who attended the CyberChallenge.IT training in one of the 8 universities involved in the project. This year the CTF is organized by the <a href="https://secgroup.github.io">c00kies@venice</a> hacking team under the direction of the <a href="https://cyberchallenge.it">CyberChallenge.IT</a> committee.</p>
 
-<h2>Schedule</h2>
-<p>The contest is expected to take place on Jun 7 and last for 7 hours, from 10:00am to 5:00pm (Italian local time). Access to the laboratory of your university should be granted from 9:00am. Once the competition is finished, you can still try to complete challenges and submit flags, but you won't get new points.</p>
+<div class="card">
+    <div class="card-body">
+        
+        <p>The CCIT CTF '19 is a security competition for students who attended the CyberChallenge.IT training in one of the 18 universities involved in the project.
+            This year the CTF is organized by <a href="mailto:info@10sec.it">10Sec S.r.l.</a> and the <a href="https://secgroup.github.io">c00kies@venice</a> hacking team under the direction of the <a href="https://cyberchallenge.it">CyberChallenge.IT</a> committee.</p>
 
+
+        <h2>Schedule</h2>
+        <p>The contest is expected to take place on 6 June and last for 7 hours, from 9:00am to 4:00pm (Italian local time). Once the competition is over, you can still try to complete challenges and submit flags, but you won't get new points.</p>
+
+<hr>
 <h2>Scoring</h2>
-<p>Each challenge is worth a certain amount of points in the range <code>0-500</code> according to the expected difficulty. You can start from your favourite problems according to the topic(s) listed in the challenge boxes. All the challenges are available from the beginning of the competition, so plan your work wisely to exploit most of them and rule the scoreboard! If multiple users obtain the same score, they will be sorted according to the timestamp of the last submission: the first user reaching that score will be on top among the others. No bonus points are given for first bloods.</p>
+<p>Each challenge is worth a certain amount of points in the range <code>0-700</code> according to the expected difficulty. You can start from your favourite problems according to the topic(s) listed in the challenge boxes. All the challenges are available from the beginning of the competition, so plan your work wisely to exploit most of them and rule the scoreboard! If multiple users obtain the same score, they will be sorted according to the timestamp of the last submission: the first user reaching that score will be on top among the others. No bonus points are given for first bloods.</p>
 
 <h3>Flags</h3>
 <p>The aim of each challenge is to get a string (called flag) that proves a successful exploitation. Unless otherwise noted in the challenge description, all flags will be in the format <code>ccit{...}</code>. You must submit the whole string, including <code>ccit</code> and curly brackets.</p>
 
+<h3>Hints</h3>
+<p>
+    The hint system is poll-based and a new hint is automatically released every <b>45 minutes</b> in the <a href="/hints">hints</a> page.
+    During each 45 minutes round participants can vote for the next hint: at the end of the round a hint is released for the challenge with the highest number of votes.
+</p>
+<ul>
+    <li>During each round you can change your vote but you cannot revoke it.</li>
+    <li>At the end of the round the hint will be released only if there is at least one vote.</li>
+    <li>Ties will be solved by random choice among the challenges with the highest number of votes.</li>
+    <li>A vote can be placed for a challenge only if new hints are available.</li>
+</ul>
+<p>
+    Each released hint leads to a penalty: partecipants submitting the flag <b>after the hint</b> will be awarded less points.
+    The score will be decremented as follows: 1st hint -10%, 2nd hint -15%, 3rd hint -20%, etc.
+    The penalty is cumulative, that is a challenge with 3 released hints has a total penalty of -45%.
+</p>
+
+<hr>
 <h3>Technical and Human Behaviour</h3>
 <p>We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:</p>
 <ul>
@@ -26,10 +71,14 @@
 <p>Before attempting to break one of the aforementioned rules, remember that all the traffic generated within the VPN network is logged.</p>
 <p>Rules anyway may change as more issues are raised by the participants. Also, the organizers keep the right to change them at any time. Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask to us on slack.</p>
 
+<hr>
 <h3>Communication</h3>
-<p>We invite everyone attending the contest to join us on slack. The invitation link to the organization will be provided in your profile page! Challenge hints, if any, will be announced there.</p>
+<p>We invite everyone attending the contest to join us on slack. The invitation link to the organization will be provided in your profile page!</p>
 
 <h3>And remember to...</h3>
 <p>...have fun and hack all the things!!!!!11</p>
+
+    </div>
+</div>
 
 {% endblock %}

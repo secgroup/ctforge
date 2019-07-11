@@ -1,3 +1,23 @@
+
+-- CTForge: Forge your own CTF.
+
+-- Copyright (C) 2016-2019  Marco Squarcina
+-- Copyright (C) 2016-2019  Mauro Tempesta
+-- Copyright (C) 2016-2019  Lorenzo Veronese
+
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU Affero General Public License as published
+-- by the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU Affero General Public License for more details.
+
+-- You should have received a copy of the GNU Affero General Public License
+-- along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 CREATE TABLE teams (
     id            SERIAL,
     ip            VARCHAR(15) NOT NULL,
@@ -52,6 +72,41 @@ CREATE TABLE challenges (
     writeup_template  TEXT,
     PRIMARY KEY (id),
     UNIQUE (name)
+);
+
+CREATE TABLE public_files (
+    name    TEXT NOT NULL,
+    content TEXT NOT NULL,
+    PRIMARY KEY (name)
+);
+
+CREATE TABLE hints (
+    id           SERIAL,
+    penalty      INT NOT NULL DEFAULT 10,
+    challenge_id INT NOT NULL,
+    description  TEXT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id),
+    UNIQUE (penalty, challenge_id)
+);
+
+CREATE TABLE hint_polls (
+    id           SERIAL,
+    start_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    duration     INT NOT NULL DEFAULT 2700,
+    hint_id      INT,
+    release_time TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (hint_id) REFERENCES hints (id)
+);
+
+CREATE TABLE hint_polls_choiches (
+    poll_id      INT NOT NULL,
+    user_id      INT NOT NULL,
+    challenge_id INT NOT NULL,
+    PRIMARY KEY (poll_id, user_id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id)
 );
 
 CREATE TABLE challenge_attacks (
