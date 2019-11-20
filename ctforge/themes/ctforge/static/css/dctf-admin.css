@@ -1,0 +1,79 @@
+
+/* CTForge: Forge your own CTF.
+   
+
+   Copyright (C) 2016-2019  Marco Squarcina
+   Copyright (C) 2016-2019  Mauro Tempesta
+   Copyright (C) 2016-2019  Lorenzo Veronese
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU Affero General Public License as published
+   by the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Affero General Public License for more details.
+
+   You should have received a copy of the GNU Affero General Public License
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
+textarea.form-control {
+    width: 100%;
+    min-height: 500px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+textarea.form-control:disabled {
+    overflow-x: scroll;
+    overflow-y: auto;
+    word-wrap: normal;
+    white-space: pre;
+}
+
+.modal {
+    overflow-y: auto;
+}
+#flash-messages .modal-content {
+    opacity: 0.9;
+    background: none;
+    color: inherit;
+    box-shadow: none;
+    border: 0;
+    margin: 0;
+}
+
+.modal .modal-dialog {
+    margin: 50px auto;
+}
+
+/* Footable fix */
+.footable-filtering-search .input-group-btn {
+    display: none;
+}
+.input-group .form-control {
+    border-top-right-radius: 0.25rem !important;
+    border-bottom-right-radius: 0.25rem !important;
+}
+
+thead, tr {
+    background-color: #32383e;
+    background-clip: border-box;
+}
+
+table {
+    background-color: #32383e;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    border-radius: 0.25rem;
+}
+.table>thead>tr>.active, .table>tbody>tr>.active, .table>tfoot>tr>.active,
+.table>thead>.active>td, .table>tbody>.active>td, .table>tfoot>.active>td,
+.table>thead>.active>th, .table>tbody>.active>th, .table>tfoot>.active>th {
+    background-color: #404448;
+    background-clip: border-box;
+}

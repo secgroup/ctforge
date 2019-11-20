@@ -1,0 +1,42 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}Flag Submission Service{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+        <form class="form-submit" action="{{ url_for('submit') }}" method="post">
+            <h2>Enter Your Flag</h2>
+            {{ form.team_token.label(class="sr-only") }}
+            {{ form.team_token(value=team_token) }}
+            <div class="form-group">
+                {{ form.flag.label(class="sr-only") }}
+                {{ form.flag(placeholder="Flag", class="form-control", required=True) }}
+            </div>
+            <button class="btn btn-dark" type="submit">Submit</button>
+        </form>
+    </div>
+    <div class="col-md-2"></div>
+</div>
+
+{% endblock %}
