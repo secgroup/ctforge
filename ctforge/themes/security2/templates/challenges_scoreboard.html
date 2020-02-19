@@ -1,0 +1,262 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}Challenge Scoreboard{% endblock %}
+
+{#
+{% block container_fluid %}container-fluid{% endblock %}
+#}
+
+{% block content %}
+
+<h1>Scoreboard</h1>
+
+{% if settings['ctf_running'] or (settings['time_enabled'] and settings['ctf_ended']) %}
+
+{% if settings['ctf_ended'] %}
+<div class="card col-md-8 offset-md-2 mt-4 mb-4">
+    <div class="card-body mx-auto h5 text-center">
+        🎉 The CTF is over! These are the final scores 🎉 
+    </div>
+</div>
+{% endif %}
+
+{% if settings['freeze_scoreboard'] %}
+<div class="card col-md-8 offset-md-2 mt-4 mb-4">
+    <div class="card-body mx-auto h5 text-center">
+        The scoreboard is frozen. <br>
+        This is the status of the CTF at {{ settings['freeze_time'] }}.
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- Table filled dynamically via JS -->
+        <div class="table-responsive">
+            <table class="table scoreboard" data-filtering-exact-match="true" data-filtering="false"></table> 
+        </div>
+    </div>
+</div>
+<!-- <div class="row">
+    <div class="col-md-12">
+        <div id="users_time" class="chart"></div>
+    </div>
+</div> -->
+<div class="row">
+    <div class="col-md-12">
+        <div id="challenges_time" class="chart"></div>
+    </div>
+</div>
+
+<style>
+ /* Add a counter to every td.counter in tbody */
+ table tbody {
+     counter-reset: rowNumber;
+ }
+
+ table tr {
+     counter-increment: rowNumber;
+ }
+
+ table tr td.counter::before {
+     content: counter(rowNumber);
+ }
+
+ .table td:first-child, .table th:first-child {
+     padding-left: 0.75rem;
+ }
+ /* last is not visible */
+ .table td:nth-last-child(2), .table th:nth-last-child(2) {
+     padding-right: 0.75rem;
+ }
+ .table td, .table th {
+     padding-left: 0.40rem;
+     padding-right: 0.40rem;
+     padding-top: 0.75rem;
+     padding-bottom: 0.75rem;
+ }
+</style>
+
+<script>
+ var columns = [
+     {"name": "position", "title": "#", "classes": "text-left counter"},
+     {"name": "user", "title": "User", "classes": "text-left"},
+     //{"name": "affiliation", "title": "Affiliation", "classes": "text-left"},
+     {% for chal in challenges %}
+     {
+         "name": "{{ chal.name }}",
+         "title": "<span title=\"{{ chal.name }}: {{ chal.points }} points\" class=\"chall-header {% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
+         "classes": "text-center",
+         "type": "html"
+     },
+     {% endfor %}
+     {"name": "points", "title": "Total", "classes": "text-right", "type": "number"},
+     {"name": "index", "type": "number", "sorted": true, "direction": "DESC", "visible": false}
+ ];
+
+ function escapeHTML (string) {
+     var entityMap = {
+         '&': '&amp;',
+         '<': '&lt;',
+         '>': '&gt;',
+         '"': '&quot;',
+         "'": '&#39;',
+         '/': '&#x2F;',
+         '`': '&#x60;',
+         '=': '&#x3D;'
+     };
+     return String(string).replace(/[&<>"'`=\/]/g, function (s) {
+         return entityMap[s];
+     });
+ }
+
+ // Last received data
+ var last_data = null;
+ // Current filter
+ var data_filter = null;
+ function filter_by_affiliation (affiliation) {
+     return function (row) {
+         return row['affiliation'] === affiliation;
+     }
+ }
+ function updateCharts(data) {
+     //makeChart("users_time", data_filter ? data.filter(data_filter) : data, usersChart);
+     makeChart("challenges_time", data_filter ? data.filter(data_filter) : data, challengesChart);
+ }
+ function updateScores(table) {
+     $.getJSON("/scoreboard_jeopardy", function (data) {
+         last_data = data;
+         updateCharts(data);
+         var rows = data.map(function (u) {
+             var row = {
+                 user: u.user,
+                 {% if affiliations|length > 1 %}
+                 affiliation: u.affiliation,
+                 {% endif %}
+                 points: u.points.toFixed(2)
+             };
+             Object.keys(u.challenges).forEach(function (c) {
+                 var entry = $("<span>").attr("aria-hidden", "true");
+                 if (u.challenges[c].timestamp === null)
+                     row[escapeHTML(c)] = $("<td>").append(
+                         entry.addClass("fa fa-remove alert-danger").css("background", "none"));
+                 else {
+                     row[escapeHTML(c)] = $("<td>").append(
+                         entry.addClass("alert-info").attr("title", u.challenges[c].timestamp)
+                              .text(u.challenges[c].points));
+                 }
+             });
+             return row;
+         });
+         table.rows.load(rows);
+         setTimeout(function () {
+             updateScores(table)
+         }, 30000);
+     });
+ }
+ FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
+     construct: function(instance) {
+         this._super(instance);
+         this.statuses = {{ affiliations|safe }};
+         this.def = 'Global';
+         this.$status = null;
+     },
+     $create: function() {
+         this._super();
+         this.$form.empty();
+         this.$form.addClass('float-right');
+         var self = this,
+             $form_grp = $('<div/>', {'class': 'form-group'})
+                 .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
+                 .prependTo(self.$form);
+         self.$status = $('<select/>', { 'class': 'form-control' })
+             .on('change', {self: self}, self._onStatusDropdownChanged)
+             .append($('<option/>', {text: self.def}))
+             .appendTo($form_grp);
+         $.each(self.statuses, function(i, status) {
+             self.$status.append($('<option/>').text(status));
+         });
+     },
+     _onStatusDropdownChanged: function(e) {
+         var self = e.data.self,
+             selected = $(this).val();
+         if (selected !== self.def) {
+             var filter = self.createFilter('affiliation', selected, ['affiliation']);
+             // The `match` method used by FooTable filters to select matching rows does a substring search, while
+             // we need an exact match. The exactMatch option doesn't seem to be really helpful here:
+             //     https://fooplugins.github.io/FooTable/docs/components/filtering.html#options
+             // The simplest way to fix the issue is to override the `match` method with a new one doing the equality
+             // checks.
+             filter.match = function (str) { return this.query._value === str };
+             self.addFilter(filter);
+             data_filter = filter_by_affiliation(selected);
+             updateCharts(last_data);
+         } else {
+             self.removeFilter('affiliation');
+             data_filter = null;
+             updateCharts(last_data);
+         }
+         self.filter();
+     },
+     draw: function() {
+         this._super();
+         var filter = this.find('affiliation');
+         if (filter instanceof FooTable.Filter) {
+             this.$status.val(filter.query._value);
+         } else {
+             this.$status.val(this.def);
+         }
+     }
+ });
+ $(document).ready(function() {
+     var table = FooTable.init(".scoreboard", {
+         "columns": columns,
+         "components": { "filtering": FooTable.ScoreBoardFiltering }
+     });
+     updateScores(table);
+ });
+</script>
+<!--
+     <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amcharts.js"></script>
+     <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/serial.js"></script>
+     <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/themes/dark.js"></script>
+     <script language="javascript" type="text/javascript" src="https://www.amcharts.com/lib/3/amstock.js"></script>
+-->
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jeopardy_charts.js') }}"></script>
+{% else %}
+
+<div class="card">
+    <div class="card-body mx-auto h5">
+        {% if settings['time_enabled'] %}
+        The CTF starts at {{ settings['start_time'] }}
+        {% else %}
+        The CTF is coming soon!
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

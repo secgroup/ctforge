@@ -1,0 +1,53 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}Teams{% endblock %}
+{% block content %}
+
+<h1>Teams</h1>
+
+<div class="row">
+    {% for team in teams %}
+    <div class="col-lg-4">
+        <h2 class="text-center">{{ team.name }} (team{{ team.id }})</h2>
+        <table class="table" id="team-{{ team.id }}">
+            <thead><tr>
+                {% if config.SHOW_NAMES %}
+                <td>Name</td><td>Surname</td>
+                {% endif %}
+                <td>Nickname</td></tr></thead>
+            <tbody>
+              {% for user in users %}
+                {% if team.id == user.team_id %}
+                <tr id="user-{{ user.id }}">
+                    {% if config.SHOW_NAMES %}
+                    <td>{{ user.name }}</td><td>{{ user.surname }}</td>
+                    {% endif %}
+                    <td style="max-width: 132px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">{{ user.nickname }}</td></tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
