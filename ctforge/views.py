@@ -21,18 +21,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import io
 import os
 import bcrypt
+import math
 import time
 import json
 import base64
 import psycopg2
 import psycopg2.extras
-from flask import request, render_template, redirect, url_for, flash, abort, jsonify
+from flask import request, render_template, redirect, url_for, flash, abort, jsonify, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
 from collections import defaultdict
 from datetime import datetime, timedelta
+from base64 import b64decode
 
 from ctforge import app, csrf, login_manager, cache
 from ctforge.users import User
@@ -242,7 +245,7 @@ def edit_user(id):
                 # update the password
                 query_handler((
                     'UPDATE users '
-                    'SET team_id = %s, name = %s, surname = %s, nickname = %s '
+                    'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
                     '    mail = %s, affiliation = %s, password = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data,
@@ -369,7 +372,7 @@ def edit_service(id):
                                    action='edit')
     return redirect(url_for('admin', tab='services'))
 
-@cache.memoize(timeout=20)
+@cache.memoize(timeout=5)
 def get_jeopardy_settings():
     db_conn = get_db_connection()
     with db_conn.cursor() as cur:
@@ -384,7 +387,11 @@ def get_jeopardy_settings():
         ('end_time',
          lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
          datetime.fromtimestamp(time.time())),
-        ('ctf_running', json.loads, False)
+        ('ctf_running', json.loads, False),
+        ('freeze_scoreboard', json.loads, False),
+        ('freeze_time',
+         lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"),
+         datetime.fromtimestamp(time.time())),
     ]
     jeopardy = {}
     for k, from_string, default in fields:
@@ -400,7 +407,7 @@ def get_jeopardy_settings():
     return jeopardy
 
 @app.route('/admin/jeopardy_settings', methods=['GET', 'POST'])
-@jeopardy_mode_required
+#@jeopardy_mode_required
 @admin_required
 def jeopardy_settings():
     if request.method == 'POST':
@@ -410,7 +417,9 @@ def jeopardy_settings():
                 'jeopardy_time_enabled': form.time_enabled.data,
                 'jeopardy_start_time': form.start_time.data,
                 'jeopardy_end_time': form.end_time.data,
-                'jeopardy_ctf_running': form.ctf_running.data
+                'jeopardy_ctf_running': form.ctf_running.data,
+                'jeopardy_freeze_scoreboard': form.freeze_scoreboard.data,
+                'jeopardy_freeze_time': form.freeze_time.data
             }
 
             db_conn = get_db_connection()
@@ -737,6 +746,9 @@ def challenges_scoreboard():
         jeopardy['ctf_ended'] = now >= jeopardy['end_time']
         jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
 
+    if jeopardy['freeze_scoreboard']:
+        jeopardy['freeze_time'] =  jeopardy['freeze_time'].strftime("%H:%M:%S (%d/%m/%Y)")
+
     challenges, affiliations = challenge_list()
     return render_template('challenges_scoreboard.html',
                            challenges=challenges, affiliations=affiliations,
@@ -789,6 +801,10 @@ def _challenges():
     if not jeopardy['ctf_running'] and (jeopardy['time_enabled'] and now < jeopardy['end_time']):
         return jsonify([])
 
+    scoreboard_time = now
+    if jeopardy['freeze_scoreboard']:
+        scoreboard_time = jeopardy['freeze_time']
+
     db_conn = get_db_connection()
     cur = db_conn.cursor()
     # get the challenges
@@ -804,8 +820,8 @@ def _challenges():
         '       CA.challenge_id AS challenge_id, CA.timestamp AS timestamp '
         'FROM users AS U JOIN challenge_attacks AS CA '
         'ON U.id = CA.user_id '
-        'WHERE NOT admin AND NOT hidden '
-        'ORDER BY timestamp ASC '))
+        'WHERE NOT hidden AND CA.timestamp <= %s '
+        'ORDER BY timestamp ASC '), [scoreboard_time])
     challenge_attacks = cur.fetchall()
     # cur.close()
     # map user id to a string representing his name and surname
@@ -844,6 +860,24 @@ def _challenges():
                 bonus[(c, bonus_aux[c][i][0])] = 3 - i
                 if i >= 2:
                     break
+
+    # Get released hints and update bonus to have negative values
+    with db_conn.cursor() as cur:
+        cur.execute(
+            'SELECT FLOOR(H.penalty * 0.01 * C.points) as penalty, '
+            '       C.id as challenge_id, P.release_time '
+            'FROM hint_polls P '
+            'JOIN hints H ON P.hint_id = H.id '
+            'JOIN challenges C ON H.challenge_id = C.id '
+            'WHERE P.release_time IS NOT NULL '
+            'ORDER BY P.id DESC')
+        released_hints = cur.fetchall()
+    penalties = defaultdict(list)
+    for row in released_hints:
+        penalties[row['challenge_id']].append(row)
+    for (c,u), t in attacks.items():
+        penalty = sum( int(p['penalty']) for p in penalties[c] if p['release_time'] < t)
+        bonus[(c,u)] = -penalty
 
     # compute the scoreboard as a list of dictionaries
     scoreboard = []
@@ -902,6 +936,17 @@ def challenge(name):
     if challenge is None or challenge['hidden']:
         cur.close()
         abort(404)
+
+    # get penalty
+    cur.execute(
+        'SELECT SUM(FLOOR(H.penalty * 0.01 * C.points)) as penalty '
+        'FROM hint_polls P '
+        'JOIN hints H ON P.hint_id = H.id '
+        'JOIN challenges C ON H.challenge_id = C.id '
+        'WHERE P.release_time IS NOT NULL and C.id = %s',
+        [challenge['id']])
+    res = cur.fetchone()
+    penalty = int(res['penalty']) if res['penalty'] else 0
 
     # check if the current user already solved the challenge
     cur.execute(('SELECT * FROM challenge_attacks '
@@ -1011,8 +1056,111 @@ def challenge(name):
 
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
                            challenge=challenge, evaluation=evaluation, solved=solved,
-                           graded=graded, writeups=writeups)
+                           graded=graded, writeups=writeups, penalty=penalty)
 
+@app.route('/hints', methods=['GET', 'POST'])
+@login_required
+def hints():
+
+    @cache.memoize(timeout=1)
+    def get_challenges():
+        with db_conn.cursor() as cur:
+            cur.execute(
+                'SELECT C.id, C.name '
+                'FROM hints H JOIN challenges C on C.id = H.challenge_id '
+                'WHERE NOT hidden AND H.id NOT IN ('
+                '  SELECT hint_id FROM hint_polls WHERE hint_id IS NOT NULL'
+                ') '
+                'GROUP BY C.id, C.name '
+                'ORDER BY C.name')
+            challenges = cur.fetchall()
+        return challenges
+
+    @cache.memoize(timeout=1)
+    def get_hints():
+        with db_conn.cursor() as cur:
+            cur.execute(
+                'SELECT FLOOR(H.penalty * 0.01 * C.points) as penalty, '
+                '       H.description, C.name, P.release_time '
+                'FROM hint_polls P '
+                'JOIN hints H ON P.hint_id = H.id '
+                'JOIN challenges C ON H.challenge_id = C.id '
+                'WHERE P.release_time IS NOT NULL '
+                'ORDER BY P.id DESC')
+            released_hints = cur.fetchall()
+        return released_hints
+
+    jeopardy = get_jeopardy_settings()
+    now = datetime.now()
+    db_conn = get_db_connection()
+
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT * FROM hint_polls '
+                    'WHERE release_time is NULL ORDER BY id DESC LIMIT 1')
+        current_poll = cur.fetchone()
+
+    seconds_left = 0
+    if current_poll is not None:
+        seconds_left = math.floor(
+            current_poll['duration']
+            - (now - current_poll['start_time']).total_seconds())
+        if seconds_left <= 0:
+            current_poll = None
+
+    challenges = get_challenges()
+
+    # form value for current user hint
+    if request.method == 'POST' and current_poll is not None:
+        try:
+            selected_chal = int(request.form['chal'])
+        except ValueError:
+            selected_chal = None
+        if current_poll['release_time'] is None \
+           and selected_chal in [c['id'] for c in challenges]:
+            with db_conn.cursor() as cur:
+                cur.execute(
+                    'INSERT INTO hint_polls_choiches '
+                    ' (poll_id, user_id, challenge_id) '
+                    'VALUES (%(poll)s, %(id_user)s, %(id_chall)s) '
+                    'ON CONFLICT (poll_id, user_id) DO '
+                    'UPDATE SET challenge_id = %(id_chall)s',
+                    {'id_user': current_user.id, 'id_chall': selected_chal,
+                     'poll': current_poll['id']})
+
+    released_hints = get_hints()
+    with db_conn.cursor() as cur:
+        selected_chal = None
+        if current_poll is not None:
+            cur.execute('SELECT challenge_id from hint_polls_choiches '
+                        'WHERE poll_id = %s AND user_id = %s',
+                        [current_poll['id'], current_user.id])
+            selected_chal = cur.fetchone()
+            if selected_chal:
+                selected_chal = selected_chal['challenge_id']
+
+    if jeopardy['time_enabled']:
+        jeopardy['ctf_ended'] = now >= jeopardy['end_time']
+        jeopardy['seconds_left'] = int((jeopardy['end_time'] - now).total_seconds())
+        jeopardy['start_time'] = jeopardy['start_time'].strftime("%H:%M on %d/%m/%Y")
+
+    return render_template('hints.html', current_poll=current_poll, challenges=challenges, selected_chal=selected_chal, released_hints=released_hints, seconds_left=seconds_left, settings=jeopardy)
+
+@app.route('/public/<filename>')
+@login_required
+#@cache.cached(timeout=30)
+def public_file(filename):
+    """Download public file"""
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute(
+            'SELECT name, content FROM public_files WHERE name = %s', [filename])
+        row = cur.fetchone()
+    if row is not None:
+        with io.BytesIO(b64decode(row['content'])) as f:
+            return make_response((f.read(), {
+                'Content-Type': 'application/octet-stream',
+                'Content-Disposition': 'filename={}'.format(filename)}))
+    abort(404)
 
 @app.route('/writeup/<int:id>')
 @app.route('/writeup/<int:id>/<int:md>')
@@ -1117,6 +1265,17 @@ def scoreboard():
 def _scoreboard(rnd=None):
     db_conn = get_db_connection()
     rnd, seconds_left, rnd_start_timestamp = round_info(db_conn)
+    crnd =  rnd
+    
+    settings = get_jeopardy_settings()
+    if settings['freeze_scoreboard']:
+        freeze_time = settings['freeze_time']
+        # Get the nearest round to the freeze timestamp
+        with db_conn.cursor() as cur:
+            cur.execute('SELECT id AS round, timestamp FROM rounds WHERE timestamp <= %s ORDER BY id DESC LIMIT 1', [freeze_time])
+            res = cur.fetchone()
+        rnd = res['round']
+        rnd_start_timestamp = res['timestamp']
 
     with db_conn.cursor() as cur:
 
@@ -1130,7 +1289,7 @@ def _scoreboard(rnd=None):
             'FROM scores AS SC '
             'JOIN services AS SR ON SC.service_id = SR.id '
             'JOIN teams AS T ON T.id = SC.team_id '
-            'WHERE SC.round = GREATEST(get_current_round() - 1, 0)'))
+            'WHERE SC.round = GREATEST(%s - 1, 0)'), [rnd])
 
         for score in cur:
             team = score['team_name']
@@ -1191,16 +1350,21 @@ def _scoreboard(rnd=None):
             service = row['service']
             scores[team][service]['sla_percentage'] = row['successful'] / row['total'] * 100
 
+        check_tstamp = datetime.now()
+        if settings['freeze_scoreboard']:
+            check_tstamp = rnd_start_timestamp
+
         # get the status of each service
         cur.execute((
             'SELECT T.name AS team_name, S.name AS service_name, C.timestamp, C.successful '
             'FROM teams AS T, services AS S, LATERAL ('
             '    SELECT IC.successful, IC.timestamp'
             '    FROM integrity_checks IC'
-            '    WHERE IC.team_id = T.id AND IC.service_id = S.id'
+            '    WHERE IC.team_id = T.id AND IC.service_id = S.id '
+            '      AND IC.timestamp <= %s '
             '    ORDER BY IC.timestamp DESC'
             '    LIMIT 1'
-            ') AS C'))
+            ') AS C'), [check_tstamp])
         for check in cur:
             team = check['team_name']
             service = check['service_name']
@@ -1225,6 +1389,7 @@ def _scoreboard(rnd=None):
 
     return jsonify({
         'round': rnd,
+        'current_round': crnd,
         'seconds_left': seconds_left,
         'scores': board
     })

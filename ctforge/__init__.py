@@ -25,10 +25,13 @@ import os
 import sys
 import logging
 from flask import Flask
+from flask.json import JSONEncoder
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_misaka import Misaka
 from flask_cache import Cache
+
+from datetime import date, timedelta
 
 from ctforge import utils
 
@@ -50,9 +53,10 @@ except Exception:
     traceback.print_exc()
     pass
 
-app = Flask(__name__, static_folder=config['STATIC_FOLDER'], 
+app = Flask(__name__, static_folder=config['STATIC_FOLDER'],
                      template_folder=config['TEMPLATE_FOLDER'])
 app.config.update(config)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = timedelta(minutes=30)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -82,5 +86,20 @@ if app.config['LOG_FILE'] is not None:
         app.logger.addHandler(file_handler)
     except (FileNotFoundError, PermissionError) as e:
         sys.stderr.write('[!] Unable to access the log file {}\n'.format(logfile))
+
+
+class CustomJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        try:
+            if isinstance(obj, date):
+                return obj.strftime("%a, %d %b %Y %H:%M:%S")
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        return JSONEncoder.default(self, obj)
+
+app.json_encoder = CustomJSONEncoder
 
 import ctforge.views

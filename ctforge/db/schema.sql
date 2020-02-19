@@ -74,6 +74,41 @@ CREATE TABLE challenges (
     UNIQUE (name)
 );
 
+CREATE TABLE public_files (
+    name    TEXT NOT NULL,
+    content TEXT NOT NULL,
+    PRIMARY KEY (name)
+);
+
+CREATE TABLE hints (
+    id           SERIAL,
+    penalty      INT NOT NULL DEFAULT 10,
+    challenge_id INT NOT NULL,
+    description  TEXT,
+    PRIMARY KEY (id),
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id),
+    UNIQUE (penalty, challenge_id)
+);
+
+CREATE TABLE hint_polls (
+    id           SERIAL,
+    start_time   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    duration     INT NOT NULL DEFAULT 2700,
+    hint_id      INT,
+    release_time TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (hint_id) REFERENCES hints (id)
+);
+
+CREATE TABLE hint_polls_choiches (
+    poll_id      INT NOT NULL,
+    user_id      INT NOT NULL,
+    challenge_id INT NOT NULL,
+    PRIMARY KEY (poll_id, user_id),
+    FOREIGN KEY (user_id) REFERENCES users (id),
+    FOREIGN KEY (challenge_id) REFERENCES challenges (id)
+);
+
 CREATE TABLE challenge_attacks (
     user_id       INT NOT NULL,
     challenge_id  INT NOT NULL,

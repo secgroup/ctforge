@@ -22,15 +22,16 @@
 <html lang="en">
     <head>
         {% block head %}
-        <title>CCIT CTF '18 - {% block title %}{% endblock %}</title>
+        <title>CCIT CTF '19 - {% block title %}{% endblock %}</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="CCIT CTF2018">
+        <meta name="description" content="CCIT CTF2019">
         <meta name="author" content="Secgroup @ University of Venice">
         <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
+        <link rel="stylesheet" href="https://bootswatch.com/4/slate/bootstrap.css">
+        <!--         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+        -->        <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/footable.bootstrap.min.css') }}">
         {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/dctf-admin.css') }}">
@@ -53,7 +54,7 @@
         <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <img src="/static/img/cyberchallenge_logo.png" height="30" class="d-inline-block align-top" alt="">
-                CCIT CTF '18
+                CCIT CTF '19
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -67,6 +68,7 @@
                     {% endif %}
                     {% if config.JEOPARDY_ACTIVE and current_user.is_authenticated %}
                     <li class="nav-item {% if request.path == url_for('challenges') %}active{% endif %}"><a class="nav-link" href="{{ url_for('challenges') }}">Challenges</a></li>
+                    <li class="nav-item {% if request.path == url_for('hints') %}active{% endif %}"><a class="nav-link" href="{{ url_for('hints') }}">Hints</a></li>
                     {% endif %}
                     {% if config.JEOPARDY_ACTIVE %}
                     <li class="nav-item {% if request.path == url_for('rules') %}active{% endif %}">
@@ -87,7 +89,7 @@
                     <li class="nav-item dropdown">
                         {% if current_user.is_authenticated %}
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Hi {{ current_user.name }}<span class="caret"></span>
+                            <span class="fa fa-user"></span> {{ current_user.name }}<span class="caret"></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="/user">User Profile</a>
@@ -113,7 +115,7 @@
             {% block footer %}
             <hr>
             <footer>
-                <p class="muted credit">A <a href="https://secgroup.github.io/">c00kies@venice</a> and <a href="https://www.consorzio-cini.it/">CINI</a> production | Join us on <a href="https://cyberchallengeit-ctf.slack.com/">Slack</a></p>
+                <p class="muted credit">A <a href="mailto:info@10sec.it">10Sec S.r.l.</a> and <a href="https://secgroup.github.io/">c00kies@venice</a> production | Join us on <a href="https://ccit19.slack.com">Slack</a></p>
             </footer><!-- /footer -->
             {% endblock %}
         </div> <!-- /container -->

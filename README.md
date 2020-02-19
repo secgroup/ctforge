@@ -64,5 +64,5 @@ Feel free to start editing your theme from the default theme `dctf2017` (under t
 
 Contacts
 --------
-CTForge is developed by [Marco Squarcina](https://minimalblue.com) aided by all the guys from [c00kies@venice](https://secgroup.github.io/).
+CTForge is developed by [Marco Squarcina](https://minimalblue.com), Mauro Tempesta and Lorenzo Veronese aided by all the guys from [c00kies@venice](https://secgroup.github.io/).
 

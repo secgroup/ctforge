@@ -100,3 +100,5 @@ class JeopardyForm(FlaskForm):
     start_time = DateTimeField('start_time', validators=[validators.Optional()])
     end_time = DateTimeField('end_time', validators=[validators.Optional()])
     ctf_running = BooleanField('ctf_running', validators=[validators.Optional()])
+    freeze_scoreboard = BooleanField('freeze_scoreboard', validators=[validators.Optional()])
+    freeze_time = DateTimeField('freeze_time', validators=[validators.Optional()])
