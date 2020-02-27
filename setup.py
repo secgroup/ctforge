@@ -41,7 +41,8 @@ setup(
         ]
     },
     install_requires=[
-        'Flask>=0.10.1',
+        'Werkzeug==0.15.6',
+        'Flask==1.1.1',
         'Flask-Login>=0.3.2',
         'Flask-WTF>=0.12',
         'Flask-Misaka>=0.4.1',
