@@ -1,0 +1,124 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2019  Marco Squarcina #}
+{# Copyright (C) 2016-2019  Mauro Tempesta #}
+{# Copyright (C) 2016-2019  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+{% from "_macros.html" import tabify, render_pretty_bools %}
+
+<h1>
+    Admin Panel
+    <span class="d-block-inline mr-3"></span>
+    {% if config.JEOPARDY_ACTIVE %}
+    <a class="btn btn-secondary" href="/admin/jeopardy_settings">
+        <span class="fa fa-pencil"></span>
+        Jeopardy Settings
+    </a>
+    {% endif %}
+</h1>
+
+
+<ul class="nav nav-pills" role="tablist" id="tab">
+    <li role="presentation" class="nav-item">
+        <a class="nav-link {% if tab == 'users' %}active{% endif %}" href="#users" aria-controls="users" role="tab" data-toggle="tab">Users</a>
+    </li>
+    {% if config.ATTACKDEFENSE_ACTIVE %}
+    <li role="presentation" class="nav-item">
+        <a class="nav-link {% if tab == 'teams' %}active{% endif %}" href="#teams" aria-controls="teams" role="tab" data-toggle="tab">Teams</a>
+    </li>
+    <li role="presentation" class="nav-item">
+        <a class="nav-link {% if tab == 'services' %}active{% endif %}" href="#services" aria-controls="services" role="tab" data-toggle="tab">Services</a>
+    </li>
+    {% endif %}
+    {% if config.JEOPARDY_ACTIVE %}
+    <li role="presentation" class="nav-item">
+        <a class="nav-link {% if tab == 'challenges' %}active{% endif %}" href="#challenges" aria-controls="challenges" role="tab" data-toggle="tab">Challenges</a>
+    </li>
+    <li role="presentation" class="nav-item">
+        <a class="nav-link {% if tab == 'evaluations' %}active{% endif %}" href="#evaluations" aria-controls="evaluations" role="tab" data-toggle="tab">Writeups</a>
+    </li>
+    {% endif %}
+</ul>
+
+<div class="tab-content">
+    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'nickname', 'mail', 'affiliation', 'active', 'hidden', 'admin'], 'user', 'users', class = 'active show' if tab == 'users') }}
+    {% if config.ATTACKDEFENSE_ACTIVE %}
+    {{ tabify(teams, ['id', 'ip', 'name', 'token', 'poc'], 'team', 'teams', class = 'active show' if tab == 'teams') }}
+    {{ tabify(services, ['id', 'name', 'flag_lifespan', 'active'], 'service', 'services', class = 'active show' if tab == 'services') }}
+    {% endif %}
+    {% if config.JEOPARDY_ACTIVE %}
+    {{ tabify(challenges, ['id', 'name', 'points', 'active', 'hidden', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active show' if tab == 'challenges') }}
+
+
+    {% set ce_keys = ['mail', 'name', 'surname', 'nickname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
+    <div role="tabpanel" class="tab-pane fade {{ 'active show' if tab == 'evaluations' }} mt-4" id="evaluations">
+        <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
+            <thead>
+                <tr>
+                    <td>edit</td>
+                    <td>view</td>
+                    {% for ce_k in ce_keys %}
+                    <td>{{ ce_k }}</td>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for ce in evaluations %}
+                {% if ce.active == 0 %}
+                <tr class="text-muted danger">
+                    {% else %}
+                    <tr>
+                        {% endif %}
+                        <td>
+                            <a href="{{ url_for('edit_evaluation', challenge_id=ce['challenge_id'], user_id=ce['user_id']) }}" style="background: none">
+                                <span class="fa fa-pencil"></span>
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('writeup', id=ce['id']) }}" style="background: none">
+                                <span class="fa fa-eye"></span>
+                            </a>
+                        </td>
+                        {% for ce_k in ce_keys %}
+                        <td>{{ render_pretty_bools(ce[ce_k]) }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+ /* Footable fix */
+ .footable-filtering-search .input-group-btn {
+     display: none;
+ }
+ .input-group .form-control {
+     border-top-right-radius: 0.25rem !important;
+     border-bottom-right-radius: 0.25rem !important;
+ }
+</style>
+
+{% endblock %}
+{% block footer %}{% endblock %}

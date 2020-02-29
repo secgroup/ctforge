@@ -1,0 +1,115 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}CTF Design{% endblock %}
+{% block content %}
+
+<h1>CTF Rules</h1>
+<p>
+    WUTCTF 2019 is a security competition for students attending the <a href="https://tuwel.tuwien.ac.at/course/view.php?id=17665">Introduction to Security (VU, 184.783)</a> and <a href="https://tuwel.tuwien.ac.at/course/view.php?id=17704">Introduction to Security (UE, 192.082)</a> courses at <a href="https://tuwien.ac.at">TU Wien</a>. Please refer to <a href="https://tuwel.tuwien.ac.at">TUWel</a> pages for an updated schedule of the lectures and deadlines. 
+</p>
+
+
+<h3>Flags</h3>
+<p>
+    The aim of each challenge is to get a string (called flag) that proves a successful exploitation. All flags will have different formats but they will be easily recognizable.
+</p>
+
+
+<h3>Scoring</h3>
+<p>
+    Each challenge is worth a certain amount of points according to the expected difficulty level. Besides solving challenges, you are expected to write a small report, called write-up, and submit it using the provided form within a limited amount of time (in terms of weeks), that will be announced at the release of every challenge.
+</p>
+<p>
+    The CTF platform will provide a template for every write-up, asking for specific details on the solution and eventually to submit some code. <strong>Write-ups not following the template will not be evaluated</strong>.
+</p>
+
+
+<h3>Grading</h3>
+<p>
+    There will be two sets of challenges: 4 challenges for the mandatory course Introduction to Security (VU, 184.783) and 7 slightly more difficult challenges for the complementary Introduction to Security (UE, 192.082) course. Students can voluntarily decide to solve challenges of one set even if they are not enrolled in the relative course, but the additional points will not affect the final grade. On the other hand, their rank in the scoreboard will be higher!
+</p>
+<p>
+    The submitted write-ups will be graded in the range <code>{0, 0.7, 1}</code> depending on their quality. Challenges with a missing, partial or clearly wrong write-up will receive a score of <code>0</code> and will not be considered in the final assessment of the courses. The specific grading scheme for each course is reported as follows:
+<ul>
+    <li><a href="https://tuwel.tuwien.ac.at/course/view.php?id=17665">Introduction to Security (VU, 184.783)</a>
+        <ul>
+            <li>Each successfully solved challenge will count 15% on the final grade of the course</li>
+            <li>By completing 4 out of 4 challenges, you will get a 10% bonus over the written exam</li>
+            <li>The minimum required to pass, in addition to the written exam, is two challenges scored <code>0.7</code> each</li>
+</li>
+        </ul>
+    </li>
+    <li><a href="https://tuwel.tuwien.ac.at/course/view.php?id=17704">Introduction to Security (UE, 192.082)</a>
+        <ul>
+            <li>The final grade of the course will be computed as <code>grade = 8 - ceil(sum(writeups))</code></li>   
+            <li>To pass the exam, it is required to solve at least 4 out of 7 challenges and at least one write-up must be evaluated as <code>1</code></li>
+            <li>The best grade can be obtained by solving all 7 challenges and by having up to three imperfect write-ups evaluated as <code>0.7</code></li>
+            <li>Python examples:
+                <pre><code>>>> from math import ceil
+>>> writeups = [1, 1, 1, 1, 0.7, 0.7, 0.7]
+>>> 8 - ceil(sum(writeups))
+1
+>>> writeups = [0, 0.7, 0.7, 0.7, 1, 0, 0]
+>>> 8 - ceil(sum(writeups))
+4</code></pre>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+<h3>Technical and Human Behaviour</h3>
+<p>We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:</p>
+<ul>
+    <li>No attacks against the infrastructure (this website and challenges) including denial-of-service (DOS), floods, DNS poisoning, ARP spoofing, MITM, etc...</li>
+    <li>Don't try to bruteforce flags by doing an unreasonable number of attempts in the flag submission page. We guarantee our flags to be unguessable&trade;.</li>
+    <li>Vulnerability/network scanners are useless for these challenges and not allowed. Do something better.</li>
+    <li>If you find a way to hack into a service/challenge more easily than intended, please report it to the tutors.</li>
+</ul>
+<p>
+    Rules anyway may change as more issues are raised by the participants. Also, the organizers keep the right to change them at any time. Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask the tutors/teaching assistants.
+</p>
+
+
+<h3>Collaboration Policy</h3>
+<p>
+    For any challenge, you can use all resources listed on the website and in TUWEL lecture notes, referred textbooks, and URLs mentioned on the slides and in the challenge description. It is strictly prohibited to use solutions/code from similar courses or to take solutions/code from Internet searches. If you discuss with other people, list them (i.e., cite your sources) and indicate how your solution was affected by that discussion.
+</p>
+<p>
+    Solutions have to be kept strictly confidential: spreading of information is easy to detect and it will likely spoil the fun of other participants trying to solve the tasks. In case of uncertainty, ask the tutors or teaching assistants. There is no warning: if you are caught cheating, you will be immediately banned from the course. <strong>Ignorance is not an excuse!</strong>
+</p>
+
+
+<h3>Communication</h3>
+<p>
+    Please use the forums hosted on TUWel if you have doubts about the challenges or if you need clarification on a specific topic. If you think you have any question or request that cannot be publicly shared, send us a mail at <a href="mailto:introsec@list.tuwien.ac.at">introsec@list.tuwien.ac.at</a>.
+</p>
+
+
+<h3>Credits</h3>
+<p>
+    The CTF platform, the gaming infrastructure and most challenges have been designed by <a href="https://minimalblue.com">Marco Squarcina</a> based on previous work for the <a href="https://secgroup.dais.unive.it/teaching/security-course/">Security course</a> at Università Ca' Foscari (Venice, IT) held by Prof. Riccardo Focardi and for the <a href="https://cyberchallenge.it/">CyberChallenge.IT</a> training program. Mauro Tempesta contributed to the platform and challenge development. The <a href="https://secgroup.github.io">c00kies</a> hacking team, and in particular Lorenzo Veronese and Francesco Palmarini, contributed to the platform and provided assistance during the deployment of the intrastructure. The tutors contributed by testing challenges before being released and by providing useful feedback.
+</p>
+<p>
+    We are also extremely thankful to <a href="https://www.sba-research.org/">SBA research</a> for providing virtual machines and technical support to host the competition.
+</p>
+
+{% endblock %}

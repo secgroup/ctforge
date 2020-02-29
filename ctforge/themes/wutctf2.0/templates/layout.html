@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+<html lang="en">
+    <head>
+        {% block head %}
+        <title>WUTCTF2.0 - {% block title %}{% endblock %}</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="WUTCTF 2.0">
+        <meta name="author" content="S&P Group, TU Wien">
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/footable.bootstrap.min.css') }}">
+        {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/wutctf-admin.css') }}">
+        {% else %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/wutctf.css') }}">
+        {% endif %}
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="stylesheet">
+
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.0.3.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/footable.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/dctf.js') }}"></script>
+        {% endblock %}
+    </head>
+    <body>
+        {% block navigation %}
+        <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                WUTCTF2.0
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    {% if config.JEOPARDY_ACTIVE %}
+                    <li class="nav-item {% if request.path == url_for('challenges_scoreboard') %}active{% endif %}">
+                        <a class="nav-link" href="{{ url_for('challenges_scoreboard') }}">Scoreboard</a></li>
+                    {% endif %}
+                    {% if config.JEOPARDY_ACTIVE and current_user.is_authenticated %}
+                    <li class="nav-item {% if request.path == url_for('challenges') %}active{% endif %}"><a class="nav-link" href="{{ url_for('challenges') }}">Challenges</a></li>
+                    {% endif %}
+                    {% if config.JEOPARDY_ACTIVE %}
+                    <li class="nav-item {% if request.path == url_for('rules') %}active{% endif %}">
+                        <a class="nav-link" href="{{ url_for('rules') }}">Rules</a></li>
+                    {% endif %}
+                    {% if config.ATTACKDEFENSE_ACTIVE %}
+                    <li class="nav-item {% if request.path == url_for('scoreboard') %}active{% endif %}"><a class="nav-link" href="{{ url_for('scoreboard') }}">Scoreboard</a></li>
+                    {% endif %}
+                    {% if config.ATTACKDEFENSE_ACTIVE %}
+                    <li class="nav-item {% if request.path == url_for('teams') %}active{% endif %}"><a class="nav-link" href="{{ url_for('teams') }}">Teams</a></li>
+                    {% endif %}
+                    {% if config.ATTACKDEFENSE_ACTIVE %}
+                    <li class="nav-item {% if request.path == url_for('design') %}active{% endif %}"><a class="nav-link" href="{{ url_for('design') }}">Rules</a></li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav navbar-right">
+                    <li class="nav-item dropdown">
+                        {% if current_user.is_authenticated %}
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Hi {{ current_user.name }}<span class="caret"></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="/user">User Profile</a>
+                            <div class="dropdown-divider"></div>
+                            {% if config.ATTACKDEFENSE_ACTIVE and current_user.team_id %}
+                            <a class="dropdown-item" href="/team">Team Details</a>
+                            <a class="dropdown-item" href="/submit">Flag Submission Service</a>
+                            <div class="dropdown-divider"></div>
+                            {% endif %}
+                            <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
+                        </div>
+                        {% else %}
+                        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        {% endblock %}
+        <div id="content" class="{% block container_fluid %}{% endblock %}{% if not self.container_fluid() %}container{% endif %}">
+            {% block content %}
+            {% endblock %}
+            {% block footer %}
+            <hr>
+            <footer>
+                <p class="muted credit">WUTCTF2.0 is powered by <a href="https://github.com/secgroup/ctforge/">CTForge</a></p>
+            </footer><!-- /footer -->
+            {% endblock %}
+        </div> <!-- /container -->
+        {% if current_user.is_authenticated and current_user.admin %}
+        <div id="admin-button" style="position: fixed; right: 60px; bottom: 20px; opacity: 0.8">
+            {% if 'admin' in request.path %}
+            <a href="{{ url_for('index') }}"><button type="button" class="btn btn-info btn-xl" style="padding: 10px"><span class="fa fa-home" style="display: block"></span></button></a>
+            {% else %}
+            <a href="{{ url_for('admin') }}"><button type="button" class="btn btn-danger btn-xl" style="padding: 10px"><span class="fa fa-cog" style="display: block"></span></button></a>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <!-- Modal -->
+        <div class="modal fade" id="flash-messages" tabindex="-1" role="dialog" aria-labelledby="flash-messages" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        {% for category, message in messages %}
+                        {% if category == 'error' %}
+                        <div class="alert alert-danger" role="alert">
+                            <span class="fa fa-exclamation-sign" aria-hidden="true"></span>
+                            <span class="sr-only">Error:</span>
+                            {% elif category == 'success' %}
+                            <div class="alert alert-success" role="alert">
+                                <span class="fa fa-ok" aria-hidden="true"></span>
+                                <span class="sr-only">Success:</span>
+                                {% else %}
+                                <div class="alert alert-info" role="alert">
+                                    <span class="fa fa-info-sign" aria-hidden="true"></span>
+                                    <span class="sr-only">Info:</span>
+                                    {% endif %}
+                                    {{ message }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <script>$('#flash-messages').modal('show');</script>
+                {% endif %}
+                {% endwith %}
+    </body>
+</html>
