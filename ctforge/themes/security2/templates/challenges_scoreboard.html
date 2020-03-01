@@ -161,8 +161,11 @@
                          entry.addClass("fa fa-remove alert-danger").css("background", "none"));
                  else {
                      row[escapeHTML(c)] = $("<td>").append(
-                         entry.addClass("alert-info").attr("title", u.challenges[c].timestamp)
-                              .text(u.challenges[c].points));
+                         (u.challenges[c].grade > 0) ?
+                           entry.addClass("alert-info").attr("title", u.challenges[c].timestamp)
+                                .text(u.challenges[c].points * u.challenges[c].grade) :
+                           entry.addClass("fa fa-check alert-info")
+                                .attr("title", u.challenges[c].timestamp));
                  }
              });
              return row;
