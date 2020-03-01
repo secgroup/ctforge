@@ -287,3 +287,7 @@ table.scoreboard .badge.badge-warning {
 table.scoreboard .badge.badge-info {
     background: #5bc0de;
 }
+
+footer img {
+    height: 1em;
+}
