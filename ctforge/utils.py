@@ -65,9 +65,14 @@ def parse_conf(fname):
             DEBUG = config.getboolean('website', 'debug', fallback=False),
             SESSION_COOKIE_SECURE = config.getboolean('website', 'secure_cookie', fallback=False),
             LOG_FILE = config.get('website', 'log_file', fallback=None),
-            SECRET_KEY = config.get('website', 'secret_key', fallback='ChengeMeWithRandomStuffASAP'),
+            SECRET_KEY = config.get('website', 'secret_key', fallback='ChangeMeWithRandomStuffASAP'),
+            TOKEN_KEY = config.get('website', 'token_key', fallback='ChangeMeWithOtherRandomStuff'),
+            TOKEN_LIFESPAN = config.get('website', 'token_lifespan', fallback=24),
             BOT_LOG_FILE = config.get('flagbot', 'log_file', fallback=None),
-            BOT_SCRIPT_PATH = config.get('flagbot', 'bot_script_path', fallback='~/.ctforge/bot/')
+            BOT_SCRIPT_PATH = config.get('flagbot', 'bot_script_path', fallback='~/.ctforge/bot/'),
+
+            MAIL_ADDRESS = config.get('mail', 'address', fallback=None),
+            MAIL_PASSWORD = config.get('mail', 'password', fallback=None)
         )
     except (configparser.NoOptionError, configparser.NoSectionError) as e:
         sys.stderr.write('Malformed configuration file, aborting: {}\n'.format(e))

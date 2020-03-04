@@ -34,7 +34,7 @@ from ctforge import utils
 
 
 __author__      = "Marco Squarcina"
-__credits__     = ["Francesco Palmarini", "Marco Squarcina", "Mauro Tempesta"]
+__credits__     = ["Francesco Palmarini", "Marco Squarcina", "Mauro Tempesta", "Lorenzo Veronese"]
 __license__     = "MIT"
 __copyright__   = "Copyright 2014-17, University of Venice"
 __maintainer__  = "Marco Squarcina"

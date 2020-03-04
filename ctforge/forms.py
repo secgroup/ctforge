@@ -37,10 +37,15 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('Password', validators=[validators.DataRequired()])
     password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
 
-class ActivateUserForm(FlaskForm):
-    nickname = StringField('Nickname', validators=[validators.DataRequired(), validators.Length(min=5, message="nick must be at least 5 chars long")])
+class PasswordResetEmailForm(FlaskForm):
+    mail = StringField('Mail', validators=[validators.DataRequired()])
+
+class PasswordResetForm(FlaskForm):
     password = PasswordField('Password', validators=[validators.DataRequired(), validators.Length(min=10, message="password must be at least 10 chars long")])
     password_ver = PasswordField('Password (Verification)', validators=[validators.DataRequired()])
+
+class ActivateUserForm(PasswordResetForm):
+    nickname = StringField('Nickname', validators=[validators.DataRequired(), validators.Length(min=5, message="nick must be at least 5 chars long")])
 
 class ServiceFlagForm(FlaskForm):
     team_token = HiddenField('team_token', validators=[validators.DataRequired()])

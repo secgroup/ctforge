@@ -48,18 +48,15 @@ CREATE TABLE users (
     name          VARCHAR(45) NOT NULL,
     surname       VARCHAR(45) NOT NULL,
     nickname      VARCHAR(45) DEFAULT NULL,
-    token         UUID DEFAULT uuid_generate_v4(),
     mail          VARCHAR(70) NOT NULL,
     affiliation   VARCHAR(100) NULL,
-    password      VARCHAR(100),
-    active        BOOLEAN NOT NULL DEFAULT FALSE,
+    password      VARCHAR(100) DEFAULT NULL,
     admin         BOOLEAN NOT NULL DEFAULT FALSE,
     hidden        BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id),
     FOREIGN KEY (team_id) REFERENCES teams (id),
     UNIQUE (mail),
-    UNIQUE (nickname),
-    UNIQUE(token)
+    UNIQUE (nickname)
 );
 
 CREATE TABLE challenges (

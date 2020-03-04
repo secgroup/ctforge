@@ -21,7 +21,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-import os
 import re
 import bcrypt
 import time
@@ -41,6 +40,7 @@ from ctforge.database import db_connect, get_db_connection, query_handler
 from ctforge.utils import flash_errors
 import ctforge.forms
 import ctforge.exceptions
+import ctforge.mail
 
 
 @login_manager.user_loader
@@ -108,7 +108,7 @@ def login():
     if request.method == 'POST':
         if form.validate_on_submit():
             user = User.get(form.mail.data)
-            if user is not None and user.active and bcrypt.checkpw(form.password.data, user.password):
+            if user is not None and user.password is not None and bcrypt.checkpw(form.password.data, user.password):
                 if login_user(user):
                     return redirect(url_for('index'))
                 else:
@@ -119,6 +119,102 @@ def login():
             flash_errors(form)
 
     return render_template('login.html', form=form)
+
+@app.route('/reset', methods=['POST', 'GET'])
+def send_reset_token():
+    form = ctforge.forms.PasswordResetEmailForm()
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            # Get the user associated to the email
+            user = User.get(form.mail.data)
+            if user is None:
+                flash('No user with the provided email address', 'error')
+            elif user.password is None:
+                pass # TODO send activation link?
+            else:
+                try:
+                    ctforge.mail.send_password_reset_email(user.mail, user.generate_token())
+                    flash('Email sent!', 'success')
+                    return redirect(url_for('index'))
+                except ctforge.exceptions.MailFailure:
+                    flash('A failure occurred when sending the email', 'error')
+        else:
+            flash_errors(form)
+
+    return render_template('reset_mail.html', form=form)
+
+@app.route('/reset/<token>', methods=['POST', 'GET'])
+def pwd_reset(token=None):
+    # get the user corresponding to the provided token
+    # returns None when validation fails or the email does not exist
+    user = User.get_from_token(token)
+    if user is None:
+        flash('Token invalid or expired', 'error')
+        return redirect(url_for('index'))
+    # redirect to the activation endpoint if the user is not active (i.e., no password is set)
+    if user.password is None:
+        return redirect(url_for('activate', token=token))
+
+    # initialize the form
+    form = ctforge.forms.PasswordResetForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if form.password.data != form.password_ver.data:
+                flash('Password mismatch, try again', 'error')
+            else:
+                db_conn = get_db_connection()
+                try:
+                    with db_conn.cursor() as cur:
+                        cur.execute((
+                            'UPDATE users SET password = %s WHERE id = %s'),
+                            (bcrypt.hashpw(form.password.data, bcrypt.gensalt()), user.id))
+                        flash('Password reset!', 'success')
+                        return redirect(url_for('login'))
+                except psycopg2.Error:
+                    db_conn.rollback()
+                    flash('Password reset failed, try again', 'error')
+        else:
+            flash_errors(form)
+
+    return render_template('reset.html', form=form, token=token, mail=user.mail)
+
+@app.route('/activate/<token>', methods=['POST', 'GET'])
+def activate(token=None):
+    # get the user corresponding to the provided token
+    # returns None when validation fails or the email does not exist
+    user = User.get_from_token(token)
+    if user is None:
+        flash('Token invalid or expired', 'error')
+        return redirect(url_for('index'))
+    # redirect to the password reset endpoint if the user is already active
+    if user.password is not None:
+        return redirect(url_for('pwd_reset', token=token))
+    # initialize the form
+    form = ctforge.forms.ActivateUserForm()
+
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            if form.password.data != form.password_ver.data:
+                flash('Password mismatch, try again', 'error')
+            elif re.search('admin|r00t|root', form.nickname.data, flags=re.IGNORECASE):
+                flash('Invalid nickname', 'error')
+            else:
+                db_conn = get_db_connection()
+                try:
+                    with db_conn.cursor() as cur:
+                        cur.execute((
+                            'UPDATE users SET nickname = %s, password = %s WHERE id = %s'),
+                            (form.nickname.data, bcrypt.hashpw(form.password.data, bcrypt.gensalt()), user.id))
+                        flash('User activated!', 'success')
+                        return redirect(url_for('login'))
+                except psycopg2.Error:
+                    db_conn.rollback()
+                    flash('Activation failed, try a different nickname', 'error')
+        else:
+            flash_errors(form)
+
+    return render_template('activate.html', form=form, token=token, mail=user['mail'])
 
 # @app.route('/register', methods=['POST', 'GET'])
 # def register():
@@ -140,51 +236,6 @@ def login():
 #             return redirect(url_for('index'))
 
 #     return render_template('register.html', form=form)
-
-@app.route('/activate/<token>', methods=['POST', 'GET'])
-def activate(token=None):
-    # get the disabled user corresponding to the provided token
-    db_conn = get_db_connection()
-    with db_conn.cursor() as cur:
-        try:
-            cur.execute((
-                'SELECT id, mail '
-                'FROM users '
-                'WHERE active = FALSE AND token = %s'), [token])
-            user = cur.fetchone()
-        except psycopg2.Error:
-            flash('Malformed token!', 'error')
-            return redirect(url_for('index'))
-    if user is None:
-        flash('Invalid token!', 'error')
-        return redirect(url_for('index'))
-    # initialize the form
-    form = ctforge.forms.ActivateUserForm()
-
-    if request.method == 'POST':
-        if form.validate_on_submit():
-            if form.password.data != form.password_ver.data:
-                flash('Password mismatch, try again', 'error')
-            elif re.search('admin|r00t|root', form.nickname.data, flags=re.IGNORECASE):
-                flash('Invalid nickname', 'error')
-            else:
-                try:
-                    with db_conn.cursor() as cur:
-                        cur.execute((
-                            'UPDATE users SET nickname = %s, password = %s, '
-                            '                 active = TRUE, token = NULL '
-                            'WHERE id = %s'),
-                            (form.nickname.data, bcrypt.hashpw(form.password.data, 
-                             bcrypt.gensalt()), user['id']))
-                        flash('User activated!', 'success')
-                        return redirect(url_for('login'))
-                except psycopg2.Error:
-                    db_conn.rollback()
-                    flash('Activation failed, try a different nickname', 'error')
-        else:
-            flash_errors(form)
-
-    return render_template('activate.html', form=form, token=token, mail=user['mail'])
 
 @app.route('/logout')
 @login_required
@@ -1081,7 +1132,7 @@ def writeup(id, md=0):
         with db_conn.cursor() as cur:
             cur.execute((
                 'SELECT id, timestamp FROM writeups '
-                'WHERE user_id = %s AND challenge_id = %s'
+                'WHERE user_id = %s AND challenge_id = %s '
                 'ORDER BY timestamp DESC'),
                 [writeup['user_id'], writeup['challenge_id']])
             writeups = cur.fetchall()

@@ -19,26 +19,28 @@
 {# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
 
 {% extends "layout.html" %}
-{% block title %}Login{% endblock %}
+{% block title %}Password Reset{% endblock %}
 {% block navigation %}{% endblock %}
 {% block content %}
 
 <div class="row">
-    <div class="col-sm-6 col-md-4 col-md-offset-4">
-        <form class="form-signin" action="{{ url_for('login') }}" method="post">
-            <h2 class="form-signin-heading">Please sign in</h2>
+    <div class="col-sm-8">
+        <form class="form-signin" action="{{ url_for('pwd_reset', token=token) }}" method="post">
+            <h2 class="form-signin-heading">Reset password of the user {{ mail }}</h2>
             {{ form.csrf_token }}
-            {{ form.mail.label(class="sr-only") }}
-            {{ form.mail(placeholder="Email address", class="form-control", type="email", required=True, autofocus=True) }}
-            {{ form.password.label(class="sr-only") }}
+
+            {{ form.password.label(class="control-label") }}
             {{ form.password(placeholder="Password", class="form-control", required=True) }}
-            <button class="btn btn-lg btn-dark" type="submit">Sign in</button>
-            <a href="{{ url_for('send_reset_token') }}" class="pad-left align-middle">Forgot your password?</a>
+            
+            {{ form.password_ver.label(class="control-label") }}
+            {{ form.password_ver(placeholder="Password (verification)", class="form-control", required=True) }}
+
+            <br/>
+            <button class="btn btn-lg btn-dark" type="submit">Set password</button>
         </form>
     </div>
 </div>
 
 {% endblock %}
 {% block footer %}{% endblock %}
-
 

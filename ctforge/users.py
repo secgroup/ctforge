@@ -21,22 +21,23 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import time
 from flask_login import UserMixin
+from jose import jwt
 
+from ctforge import app
 from ctforge.database import get_db_connection
 
 class User(UserMixin):
-    def __init__(self, id, team_id, name, surname, token, nickname, mail, affiliation, password, active, admin, hidden):
+    def __init__(self, id, team_id, name, surname, nickname, mail, affiliation, password, admin, hidden):
         self.id = id
         self.team_id = team_id
         self.name = name
         self.surname = surname
         self.nickname = nickname
-        self.token = token
         self.mail = mail
         self.affiliation = affiliation
         self.password = password
-        self.active = active
         self.admin = admin
         self.hidden = hidden
 
@@ -52,3 +53,21 @@ class User(UserMixin):
             cur.execute('SELECT * FROM users WHERE mail = %s', [mail])
             res = cur.fetchone()
             return User(**res) if res else None
+
+    def generate_token(self):
+        now = time.time()
+        # standard claims from the JWT specification (https://tools.ietf.org/html/rfc7519)
+        token = {
+            'sub': self.mail,
+            'exp': now + app.config['TOKEN_LIFESPAN'] * 3600,
+            'iat': now
+        }
+        return jwt.encode(token, app.config['TOKEN_KEY'])
+
+    @staticmethod
+    def get_from_token(token):
+        try:
+            claims = jwt.decode(token, app.config['TOKEN_KEY'])
+            return User.get(claims['sub'])
+        except (jwt.JWTError, jwt.JWTClaimsError, jwt.ExpiredSignatureError):
+            return None

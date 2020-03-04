@@ -29,12 +29,11 @@ import argparse
 import bcrypt
 import json
 import psycopg2
-import smtplib
 from shutil import copy2, rmtree
 from getpass import getpass
 from ctforge.database import db_connect
 
-from ctforge import app, utils, database
+from ctforge import app, utils, database, mail as mail_module
 
 def db_create_schema():
     # db_conn = database.db_connect('postgres')
@@ -214,20 +213,6 @@ def imp_chal(chal_info_file, public_folder):
 def send_activation_links(args):
     from time import sleep
 
-    def send_email(from_email, from_password, to_email, email_text):
-        import unicodedata
-
-        email_text = unicodedata.normalize('NFKD', email_text).encode('ascii', 'ignore')
-        try:
-            server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-            server.ehlo()
-            server.login(from_email, from_password)
-            server.sendmail(from_email, to_email, email_text)
-            server.close()
-            print('Email to {} has been successfully sent!'.format(to_email))
-        except Exception as e:  
-            print('Error while sending email to {}: {}'.format(to_email, e))
-
     from_email = args.user
     from_password = args.password
     subject = 'WUTCTF Activation Link'
@@ -254,7 +239,7 @@ def send_activation_links(args):
                 print('[!] Skipping {}: either the mail is not in the DB or the user is already active'.format(mail))
 
     for n, user in enumerate(users):
-        # wait 60 seconds every 20 mails to avoid too many consecutive connections to Google
+        # wait 60 seconds every 20 mails to avoid too many consecutive connections
         if n > 0 and n % 20 == 0:
             sleep(60)
         email_text = (
@@ -268,7 +253,7 @@ def send_activation_links(args):
                     )
                 )
             )
-        send_email(from_email, from_password, user['mail'], email_text)
+        mail_module.send_email(from_email, from_password, user['mail'], email_text)
 
 def imp_grades(args):
     db_conn = db_connect()

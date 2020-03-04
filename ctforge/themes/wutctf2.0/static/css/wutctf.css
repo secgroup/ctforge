@@ -291,3 +291,7 @@ table.scoreboard .badge.badge-info {
 footer img {
     height: 1em;
 }
+
+.pad-left {
+    padding-left: 1em;
+}

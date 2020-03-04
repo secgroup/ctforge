@@ -35,3 +35,6 @@ class ExpiredFlag(Exception):
 
 class ServiceCorrupted(Exception):
     pass
+
+class MailFailure(Exception):
+    pass
