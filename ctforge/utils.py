@@ -67,7 +67,7 @@ def parse_conf(fname):
             LOG_FILE = config.get('website', 'log_file', fallback=None),
             SECRET_KEY = config.get('website', 'secret_key', fallback='ChangeMeWithRandomStuffASAP'),
             TOKEN_KEY = config.get('website', 'token_key', fallback='ChangeMeWithOtherRandomStuff'),
-            TOKEN_LIFESPAN = config.get('website', 'token_lifespan', fallback=24),
+            TOKEN_LIFESPAN = config.get('website', 'token_lifespan', fallback=4),
             BOT_LOG_FILE = config.get('flagbot', 'log_file', fallback=None),
             BOT_SCRIPT_PATH = config.get('flagbot', 'bot_script_path', fallback='~/.ctforge/bot/'),
 
