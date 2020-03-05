@@ -22,6 +22,7 @@
 
 import smtplib
 import unicodedata
+import urllib.parse
 
 from ctforge import app
 from ctforge.exceptions import MailFailure
@@ -40,13 +41,29 @@ def send_email(from_email, from_password, to_email, email_text):
     except Exception as e:
         raise MailFailure('Error while sending email to {}: {}'.format(to_email, e))
 
-def send_password_reset_email(to_email, token):
+def send_password_reset_link(user):
+    link = urllib.parse.urljoin(app.config['URL'], '/reset/'+user.generate_token())
     email_text = (
         'From: {sender}+noreply\n'
         'To: {receiver}\n'
         'Subject: Password reset requested\n\n'
+        'Hi {name},\n'
         'Please click on the link below to reset the password of your account:\n\n{link}\n\n'
         'Please ignore this email if you did not request to reset your password.\n\n'
-        'Cheers,\nWUTCTF organizers'
-    ).format(sender=app.config['MAIL_ADDRESS'], receiver=to_email, link='https://hackthe.space/reset/'+token)
-    send_email(app.config['MAIL_ADDRESS'], app.config['MAIL_PASSWORD'], to_email, email_text)
+        'Cheers,\nThe WUTCTF organizers'
+    ).format(sender=app.config['MAIL_ADDRESS'], receiver=user.mail, name=user.name, link=link)
+    send_email(app.config['MAIL_ADDRESS'], app.config['MAIL_PASSWORD'], user.mail, email_text)
+
+def send_activation_link(user):
+    link = urllib.parse.urljoin(app.config['URL'], '/activate/'+user.generate_token())
+    email_text = (
+        'From: {sender}+noreply\n'
+        'To: {receiver}\n'
+        'Subject: Account activation\n\n'
+        'Hi {name},\n'
+        'Welcome to WUTCTF! Please click on the link below to activate your account:\n\n{link}\n\n'
+        'Keep in mind that your nickname is public! Choose wisely and avoid bad words ;)\n'
+        'In case of problems, don\'t hesitate to contact us.\n\n'
+        'Cheers,\nThe WUTCTF organizers'
+    ).format(sender=app.config['MAIL_ADDRESS'], receiver=user.mail, name=user.name, link=link)
+    send_email(app.config['MAIL_ADDRESS'], app.config['MAIL_PASSWORD'], user.mail, email_text)

@@ -130,12 +130,15 @@ def send_reset_token():
             user = User.get(form.mail.data)
             if user is None:
                 flash('No user with the provided email address', 'error')
-            elif user.password is None:
-                pass # TODO send activation link?
             else:
                 try:
-                    ctforge.mail.send_password_reset_email(user.mail, user.generate_token())
-                    flash('Email sent!', 'success')
+                    # send the link for activation or password reset depending on whether the
+                    # account has already been activated or not
+                    if user.password is None:
+                        ctforge.mail.send_activation_link(user)
+                    else:
+                        ctforge.mail.send_password_reset_link(user)
+                    flash('Mail sent!', 'success')
                     return redirect(url_for('index'))
                 except ctforge.exceptions.MailFailure:
                     flash('A failure occurred when sending the email', 'error')
@@ -187,9 +190,10 @@ def activate(token=None):
     if user is None:
         flash('Token invalid or expired', 'error')
         return redirect(url_for('index'))
-    # redirect to the password reset endpoint if the user is already active
+    # Error if the user is already active
     if user.password is not None:
-        return redirect(url_for('pwd_reset', token=token))
+        flash('Your account is already active', 'error')
+        return redirect(url_for('index'))
     # initialize the form
     form = ctforge.forms.ActivateUserForm()
 
@@ -214,7 +218,7 @@ def activate(token=None):
         else:
             flash_errors(form)
 
-    return render_template('activate.html', form=form, token=token, mail=user['mail'])
+    return render_template('activate.html', form=form, token=token, mail=user.mail)
 
 # @app.route('/register', methods=['POST', 'GET'])
 # def register():
