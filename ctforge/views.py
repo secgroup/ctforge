@@ -320,12 +320,12 @@ def add_user():
         if form.validate_on_submit():
             query_handler((
                 'INSERT INTO users (team_id, name, surname, nickname, mail, '
-                '                   affiliation, password, active, admin, hidden) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'),
+                '                   affiliation, password, admin, hidden) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 (form.team_id.data, form.name.data, form.surname.data,
                  form.nickname.data, form.mail.data, form.affiliation.data,
                  bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
-                 form.active.data, form.admin.data, form.hidden.data))
+                 form.admin.data, form.hidden.data))
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='users'))
@@ -343,33 +343,28 @@ def edit_user(id):
                 query_handler((
                     'UPDATE users '
                     'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
-                    '    mail = %s, affiliation = %s, password = %s, '
-                    '    active = %s, admin = %s, hidden = %s '
+                    '    mail = %s, affiliation = %s, password = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data, form.surname.data, 
-                     form.nickname.data, form.mail.data,
-                     form.affiliation.data,
+                     form.nickname.data, form.mail.data, form.affiliation.data,
                      bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
-                     form.active.data, form.admin.data, form.hidden.data, id))
+                     form.admin.data, form.hidden.data, id))
             else:
                 query_handler((
                     'UPDATE users '
                     'SET team_id = %s, name = %s, surname = %s, nickname = %s, '
-                    '    mail = %s, affiliation = %s, '
-                    '    active = %s, admin = %s, hidden = %s '
+                    '    mail = %s, affiliation = %s, admin = %s, hidden = %s '
                     'WHERE id = %s'),
                     (form.team_id.data, form.name.data, form.surname.data, 
-                     form.nickname.data, form.mail.data,
-                     form.affiliation.data, form.active.data, form.admin.data,
-                     form.hidden.data, id))
+                     form.nickname.data, form.mail.data, form.affiliation.data,
+                     form.admin.data, form.hidden.data, id))
         else:
             flash_errors(form)
     else:
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
             cur.execute((
-                'SELECT id, team_id, name, surname, nickname, token, mail, '
-                '       affiliation, active, admin, hidden '
+                'SELECT id, team_id, name, surname, nickname, mail, affiliation, admin, hidden '
                 'FROM users '
                 'WHERE id = %s'), [id])
             user = cur.fetchone()

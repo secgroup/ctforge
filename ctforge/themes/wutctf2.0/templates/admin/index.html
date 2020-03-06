@@ -60,7 +60,7 @@
 </ul>
 
 <div class="tab-content">
-    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'nickname', 'mail', 'affiliation', 'active', 'hidden', 'admin'], 'user', 'users', class = 'active show' if tab == 'users') }}
+    {{ tabify(users, ['id', 'team_id', 'name', 'surname', 'nickname', 'mail', 'affiliation', 'hidden', 'admin'], 'user', 'users', class = 'active show' if tab == 'users') }}
     {% if config.ATTACKDEFENSE_ACTIVE %}
     {{ tabify(teams, ['id', 'ip', 'name', 'token', 'poc'], 'team', 'teams', class = 'active show' if tab == 'teams') }}
     {{ tabify(services, ['id', 'name', 'flag_lifespan', 'active'], 'service', 'services', class = 'active show' if tab == 'services') }}

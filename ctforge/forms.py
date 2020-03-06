@@ -95,7 +95,6 @@ class UserForm(FlaskForm):
     mail = StringField('mail', validators=[validators.DataRequired()])
     affiliation = StringField('affiliation', validators=[validators.Optional()])
     password = StringField('password')
-    active = BooleanField('active')
     admin = BooleanField('admin')
     hidden = BooleanField('hidden')
 
