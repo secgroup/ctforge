@@ -968,7 +968,7 @@ def _challenges():
 
     # add an index to the scoreboard row to preserve sorting
     for i, elm in enumerate(scoreboard):
-        elm['index'] = i
+        elm['position'] = i+1
 
     return jsonify(scoreboard)
 

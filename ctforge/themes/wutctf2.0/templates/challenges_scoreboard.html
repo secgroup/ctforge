@@ -30,217 +30,108 @@
 <h1>Scoreboard</h1>
 
 {% if settings['ctf_running'] or (settings['time_enabled'] and settings['ctf_ended']) %}
+
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jeopardy_charts.js') }}"></script>
+
 <div class="row">
     <div class="col-md-12">
+        {% if affiliations|length > 1 %}
+        <div class="float-right">
+            <label for="scoreboard-filter">Scoreboard</label>
+            <select id="scoreboard-filter">
+                <option>Global</option>
+                {% for a in affiliations %}
+                <option>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
         <!-- Table filled dynamically via JS -->
         <div class="table-responsive">
-            <table class="table scoreboard"
-                {% if affiliations|length > 1 %}
-                data-filtering="true"
-                {% endif %}
-                ></table>
+            <table class="table scoreboard"></table>
         </div>
     </div>
 </div>
-<!--
-<div class="row">
-     <div class="col-md-12">
-        <div id="users_time" class="chart"></div>
-     </div>
-</div>
--->
+
 <div class="row">
     <div class="col-md-12">
         <div id="challenges_time" class="chart"></div>
     </div>
 </div>
 
-<style>
- /* Add a counter to every td.counter in tbody */
- table tbody {
-     counter-reset: rowNumber;
- }
-
- table tr {
-     counter-increment: rowNumber;
- }
-
- table tr td.counter::before {
-     content: counter(rowNumber);
- }
-
- .table td:first-child, .table th:first-child {
-     padding-left: 0.75rem;
- }
- /* last is not visible */
- .table td:nth-last-child(2), .table th:nth-last-child(2) {
-     padding-right: 0.75rem;
- }
- .table td, .table th {
-     padding-left: 0.40rem;
-     padding-right: 0.40rem;
-     padding-top: 0.75rem;
-     padding-bottom: 0.75rem;
- }
-</style>
-
 <script>
- var columns = [
-     {"name": "position", "title": "#", "classes": "text-left counter"},
-     {"name": "user", "title": "User", "classes": "text-left"},
-
-     {% if affiliations|length > 1 %}
-     {"name": "affiliation", "title": "Course", "classes": "text-left"},
-     {% endif %}
-     {% for chal in challenges %}
-     {
-         "name": "{{ chal.name }}",
-         "title": "<span title=\"{{ chal.name }}: {{ chal.points }} points\" class=\"chall-header {% if not chal.active %}text-muted{% endif %}\">{{ chal.name }}</span>",
-         "classes": "text-center",
-         "type": "html"
-     },
-     {% endfor %}
-     {"name": "points", "title": "Points", "classes": "text-right", "type": "number"},
-     {"name": "index", "type": "number", "sorted": true, "direction": "DESC", "visible": false}
- ];
-
- function escapeHTML (string) {
-     var entityMap = {
-         '&': '&amp;',
-         '<': '&lt;',
-         '>': '&gt;',
-         '"': '&quot;',
-         "'": '&#39;',
-         '/': '&#x2F;',
-         '`': '&#x60;',
-         '=': '&#x3D;'
-     };
-     return String(string).replace(/[&<>"'`=\/]/g, function (s) {
-         return entityMap[s];
-     });
- }
-
- // Last received data
- var last_data = null;
- // Current filter
- var data_filter = null;
-
- function filter_by_affiliation (affiliation) {
+// Second-order function that generates filters used to plot charts
+function filter_by_affiliation (affiliation) {
      return function (row) {
-         return row['affiliation'] === affiliation;
+         return affiliation === 'Global' || row['affiliation'] === affiliation;
      }
  }
+
+ // Current filter
+ var data_filter = filter_by_affiliation('Global');
 
  function updateCharts(data) {
-     // makeChart("users_time", data_filter ? data.filter(data_filter) : data, usersChart);
-     makeChart("challenges_time", data_filter ? data.filter(data_filter) : data, challengesChart);
+     makeChart("challenges_time", data.filter(data_filter), challengesChart);
  }
 
- function updateScores(table) {
-     $.getJSON("/scoreboard_jeopardy", function (data) {
-         last_data = data;
-         updateCharts(data);
+function renderChallenge(challName) {
+    return function (row, type) {
+        let c = row.challenges[challName];
+        if (type !== "display") {
+            return c.points;
+        }
+        if (row.challenges[challName].timestamp === null) {
+            return "<span class='fa fa-remove alert-danger bg-no'></span>";
+        } else {
+            return $("<span>").attr("aria-hidden", "true").addClass("alert-info")
+                .attr("title", c.timestamp).text(c.points).prop("outerHTML");
+        }
+    }
+}
 
-         var rows = data.map(function (u) {
-             var row = {
-                 user: u.user,
-                 {% if affiliations|length > 1 %}
-                 affiliation: u.affiliation,
-                 {% endif %}
-                 points: u.points.toFixed(2)
-             };
-             Object.keys(u.challenges).forEach(function (c) {
-                 var entry = $("<span>").attr("aria-hidden", "true");
-                 if (u.challenges[c].timestamp === null)
-                     row[escapeHTML(c)] = $("<td>").append(
-                         entry.addClass("fa fa-remove alert-danger").css("background", "none"));
-                 else {
-                     row[escapeHTML(c)] = $("<td>").append(
-                         entry.addClass("alert-info").attr("title", u.challenges[c].timestamp)
-                              .text(u.challenges[c].points));
-                 }
+$(document).ready(function() {
+    $('.scoreboard').DataTable({
+        "ajax": {
+            "url": "/scoreboard_jeopardy",
+            "dataSrc": ""
+        },
+        "columns": [
+            { "name": "position", "defaultContent": "", "title": "#", "className": "text-left counter" },
+            { "name": "user", "data": "user", "title": "User", "className": "text-left" },
+            {% if affiliations|length > 1 %}
+            { "name": "affiliation", "data": "affiliation", "title": "Course", "className": "text-left" },
+            {% endif %}
+            {% for chal in challenges %}
+            { "name": "challenges.{{ chal.name }}", "data": renderChallenge("{{ chal.name }}"), "title": "{{ chal.name }}", "className": "text-center" },
+            {% endfor %}
+            { "name": "points", "data": "points", "title": "Points", "className": "text-right" },
+        ],
+        "ordering": false,
+        "paging": false,
+        "dom": "t"
+    });
+    $(".scoreboard").DataTable().on("xhr", (e, settings, json) => {
+        updateCharts(json);
+    });
+    $("#scoreboard-filter").on("change", (e) => {
+        let val = (e.target.value === "Global") ? "" : `^${e.target.value}$`;
+        let table = $('.scoreboard').DataTable();
+        table.column("affiliation:name").search(val, true).draw();
 
-             });
-             return row;
-         });
-         table.rows.load(rows);
-
-         setTimeout(function () {
-             updateScores(table)
-         }, 30000);
-     });
- }
-
- FooTable.ScoreBoardFiltering = FooTable.Filtering.extend({
-     construct: function(instance) {
-         this._super(instance);
-         this.statuses = {{ affiliations|safe }};
-         this.def = 'Global';
-         this.$status = null;
-     },
-     $create: function() {
-         this._super();
-         this.$form.empty();
-         this.$form.addClass('float-right');
-         var self = this,
-             $form_grp = $('<div/>', {'class': 'form-group'})
-                 .append($('<label/>', {'style': 'margin-right: 10px', text: 'Scoreboard:'}))
-                 .prependTo(self.$form);
-
-         self.$status = $('<select/>', { 'class': 'form-control' })
-             .on('change', {self: self}, self._onStatusDropdownChanged)
-             .append($('<option/>', {text: self.def}))
-             .appendTo($form_grp);
-
-         $.each(self.statuses, function(i, status) {
-             self.$status.append($('<option/>').text(status));
-         });
-     },
-     _onStatusDropdownChanged: function(e) {
-         var self = e.data.self,
-             selected = $(this).val();
-         if (selected !== self.def) {
-             var filter = self.createFilter('affiliation', selected, ['affiliation']);
-             // The `match` method used by FooTable filters to select matching rows does a substring search, while
-             // we need an exact match. The exactMatch option doesn't seem to be really helpful here:
-             //     https://fooplugins.github.io/FooTable/docs/components/filtering.html#options
-             // The simplest way to fix the issue is to override the `match` method with a new one doing the equality
-             // check.
-             filter.match = function (str) { return this.query._value === str };
-             self.addFilter(filter);
-             data_filter = filter_by_affiliation(selected);
-             updateCharts(last_data);
-         } else {
-             self.removeFilter('affiliation');
-             data_filter = null;
-             updateCharts(last_data);
-         }
-         self.filter();
-     },
-     draw: function() {
-         this._super();
-         var filter = this.find('affiliation');
-         if (filter instanceof FooTable.Filter) {
-             this.$status.val(filter.query._value);
-         } else {
-             this.$status.val(this.def);
-         }
-     }
- });
-
- $(document).ready(function() {
-     var table = FooTable.init(".scoreboard", {
-         "columns": columns,
-         "components": { "filtering": FooTable.ScoreBoardFiltering }
-     });
-     updateScores(table);
- });
+        data_filter = filter_by_affiliation(e.target.value);
+        updateCharts(table.ajax.json());
+    });
+    setInterval( () => {
+        $('.scoreboard').DataTable().ajax.reload();
+    }, 30000 );
+} );
 </script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jeopardy_charts.js') }}"></script>
+
 {% else %}
 
 <div class="card">

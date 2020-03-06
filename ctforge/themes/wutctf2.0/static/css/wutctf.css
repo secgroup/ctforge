@@ -295,3 +295,32 @@ footer img {
 .pad-left {
     padding-left: 1em;
 }
+
+.bg-no {
+    background: none;
+}
+
+/* Row counter for scoreboards */
+ table.scoreboard tbody {
+     counter-reset: rowNumber;
+ }
+
+ table.scoreboard tr {
+     counter-increment: rowNumber;
+ }
+
+ table.scoreboard tr td.counter::before {
+     content: counter(rowNumber);
+ }
+
+ table.scoreboard td:first-child, .table th:first-child {
+     padding-left: 0.75rem;
+ }
+
+ table.scoreboard td:nth-last-child(2), .table th:nth-last-child(2) {
+     padding-right: 0.75rem;
+ }
+
+ table.scoreboard td, table.scoreboard th {
+     padding: 0.75rem 0.40rem;
+ }

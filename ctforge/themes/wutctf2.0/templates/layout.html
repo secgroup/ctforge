@@ -31,6 +31,7 @@
 
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/footable.bootstrap.min.css') }}">
         {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/wutctf-admin.css') }}">
@@ -40,10 +41,11 @@
 
         <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="stylesheet">
 
-        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.0.3.min.js') }}"></script>
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
+        <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/footable.min.js') }}"></script>
         <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/dctf.js') }}"></script>
         {% endblock %}
