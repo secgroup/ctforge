@@ -106,8 +106,10 @@ $(document).ready(function() {
             {% if affiliations|length > 1 %}
             { "name": "affiliation", "data": "affiliation", "title": "Course", "className": "text-left" },
             {% endif %}
-            {% for chal in challenges %}
-            { "name": "challenges.{{ chal.name }}", "data": renderChallenge("{{ chal.name }}"), "title": "{{ chal.name }}", "className": "text-center" },
+            {% for c in challenges %}
+            { "name": "challenges.{{ c.name }}", "data": renderChallenge("{{ c.name }}"),
+                "title": "<a href=\"{{ url_for('challenge', name=c.name) }}\" class=\"btn btn-secondary {% if not c.active %}disabled{% endif %}\" role=\"button\">{{ c.name }}</a>",
+                "className": "text-center" },
             {% endfor %}
             { "name": "points", "data": "points", "title": "Points", "className": "text-right" },
         ],
