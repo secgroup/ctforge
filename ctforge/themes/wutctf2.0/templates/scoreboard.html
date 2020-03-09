@@ -158,7 +158,7 @@ $(document).ready(function() {
             { "name": "position", "defaultContent": "", "title": "#", "className": "align-middle text-left counter" },
             { "name": "team", "data": renderTeamName, "title": "Team", "className": "align-middle text-left" },
             {% for s in services %}
-            { "name": "services.{{ s.name }}", "data": renderService("{{ s.name }}"),
+            { "name": "services-{{ s.name }}", "data": renderService("{{ s.name }}"),
                 "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}disabled{% endif %}\" role=\"button\">{{ s.name }}</a>",
                 "className": "text-center" },
             {% endfor %}

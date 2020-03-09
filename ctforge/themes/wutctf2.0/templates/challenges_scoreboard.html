@@ -107,7 +107,7 @@ $(document).ready(function() {
             { "name": "affiliation", "data": "affiliation", "title": "Course", "className": "text-left" },
             {% endif %}
             {% for c in challenges %}
-            { "name": "challenges.{{ c.name }}", "data": renderChallenge("{{ c.name }}"),
+            { "name": "challenges-{{ c.name }}", "data": renderChallenge("{{ c.name }}"),
                 "title": "<a href=\"{{ url_for('challenge', name=c.name) }}\" class=\"btn btn-secondary {% if not c.active %}disabled{% endif %}\" role=\"button\">{{ c.name }}</a>",
                 "className": "text-center" },
             {% endfor %}
