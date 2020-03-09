@@ -168,7 +168,7 @@ $(document).ready(function() {
         "paging": false,
         "dom": "t"
     });
-    
+
     $(".scoreboard").DataTable().on("xhr", (e, settings, json) => {
         current_round = json.round;
         if (seconds_left <= 0) {
