@@ -31,11 +31,11 @@
 
 {% if settings['ctf_running'] or (settings['time_enabled'] and settings['ctf_ended']) %}
 
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
-<script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/jeopardy_charts.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jeopardy_charts.js') }}"></script>
 
 <div class="row">
     <div class="col-md-12">
