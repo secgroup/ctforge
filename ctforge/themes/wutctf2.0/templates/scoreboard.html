@@ -50,56 +50,38 @@
     </div>
 </div>
 
-<style>
- /* Add a counter to every td.counter in tbody */
- table.scoreboard tbody {
-     counter-reset: rowNumber;
- }
-
- table.scoreboard tr {
-     counter-increment: rowNumber;
- }
-
- table.scoreboard tr td.counter::before {
-     content: counter(rowNumber);
- }
-</style>
-
 <script>
- var columns = [
-     {"name": "position", "title":"#", "classes":"align-middle counter pl-4"},
-     {"name": "team", "title": "Team", "classes": "text-left"},
-     {% for s in services %}
-     {
-         "name": "{{ s.name }}",
-         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}disabled{% endif %}\" role=\"button\">{{ s.name }}</a>",
-         "classes": "text-center",
-         "type": "html"
-     },
-     {% endfor %}
-     {"name": "score", "title": "Global Score", "classes": "text-center", "type": "html"}
- ];
 
- function formatNumber(n) {
-     var prefix = (n >= 0) ? "  " : " ";
-     return prefix + n.toLocaleString("en-US", {"minimumFractionDigits": 2, "maximumFractionDigits": 2});
- }
+var seconds_left = {{ time_left }};
+var current_round = {{ rnd }};
+var update_period = {{ rnd_duration / 20 }};
 
- function renderService(s) {
-     var integrity_check;
+function formatNumber(n) {
+    const prefix = (n >= 0) ? "  " : " ";
+    return prefix + n.toLocaleString("en-US", {"minimumFractionDigits": 2, "maximumFractionDigits": 2});
+}
 
-     if (s.integrity) {
-         integrity_check = s.integrity.status ?
-                           $("<span class='badge badge-info'>UP</span>") :
-                           $("<span class='badge badge-danger'>CORRUPTED</span>");
-         integrity_check.attr("title", "last checked at " + s.integrity.timestamp);
-     } else {
-         integrity_check = $("<span class=\"badge badge-warning\">NOT CHECKED</span>");
-     }
+function renderTeamName(row) {
+    return $("<div>").append($("<div>").addClass("font-weight-bold").text(row.name))
+                     .append($("<small>").text(row.ip))
+                     .prop("outerHTML");
+}
 
-     return $("<td>").append([
-         $("<div>").append(integrity_check),
-         $("<div title='attack' style='margin-top: 5px'>").append([
+function renderService(serviceName) {
+    return function (row) {
+        let s = row.services[serviceName];
+
+        let ic;
+        if (s.integrity) {
+            ic = s.integrity.status ?
+                 $("<span class='badge badge-info'>UP</span>") :
+                 $("<span class='badge badge-danger'>CORRUPTED</span>");
+            ic.attr("title", "last checked at " + s.integrity.timestamp);
+        } else {
+            ic = $("<span class=\"badge badge-warning\">NOT CHECKED</span>");
+        }
+
+        let atk = $("<div title='attack' style='margin-top: 5px'>").append([
              $("<span class='fa fa-lg fa-fire' title='attack'>"),
              formatNumber(s.attack),
              $("<small>").text(' ( '+s.attack_flags).append([
@@ -107,9 +89,9 @@
                  $("<span class='fa fa-flag'>"),
                  " )"
              ])
-         ]
-         ),
-         $("<div title='defense'>").append([
+        ]);
+
+        let def = $("<div title='defense'>").append([
              $("<span class='fa fa-lg fa-shield' title='defense'>"),
              formatNumber(s.defense),
              $("<small>").text(' ( '+s.defense_flags).append([
@@ -117,98 +99,98 @@
                  $("<span class='fa fa-flag'>"),
                  " )"
              ])
-         ]),
-         $("<div title='SLA'>").append([
+        ]);
+
+        let sla = $("<div title='SLA'>").append([
              $("<span class='fa fa-lg fa-wrench' title='SLA'>"),
              formatNumber(s.sla),
              $("<small>").text(' ( '+(s.sla_percentage | 0)+" % )")
-         ])
-     ]);
+        ]);
+
+        return $("<div>").append([ic, atk, def, sla]).prop("outerHTML");
+    }
+}
+
+function renderScore(row) {
+    let points = $("<div title='global score'>").append([
+        $("<span class='fa fa-lg fa-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(row.score))
+    ]);
+    let atk = $("<div title='attack'>").append([
+        $("<span class='fa fa-lg fa-fire' title='attack'>"), formatNumber(row.attack)]
+    );
+    let def = $("<div title='defense'>").append([
+        $("<span class='fa fa-lg fa-shield' title='defense'>"), formatNumber(row.defense)
+    ]);
+    let sla = $("<div title='SLA'>").append([
+        $("<span class='fa fa-lg fa-wrench' title='SLA'>"), formatNumber(row.sla)
+    ]);
+    return $("<div>").append([points, atk, def, sla]).prop("outerHTML");
+}
+
+function updateChart() {
+    $.getJSON("/ctf_stats/300", function (data) {
+        makeChart('global_score', data, scoresChart);
+    });
+}
+
+function updateCountdown() {
+    seconds_left--;
+    const s = seconds_left % 3600;
+    const hours = Math.floor(seconds_left / 3600);
+    const minutes = Math.floor(s / 60);
+    const seconds = s % 60;
+    $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
+    if (seconds_left < 0) {
+        $("#countdown-container").hide();
+    } else {
+        $("#countdown-container").show();
+    }
  }
 
- function renderScore(t) {
-     return $("<td>").append([
-         $("<div title='global score'>").append([
-             $("<span class='fa fa-lg fa-globe' title='global score'>"), $("<span class='global-score'>").append(formatNumber(t.score))
-         ]),
-         $("<div title='attack'>").append([
-             $("<span class='fa fa-lg fa-fire' title='attack'>"), formatNumber(t.attack)]
-         ),
-         $("<div title='defense'>").append([
-             $("<span class='fa fa-lg fa-shield' title='defense'>"), formatNumber(t.defense)
-         ]),
-         $("<div title='SLA'>").append([
-             $("<span class='fa fa-lg fa-wrench' title='SLA'>"), formatNumber(t.sla)
-         ])
-     ]);
- }
+$(document).ready(function() {
 
- $(document).ready(function() {
-     var table = FooTable.init(".scoreboard", {
-         "columns": columns
-     });
-     var seconds_left = {{ time_left }};
-     var current_round = {{ rnd }};
-     var update_period = {{ rnd_duration / 20 }};
+    $('.scoreboard').DataTable({
+        "ajax": {
+            "url": "/ctf_scoreboard",
+            "dataSrc": "scores"
+        },
+        "columns": [
+            { "name": "position", "defaultContent": "", "title": "#", "className": "align-middle text-left counter" },
+            { "name": "team", "data": renderTeamName, "title": "Team", "className": "align-middle text-left" },
+            {% for s in services %}
+            { "name": "services.{{ s.name }}", "data": renderService("{{ s.name }}"),
+                "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}disabled{% endif %}\" role=\"button\">{{ s.name }}</a>",
+                "className": "text-center" },
+            {% endfor %}
+            { "name": "points", "data": renderScore, "title": "Points", "className": "align-middle text-center" },
+        ],
+        "ordering": false,
+        "paging": false,
+        "dom": "t"
+    });
+    
+    $(".scoreboard").DataTable().on("xhr", (e, settings, json) => {
+        current_round = json.round;
+        if (seconds_left <= 0) {
+            seconds_left = json.seconds_left;
+            updateCountdown();
+        }
+        $("#rnd-scores").text(current_round - 1);
+        $("#rnd-current").text(current_round);
+    });
 
-     function updateTable() {
-         $.getJSON("/ctf_scoreboard", function (data) {
-             current_round = data.round;
-             if (seconds_left <= 0) {
-                 seconds_left = data.seconds_left;
-                 updateCountdown();
-             }
-
-             var rows = data.scores.map(function (t) {
-                 var row = {
-                     team: $("<td>")
-                         .addClass("align-middle")
-                         .append($("<div>").addClass("font-weight-bold").text(t.name))
-                         .append($("<small>").text(t.ip)),
-                     score: renderScore(t)};
-                 Object.keys(t.services).forEach(function (s) {
-                     row[s] = renderService(t.services[s]);
-                 });
-                 return row;
-             });
-             table.rows.load(rows);
-
-             $("#rnd-scores").text(current_round - 1);
-             $("#rnd-current").text(current_round);
-         });
-     }
-
-     function updateChart() {
-         $.getJSON("/ctf_stats/300", function (data) {
-             makeChart('global_score', data, scoresChart);
-         });
-     }
-
-     function updateCountdown() {
-         seconds_left--;
-         var s = seconds_left % 3600;
-         var hours = Math.floor(seconds_left / 3600);
-         var minutes = Math.floor(s / 60);
-         var seconds = s % 60;
-         $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
-         if (seconds_left < 0) $("#countdown-container").hide()
-         else $("#countdown-container").show()
-
-     }
-
-     updateCountdown();
-     updateTable();
-     updateChart();
-     setInterval(function () {
+    updateCountdown();
+    updateChart();
+    setInterval(function () {
          if (seconds_left <= 0 || seconds_left % update_period == 0) {
-             updateTable();
+             $('.scoreboard').DataTable().ajax.reload();
          }
          if (seconds_left % (update_period * 10) == 0) {
              updateChart();
          }
          updateCountdown();
-     }, 1000);
- });
+    }, 1000);
+});
 </script>
 
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
@@ -216,6 +198,5 @@
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/ad_charts.js') }}"></script>
-
 
 {% endblock %}
