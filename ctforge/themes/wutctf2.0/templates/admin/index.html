@@ -74,8 +74,8 @@
         <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
             <thead>
                 <tr>
-                    <td>edit</td>
-                    <td>view</td>
+                    <td data-orderable="false"></td>
+                    <td data-orderable="false"></td>
                     {% for ce_k in ce_keys %}
                     <td>{{ ce_k }}</td>
                     {% endfor %}
@@ -108,17 +108,6 @@
     </div>
     {% endif %}
 </div>
-
-<style>
- /* Footable fix */
- .footable-filtering-search .input-group-btn {
-     display: none;
- }
- .input-group .form-control {
-     border-top-right-radius: 0.25rem !important;
-     border-bottom-right-radius: 0.25rem !important;
- }
-</style>
 
 {% endblock %}
 {% block footer %}{% endblock %}

@@ -68,3 +68,6 @@ table {
     background-color: rgba(238, 232, 213, 0.05);
 }
 
+#evaluations {
+    width: min-content;
+}
