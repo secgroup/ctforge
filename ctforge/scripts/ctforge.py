@@ -33,7 +33,7 @@ from shutil import copy2, rmtree
 from getpass import getpass
 from ctforge.database import db_connect
 
-from ctforge import app, utils, database, mail as mail_module
+from ctforge import app, utils, database, users as users_module, mail as mail_module
 
 def db_create_schema():
     # db_conn = database.db_connect('postgres')
@@ -57,17 +57,17 @@ def db_create_procedures():
     db_conn.close()
 
 def db_add_admin(name, surname, mail, nickname, password):
-    db_add_user(name, surname, mail, nickname=nickname, password=password, active=True, admin=True, hidden=True)
+    db_add_user(name, surname, mail, nickname=nickname, password=password, admin=True, hidden=True)
 
-def db_add_user(name, surname, mail, nickname=None, affiliation=None, password=None, active=False, admin=False, hidden=False, team_id=None):
+def db_add_user(name, surname, mail, nickname=None, affiliation=None, password=None, admin=False, hidden=False, team_id=None):
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
         try:
             cur.execute((
-                'INSERT INTO users (team_id, name, surname, mail, nickname, affiliation, password, active, admin, hidden) '
-                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'),
+                'INSERT INTO users (team_id, name, surname, mail, nickname, affiliation, password, admin, hidden) '
+                'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 [team_id, name, surname, mail, nickname, affiliation, bcrypt.hashpw(password, bcrypt.gensalt()) if password else None,
-                 active, admin, hidden])
+                 admin, hidden])
             db_conn.commit()
         except psycopg2.Error as e:
             db_conn.rollback()
@@ -203,33 +203,23 @@ def imp_chal(chal_info_file, public_folder):
                     os.path.join(public_folder, f), f)
             description += '</ul>'
         cur.execute('INSERT INTO challenges (name, description, flag, points, '
-                    'tags, active, hidden, writeup) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
+                    'tags, hidden, writeup) VALUES (%s,%s,%s,%s,%s,%s,%s)',
                     [chal_info['title'], description, chal_info['flag'],
                      chal_info['points'], '/'.join(chal_info['tags']),
-                     False, True, False])
+                     True, False])
     db_conn.close()
     print('Done.')
 
 def send_activation_links(args):
     from time import sleep
-
-    from_email = args.user
-    from_password = args.password
-    subject = 'WUTCTF Activation Link'
-    body = (
-        'Hello {},\n\n'
-        'please click on the link below to activate your profile:\n\n{}\n\n'
-        'The basic access authentication credentials are user: wutctf2019, password: wutctf2019\n\n'
-        'Try to be polite when setting a nickname, '
-        'it will identify you on the public scoreboard.\n\nHack the planet!')
     
     db_conn = database.db_connect()
     with db_conn.cursor() as cur:
         if args.mails:
-            cur.execute('SELECT * FROM users WHERE active = FALSE AND token IS NOT NULL AND mail = ANY(%s)',
+            cur.execute('SELECT * FROM users WHERE password IS NULL AND mail = ANY(%s)',
                         [args.mails])
         else:
-            cur.execute('SELECT * FROM users WHERE active = FALSE AND token IS NOT NULL')
+            cur.execute('SELECT * FROM users WHERE password IS NULL')
         users = cur.fetchall()
 
     if args.mails:
@@ -242,18 +232,7 @@ def send_activation_links(args):
         # wait 60 seconds every 20 mails to avoid too many consecutive connections
         if n > 0 and n % 20 == 0:
             sleep(60)
-        email_text = (
-            'From: {}+noreply\n'
-            'To: {}\n'
-            'Subject: {}\n\n'
-            '{}').format(
-                from_email, user['mail'], subject, body.format(
-                    user['name'], 'https://wutctf.space/activate/{}'.format(
-                        user['token']
-                    )
-                )
-            )
-        mail_module.send_email(from_email, from_password, user['mail'], email_text)
+        mail_module.send_activation_link(users_module.User(**user))
 
 def imp_grades(args):
     db_conn = db_connect()
