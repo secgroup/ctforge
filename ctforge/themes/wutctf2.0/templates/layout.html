@@ -33,6 +33,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.dark.css') }}">
         {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/wutctf-admin.css') }}">
         {% else %}
