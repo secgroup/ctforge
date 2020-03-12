@@ -819,7 +819,7 @@ def challenges_scoreboard():
     def challenge_list():
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
-            cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY id')
+            cur.execute('SELECT *, deadline IS NULL OR deadline > NOW() AS "active" FROM challenges WHERE NOT hidden ORDER BY id')
             challenges = cur.fetchall()
             cur.execute('SELECT DISTINCT affiliation FROM users')
             affiliations = [ v['affiliation'] for v in cur.fetchall()
