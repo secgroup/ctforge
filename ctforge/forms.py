@@ -22,7 +22,11 @@
 
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, HiddenField, IntegerField, FloatField, BooleanField, TextAreaField, DateTimeField, validators
+from wtforms import StringField, PasswordField, HiddenField, IntegerField, FloatField, BooleanField, TextAreaField, DateTimeField, FormField, validators
+
+class OptionalDateTimeField(FlaskForm):
+    active = BooleanField('active', validators=[validators.Optional()])
+    time = DateTimeField('time', validators=[validators.Optional()], format='%Y-%m-%d %H:%M')
 
 class LoginForm(FlaskForm):
     mail = StringField('mail', validators=[validators.DataRequired()])
@@ -67,7 +71,7 @@ class ChallengeForm(FlaskForm):
     flag = StringField('flag', validators=[validators.DataRequired()])
     points = FloatField('points')
     tags = StringField('tags', validators=[validators.DataRequired()])
-    active = BooleanField('active')
+    deadline = FormField(OptionalDateTimeField)
     hidden = BooleanField('hidden', default=True)
     writeup = BooleanField('writeup')
     writeup_template = TextAreaField('writeup_template')

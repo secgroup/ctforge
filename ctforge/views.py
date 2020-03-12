@@ -542,14 +542,14 @@ def add_challenge():
     form =ctforge.forms.ChallengeForm()
     if request.method == 'POST':
         if form.validate_on_submit():
+            deadline = form.deadline.time.data if form.deadline.active.data else None
             query_handler((
                 'INSERT INTO challenges (name, description, flag, points, tags, '
-                '                        active, hidden, writeup, writeup_template) '
+                '                        deadline, hidden, writeup, writeup_template) '
                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.tags.data,
-                 form.active.data, form.hidden.data, form.writeup.data,
-                 form.writeup_template.data])
+                 form.points.data, form.tags.data, deadline, form.hidden.data,
+                 form.writeup.data, form.writeup_template.data])
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='challenges'))
@@ -563,16 +563,16 @@ def edit_challenge(id):
     if request.method == 'POST':
         form = ctforge.forms.ChallengeForm()
         if form.validate_on_submit():
+            deadline = form.deadline.time.data if form.deadline.active.data else None
             query_handler((
                 'UPDATE challenges '
                 'SET name = %s, description = %s, flag = %s, points = %s, '
-                '    tags = %s, active = %s, hidden = %s, '
+                '    tags = %s, deadline = %s, hidden = %s, '
                 '    writeup = %s, writeup_template = %s '
                 'WHERE id = %s'),
                 [form.name.data, form.description.data, form.flag.data,
-                 form.points.data, form.tags.data,
-                 form.active.data, form.hidden.data, form.writeup.data,
-                 form.writeup_template.data, id])
+                 form.points.data, form.tags.data, deadline, form.hidden.data,
+                 form.writeup.data, form.writeup_template.data, id])
         else:
             flash_errors(form)
     else:
@@ -584,6 +584,10 @@ def edit_challenge(id):
             flash('Invalid challenge!', 'error')
         else:
             form = ctforge.forms.ChallengeForm(**challenge)
+            # TODO is there a better way to do this?
+            form.deadline.process(formdata=None, data={
+                'active': challenge['deadline'] is not None,
+                'time': challenge['deadline']})
             return render_template('admin/data.html', form=form,
                                    target='challenge', action='edit')
     return redirect(url_for('admin', tab='challenges'))
@@ -846,7 +850,8 @@ def challenges():
     def challenges_attacks():
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
-            cur.execute('SELECT * FROM challenges WHERE NOT hidden ORDER BY id')
+            cur.execute('SELECT *, deadline IS NULL OR deadline > NOW() AS "active" '
+                        'FROM challenges WHERE NOT hidden ORDER BY id')
             challenges = cur.fetchall()
             cur.execute('SELECT A.*, U.id as user_id, U.hidden as user_hidden '
                         'FROM challenge_attacks as A '
@@ -988,7 +993,7 @@ def challenge(name):
     cur = db_conn.cursor()
 
     # get challenge data if the challenge exists
-    cur.execute('SELECT * FROM challenges WHERE name = %s',
+    cur.execute('SELECT *, deadline IS NULL OR deadline > NOW() AS "active" FROM challenges WHERE name = %s',
                 [name])
     challenge = cur.fetchone()
     # if the challenge is not valid abort
@@ -1022,79 +1027,82 @@ def challenge(name):
     flag_form = ctforge.forms.ChallengeFlagForm()
 
     # accept POST requests only if the challenge is active
-    if request.method == 'POST' and challenge['active']:
-        # process the two mutually exclusive forms
-        writeup_data = request.form.get('writeup')
-        flag = request.form.get('flag')
-
-        if writeup_data is not None:
-            # only allow writeup submission if writeup support is enabled for this chal
-            if challenge['writeup'] and writeup_form.validate_on_submit():
-                if graded:
-                    # writeup already submitted, resubmission allowed only if there's no grade
-                    flash('Your submission has already been graded, you cannot modify it', 'error')
-                else:
-                    writeup_data = writeup_form.writeup.data
-                    try:
-                        # save this writeup into the db
-                        cur.execute(('INSERT INTO writeups (user_id, challenge_id, writeup) '
-                                    'VALUES (%s, %s, %s) RETURNING id'),
-                                    [current_user.id, challenge['id'], writeup_data])
-                        writeup_id = cur.fetchone()['id']
-                        cur.close()
-                        db_conn.commit()
-                        flash('Writeup added', 'success')
-                    except psycopg2.Error as e:
-                        db_conn.rollback()
-                        error_msg = 'Unknown database error: {}'.format(e)
-                        flash(error_msg, 'error')
-                        app.logger.error(error_msg)
-            else:
-                flash_errors(writeup_form)
+    if request.method == 'POST':
+        if not challenge['active']:
+            flash('The deadline for the challenge has expired', 'error')
         else:
-            if cur is None:
-                cur = db_conn.cursor()
-            if flag is not None and flag_form.validate_on_submit():
-                flag = flag_form.flag.data
+            # process the two mutually exclusive forms
+            writeup_data = request.form.get('writeup')
+            flag = request.form.get('flag')
 
-                # Check if the user can submit flags
-                # if the ctf is over the flags are validated but the db is not updated
-                if not jeopardy['ctf_running']:
-                    if jeopardy['time_enabled']:
-                        if now >= jeopardy['end_time'] and flag == challenge['flag']:
-                            flash('Flag accepted! (No points)', 'success')
-                        else:
-                            flash('Invalid flag', 'error')
-                        return redirect(url_for('challenge', name=challenge['name']))
+            if writeup_data is not None:
+                # only allow writeup submission if writeup support is enabled for this chal
+                if challenge['writeup'] and writeup_form.validate_on_submit():
+                    if graded:
+                        # writeup already submitted, resubmission allowed only if there's no grade
+                        flash('Your submission has already been graded, you cannot modify it', 'error')
                     else:
-                        flash('There is no running CTF!', 'error')
-                        return redirect(url_for('challenge', name=challenge['name']))
-
-
-                if flag == challenge['flag']:
-                    try:
-                        # save this attack into the db
-                        cur.execute((
-                            'INSERT INTO challenge_attacks (user_id, challenge_id) '
-                            'VALUES (%s, %s)'),
-                            [current_user.id, challenge['id']])
-                        cur.close()
-                        db_conn.commit()
-                        flash('Flag accepted!', 'success')
-                    except psycopg2.IntegrityError:
-                        # this exception is raised not only on duplicated entry,
-                        # but also when key constraint fails
-                        db_conn.rollback()
-                        flash('You already solved this challenge')
-                    except psycopg2.Error as e:
-                        db_conn.rollback()
-                        error_msg = 'Unknown database error: {}'.format(e)
-                        flash(error_msg, 'error')
-                        app.logger.error(error_msg)
+                        writeup_data = writeup_form.writeup.data
+                        try:
+                            # save this writeup into the db
+                            cur.execute(('INSERT INTO writeups (user_id, challenge_id, writeup) '
+                                        'VALUES (%s, %s, %s) RETURNING id'),
+                                        [current_user.id, challenge['id'], writeup_data])
+                            writeup_id = cur.fetchone()['id']
+                            cur.close()
+                            db_conn.commit()
+                            flash('Writeup added', 'success')
+                        except psycopg2.Error as e:
+                            db_conn.rollback()
+                            error_msg = 'Unknown database error: {}'.format(e)
+                            flash(error_msg, 'error')
+                            app.logger.error(error_msg)
                 else:
-                    flash('Invalid flag', 'error')
+                    flash_errors(writeup_form)
             else:
-                flash_errors(flag_form)
+                if cur is None:
+                    cur = db_conn.cursor()
+                if flag is not None and flag_form.validate_on_submit():
+                    flag = flag_form.flag.data
+
+                    # Check if the user can submit flags
+                    # if the ctf is over the flags are validated but the db is not updated
+                    if not jeopardy['ctf_running']:
+                        if jeopardy['time_enabled']:
+                            if now >= jeopardy['end_time'] and flag == challenge['flag']:
+                                flash('Flag accepted! (No points)', 'success')
+                            else:
+                                flash('Invalid flag', 'error')
+                            return redirect(url_for('challenge', name=challenge['name']))
+                        else:
+                            flash('There is no running CTF!', 'error')
+                            return redirect(url_for('challenge', name=challenge['name']))
+
+
+                    if flag == challenge['flag']:
+                        try:
+                            # save this attack into the db
+                            cur.execute((
+                                'INSERT INTO challenge_attacks (user_id, challenge_id) '
+                                'VALUES (%s, %s)'),
+                                [current_user.id, challenge['id']])
+                            cur.close()
+                            db_conn.commit()
+                            flash('Flag accepted!', 'success')
+                        except psycopg2.IntegrityError:
+                            # this exception is raised not only on duplicated entry,
+                            # but also when key constraint fails
+                            db_conn.rollback()
+                            flash('You already solved this challenge')
+                        except psycopg2.Error as e:
+                            db_conn.rollback()
+                            error_msg = 'Unknown database error: {}'.format(e)
+                            flash(error_msg, 'error')
+                            app.logger.error(error_msg)
+                    else:
+                        flash('Invalid flag', 'error')
+                else:
+                    flash_errors(flag_form)
 
         # close the pending connection to the database
         db_conn.close()

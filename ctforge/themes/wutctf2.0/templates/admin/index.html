@@ -66,7 +66,7 @@
     {{ tabify(services, ['id', 'name', 'flag_lifespan', 'active'], 'service', 'services', class = 'active show' if tab == 'services') }}
     {% endif %}
     {% if config.JEOPARDY_ACTIVE %}
-    {{ tabify(challenges, ['id', 'name', 'points', 'active', 'hidden', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active show' if tab == 'challenges') }}
+    {{ tabify(challenges, ['id', 'name', 'points', 'deadline', 'hidden', 'writeup', 'writeup_template'], 'challenge', 'challenges', class = 'active show' if tab == 'challenges') }}
 
 
     {% set ce_keys = ['mail', 'name', 'surname', 'nickname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}

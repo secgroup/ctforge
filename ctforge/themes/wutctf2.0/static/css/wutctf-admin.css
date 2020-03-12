@@ -71,3 +71,8 @@ table {
 #evaluations {
     width: min-content;
 }
+
+
+.flatpickr-input.form-control[readonly] {
+    background-color: #A9BDBD;
+}

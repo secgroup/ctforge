@@ -32,19 +32,21 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/ctforge.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/flatpickr.min.css') }}">
         {% if current_user.is_authenticated and current_user.admin and '/admin' in request.path %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/wutctf-admin.css') }}">
         {% else %}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/wutctf.css') }}">
         {% endif %}
 
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}" rel="stylesheet">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
 
         <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.4.1.min.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/popper.min.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-
         <script type="text/javascript" src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/flatpickr.min.js') }}"></script>
+
         <script type="text/javascript" src="{{ url_for('static', filename='js/dctf.js') }}"></script>
         {% endblock %}
     </head>

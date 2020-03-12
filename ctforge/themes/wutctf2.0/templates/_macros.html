@@ -87,6 +87,29 @@
                     </div>
                 </div>
             </div>
+        {% elif field.type == 'FormField' and field.form.__class__.__name__ == 'OptionalDateTimeField' %}
+            <div class="form-group">
+                <div class="col-md-10">
+                    <div class="checkbox">
+                        <label>{{ field.active(id=field.active.name) }} deadline</label>
+                    </div>
+
+                    {% set visibility = "" if field.active.data else " d-none" %}
+                    {{ field.time(class="form-control"+visibility, id=field.time.name) }}
+                </div>
+                <script type="text/javascript">
+                    $(function () {
+                        $("#{{ field.time.name }}").flatpickr({
+                            "enableTime": true,
+                            "dateFormat": "Y-m-d H:i",
+                            "time_24hr": true
+                        });
+                        $("#{{ field.active.name }}").on("change", () => {
+                            $("#{{ field.time.name }}").toggleClass("d-none");
+                        })
+                    });
+                </script>
+            </div>
         {% else %}
             {% if field.flags.required %}
                 <div class="form-group has-feedback has-error">
