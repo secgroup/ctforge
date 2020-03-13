@@ -926,7 +926,7 @@ def _challenges():
             # get the number of users who already solved the challenge and compute
             # the number of points obtained by the user, taking into account the base score
             solvers[cid] = solvers.get(cid, 0) + 1
-            points = math.floor(chals[cid]['points'] / solvers[cid]**0.1)
+            points = math.floor(chals[cid]['points'] / solvers[cid]**0.15)
             users[uid]['challenges'][chals[cid]['name']] = {
                 'points': points, 'timestamp': ca['timestamp']
             }
