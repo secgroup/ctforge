@@ -25,6 +25,7 @@ import re
 import bcrypt
 import time
 import json
+import math
 import base64
 import psycopg2
 import psycopg2.extras
@@ -875,7 +876,6 @@ def challenges():
     return render_template('challenges.html', challenges=challenges,
                            settings=jeopardy)
 
-
 @app.route('/scoreboard_jeopardy')
 @cache.cached(timeout=5)
 def _challenges():
@@ -891,85 +891,55 @@ def _challenges():
     # get the challenges
     cur.execute('SELECT * FROM challenges WHERE NOT hidden')
     res = cur.fetchall()
-    chals = {c['id']: c for c in res} if len(res) != 0 else dict()
-    # get only the users who solved at least one challenge that are not admin
-    # and not hidden, sorted by timestamp. Along with the users get the
-    # information about the solved challenges
+    chals = {c['id']: c for c in res}
+
+    # get only the users who solved at least one challenge that are not admin and not hidden,
+    # sorted by timestamp, and the information about the solved challenges
     cur.execute((
-        'SELECT U.id AS user_id, U.name AS name, U.surname AS surname, U.nickname AS nickname, '
-        '       U.admin AS admin, U.hidden AS hidden, U.affiliation AS affiliation, '
+        'SELECT U.id AS user_id, U.nickname AS nickname, U.affiliation AS affiliation, '
         '       CA.challenge_id AS challenge_id, CA.timestamp AS timestamp '
         'FROM users AS U JOIN challenge_attacks AS CA '
         'ON U.id = CA.user_id '
         'WHERE NOT admin AND NOT hidden '
-        'ORDER BY timestamp ASC '))
+        'ORDER BY timestamp'))
     challenge_attacks = cur.fetchall()
-    # cur.close()
-    # map user id to a string representing his name and surname
-    users = dict()
-    # map the pair challenge id and user id to the timestamp
-    attacks = dict()
-    for ca in challenge_attacks:
-        users[ca['user_id']] = {
-            'name': '{} {} ({})'.format(ca['name'], ca['surname'], ca['nickname']) \
-                    if app.config['SHOW_NAMES'] \
-                    else '{}'.format(ca['nickname']),
-            'affiliation': ca['affiliation']
-        }
-        attacks[(ca['challenge_id'], ca['user_id'])] = ca['timestamp']
-
-    cur.execute((
-        'SELECT user_id, challenge_id, grade FROM challenges_evaluations'))
-    challenge_evaluations = cur.fetchall()
     cur.close()
-    evaluations = dict()
-    for ev in challenge_evaluations:
-        evaluations[(ev['challenge_id'], ev['user_id'])] = ev['grade']
 
-    bonus = dict()
-    if app.config['JEOPARDY_BONUS']:
-        # compute the bonus: +3 for firt shot, +2 to second and +1 to third
-        bonus_aux = dict()
-        for (c, u), t in attacks.items():
-            try:
-                bonus_aux[c].append((u, t))
-            except KeyError:
-                bonus_aux[c] = [(u, t)]
-        for c in bonus_aux.keys():
-            bonus_aux[c] = sorted(bonus_aux[c], key=lambda x: x[1])
-            for i in range(len(bonus_aux[c])):
-                bonus[(c, bonus_aux[c][i][0])] = 3 - i
-                if i >= 2:
-                    break
+    # counter of solvers per challenge
+    solvers = {}
+    # map user id to a dictionary containing the corresponding score
+    users = {}
+    for ca in challenge_attacks:
+        cid, uid = ca['challenge_id'], ca['user_id']
+        # skip solves of hidden challenges
+        if cid in chals:
+            # add the user if not present
+            if uid not in users:
+                users[uid] = {
+                    'user': ca['nickname'],
+                    'affiliation': ca['affiliation'],
+                    'points': 0,
+                    'challenges': {
+                        c['name']: { 'points': 0, 'timestamp': None } for c in chals.values()
+                    }
+                }
+            # get the number of users who already solved the challenge and compute
+            # the number of points obtained by the user, taking into account the base score
+            solvers[cid] = solvers.get(cid, 0) + 1
+            points = math.floor(chals[cid]['points'] / solvers[cid]**0.1)
+            users[uid]['challenges'][chals[cid]['name']] = {
+                'points': points, 'timestamp': ca['timestamp']
+            }
+            users[uid]['points'] += points
 
-    # compute the scoreboard as a list of dictionaries
-    scoreboard = []
-    for u, uv in users.items():
-        score = {'user': uv['name'], 'affiliation': uv['affiliation'], 'points': 0, 'challenges': {}}
-        for c, cv in chals.items():
-            try:
-                timestamp = attacks[(c, u)]
-                # grade = evaluations.get((c,u), 0)
-                # only add the bonus points if the challenge score is > 0
-                points = cv['points']
-                if points > 0:
-                    points += bonus.get((c, u), 0)
-                # if grade > 0:
-                score['points'] += points # bonus = grade * max_points
-            except KeyError:
-                timestamp = None
-                points = 0
-            score['challenges'][cv['name']] = {
-                'timestamp': timestamp, 'points': points}
-                # 'timestamp': timestamp, 'points': points, 'grade': grade}
-        scoreboard.append(score)
-    # sort the scoreboard by total points, number of solved challenges
-    # or, in case of a tie, by the time of the last submission
-    def sorting_key(u):
+    # the scoreboard is a list of dictionaries containing scoring details for each user
+    # the list is sorted by total score and, in case of ties, depending on the last flag submission
+    def sort_fn(u):
         timestamps = [c['timestamp'] for c in u['challenges'].values() if c['timestamp'] is not None]
         return u['points'], len(timestamps), None if len(timestamps) == 0 else datetime.now() - max(timestamps)
 
-    scoreboard.sort(key=sorting_key, reverse=True)
+    scoreboard = list(users.values())
+    scoreboard.sort(key=sort_fn, reverse=True)
 
     # add an index to the scoreboard row to preserve sorting
     for i, elm in enumerate(scoreboard):
