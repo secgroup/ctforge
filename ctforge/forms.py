@@ -95,7 +95,6 @@ class UserForm(FlaskForm):
     name = StringField('name', validators=[validators.DataRequired()])
     surname = StringField('surname', validators=[validators.DataRequired()])
     nickname = StringField('nickname', validators=[validators.Optional()])
-    token = StringField('token', validators=[validators.Optional(), validators.UUID()], render_kw={'disabled': True})
     mail = StringField('mail', validators=[validators.DataRequired()])
     affiliation = StringField('affiliation', validators=[validators.Optional()])
     password = StringField('password')
