@@ -24,22 +24,30 @@
 
 <h1>CTF Rules</h1>
 <p>
-    WUTCTF2.0 is a security competition for students attending the <a href="https://tuwel.tuwien.ac.at/course/view.php?id=17665">Introduction to Security (VU, 184.783)</a> and <a href="https://tuwel.tuwien.ac.at/course/view.php?id=21976">Introduction to Security (UE, 192.082)</a> courses at <a href="https://tuwien.ac.at">TU Wien</a>. Please refer to <a href="https://tuwel.tuwien.ac.at">TUWel</a> pages for more information including lectures, deadlines and grading rules.
+    WUTCTF2.0 is a security competition for students attending the Introduction to Security (<a href="https://tuwel.tuwien.ac.at/course/view.php?id=22147">184.783 VU</a> and <a href="https://tuwel.tuwien.ac.at/course/view.php?id=21976">192.082 UE</a>) courses at <a href="https://tuwien.ac.at">TU Wien</a>. Please refer to <a href="https://tuwel.tuwien.ac.at">TUWel</a> pages for more information including lectures, deadlines and grading rules.
 </p>
 
 
 <h3>Flags</h3>
 <p>
-    The aim of each challenge is to get a string (called flag) that proves a successful exploitation. Flag format is <code>wut{...}</code> unless differently specified.
+    The aim of each challenge is to get a string (called flag) that proves a successful exploitation. Flag format is <code>WUT{...}</code> unless differently specified.
 </p>
 
 
-<h3>Scoring</h3>
+<h3>Leetscores</h3>
 <p>
-    Each challenge is worth a certain amount of points that should reflect the expected difficulty level. After submitting a flag, you are expected to write a report, called write-up, and submit it using the provided form within a limited amount of time that is announced when a challenge is released. The CTF platform provides a template for every write-up, asking for specific details on the solution and eventually to submit some code. <strong>Write-ups not following the template will not be evaluated</strong>.
+    To make the competition more thrilling, we provide a scoreboard that reflects your <strong>leetness</strong>, which we measure in terms of speed to <em>hacking speed</em>. Each challenge is worth a certain amount of points that decrease according to your rank on that specific problem. The formula we use to compute points is
+    <pre><code>points = floor(100 / (X+1)**0.15)</code></pre>
+    where <code>X</code> is the number of students who solved the challenge at the time of the submission. To exemplify, the first solver will obtain the full <code>100</code> points, the second gets <code>90</code>, the third <code>84</code> and so on. You can see on <a href="https://www.wolframalpha.com/input/?i=floor%28100%2Fx%5E0.15%29+from+x+0+to+300">WolframAlpha</a> how points decrease over the number of solvers.
 </p>
 <p>
-    Students can voluntarily decide to solve challenges of one set even if they are not enrolled in the relative course, but the additional points will not affect the final grade. On the other hand, their rank in the scoreboard will be higher!
+    <strong>Leetpoints</strong> are earned right after submitting a flag and they <strong>do not affect the course grading</strong>: the only purpose of the scoreboard on this platform is to have fun and fight for honor! Furthermore, students are free to solve any published challenge (even from a different course) to increase their rank in the scoreboard!
+</p>
+
+
+<h3>Write-ups</h3>
+<p>
+    After submitting a flag you are expected to write a report, called write-up, and send it using the submission form before the challenge deadline. The CTF platform provides a template for every write-up, that specifies the content that you are required to include, e.g., the entire code developed to exploit a challenge or a patch to fix the vulnerability. <strong>Write-ups not following the template will not be evaluated</strong>. Please refer to the grading system published on TUWEL pages for more details.
 </p>
 
 
@@ -61,7 +69,7 @@
     For any challenge, you can use all resources listed on the website and in TUWEL lecture notes, referred textbooks, and URLs mentioned on the slides and in the challenge description. It is strictly prohibited to use solutions/code from similar courses or to take solutions/code from Internet searches. If you discuss with other people, list them (i.e., cite your sources) and indicate how your solution was affected by that discussion.
 </p>
 <p>
-    Solutions have to be kept strictly confidential: spreading of information is easy to detect and it will likely spoil the fun of other participants trying to solve the tasks. In case of uncertainty, ask the tutors or teaching assistants. There is no warning: if you are caught cheating, you might be banned from the course.
+    Solutions have to be kept strictly confidential: spreading of information is easy to detect and it will likely spoil the fun of other participants trying to solve the tasks. In case of uncertainty, ask the tutors or teaching assistants. There is no warning: if you are caught cheating or violating any of these rules, you might be banned from the course.
 </p>
 
 
