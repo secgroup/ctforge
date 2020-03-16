@@ -109,7 +109,7 @@ $(document).ready(function() {
                 "title": "<a href=\"{{ url_for('challenge', name=c.name) }}\" class=\"btn btn-secondary {% if not c.active %}disabled{% endif %}\" role=\"button\">{{ c.name }}</a>",
                 "className": "text-center" },
             {% endfor %}
-            { "name": "points", "data": "points", "title": "Points", "className": "text-right" },
+            { "name": "points", "data": "points", "title": "Leetscore", "className": "text-right" },
         ],
         "ordering": false,
         "paging": false,
