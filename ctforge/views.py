@@ -319,14 +319,14 @@ def add_user():
     form = ctforge.forms.UserForm()
     if request.method == 'POST':
         if form.validate_on_submit():
+            password = form.password.data if form.password.data else None
             query_handler((
                 'INSERT INTO users (team_id, name, surname, nickname, mail, '
                 '                   affiliation, password, admin, hidden) '
                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'),
                 (form.team_id.data, form.name.data, form.surname.data,
                  form.nickname.data, form.mail.data, form.affiliation.data,
-                 bcrypt.hashpw(form.password.data, bcrypt.gensalt()),
-                 form.admin.data, form.hidden.data))
+                 bcrypt.hashpw(password, bcrypt.gensalt()), form.admin.data, form.hidden.data))
         else:
             flash_errors(form)
         return redirect(url_for('admin', tab='users'))
