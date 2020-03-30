@@ -29,6 +29,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_misaka import Misaka
 from flask_cache import Cache
+from flask_behind_proxy import FlaskBehindProxy
 
 from ctforge import utils
 
@@ -53,6 +54,7 @@ except Exception:
 app = Flask(__name__, static_folder=config['STATIC_FOLDER'], 
                      template_folder=config['TEMPLATE_FOLDER'])
 app.config.update(config)
+app = FlaskBehindProxy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)

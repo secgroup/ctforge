@@ -49,7 +49,8 @@ setup(
         'py-bcrypt>=0.4',
         'psycopg2-binary>=2.6.1',
         'Flask-Cache==0.13w',
-        'python-jose>=3.1.0'
+        'python-jose>=3.1.0',
+        'flask-behind-proxy>=0.1.1'
     ],
     dependency_links=['https://github.com/wert310/flask-cache/tarball/master#egg=Flask-Cache-0.13w'],
     classifiers=[
