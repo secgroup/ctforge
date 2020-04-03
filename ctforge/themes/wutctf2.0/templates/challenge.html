@@ -32,6 +32,9 @@
 
 <div class="card">
     <div class="card-body">
+        {% if challenge.deadline %}
+        <h5>Deadline: {{ challenge.deadline }}</h5>
+        {% endif %}
         {{ challenge.description|safe }}
     </div>
 </div>

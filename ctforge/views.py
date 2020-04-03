@@ -1082,6 +1082,8 @@ def challenge(name):
 
     db_conn.close()
 
+    if challenge['deadline']:
+        challenge['deadline'] = challenge['deadline'].strftime('%d.%m.%Y, %H:%M')
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
                            challenge=challenge, evaluation=evaluation, solved=solved,
                            graded=graded, writeups=writeups)
