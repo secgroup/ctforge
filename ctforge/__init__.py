@@ -54,7 +54,7 @@ except Exception:
 app = Flask(__name__, static_folder=config['STATIC_FOLDER'], 
                      template_folder=config['TEMPLATE_FOLDER'])
 app.config.update(config)
-app = FlaskBehindProxy(app)
+proxied = FlaskBehindProxy(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
