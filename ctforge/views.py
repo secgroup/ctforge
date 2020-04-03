@@ -100,6 +100,10 @@ def page_not_found(e):
 def unauthorized():
     abort(403)
 
+# scoring formula for jeopardy CTF
+
+def score(base_score, solvers):
+    return math.floor(base_score / solvers**0.15)
 
 # views
 
@@ -849,7 +853,7 @@ def challenges():
     jeopardy = get_jeopardy_settings()
     now = datetime.now()
 
-    @cache.memoize(timeout=5)
+    @cache.memoize(timeout=1)
     def challenges_attacks():
         db_conn = get_db_connection()
         with db_conn.cursor() as cur:
@@ -869,6 +873,7 @@ def challenges():
         chal['solved'] = bool(chal_solved)
         chal['solved_time'] = None if not chal_solved else chal_solved[0]['timestamp']
         chal['solvers'] = sum( 1 for x in chal_attacks if not x['user_hidden'] )
+        chal['points'] = score(chal['points'], chal['solvers']+1)
 
     if jeopardy['time_enabled']:
         jeopardy['ctf_ended'] = now >= jeopardy['end_time']
@@ -928,7 +933,7 @@ def _challenges():
             # get the number of users who already solved the challenge and compute
             # the number of points obtained by the user, taking into account the base score
             solvers[cid] = solvers.get(cid, 0) + 1
-            points = math.floor(chals[cid]['points'] / solvers[cid]**0.15)
+            points = score(chals[cid]['points'], solvers[cid])
             users[uid]['challenges'][chals[cid]['name']] = {
                 'points': points, 'timestamp': ca['timestamp']
             }
@@ -1080,10 +1085,16 @@ def challenge(name):
         db_conn.close()
         return redirect(url_for('challenge', name=challenge['name']))
 
+    # get the number of solvers to compute the actual score of the challenge
+    cur.execute('SELECT COUNT(*) AS solvers FROM challenge_attacks WHERE challenge_id = %s',
+                [challenge['id']])
+    solvers = cur.fetchone()['solvers']
+
     db_conn.close()
 
     if challenge['deadline']:
         challenge['deadline'] = challenge['deadline'].strftime('%d.%m.%Y, %H:%M')
+    challenge['points'] = score(challenge['points'], solvers + 1)
     return render_template('challenge.html', flag_form=flag_form, writeup_form=writeup_form,
                            challenge=challenge, evaluation=evaluation, solved=solved,
                            graded=graded, writeups=writeups)
