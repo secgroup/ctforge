@@ -1086,7 +1086,10 @@ def challenge(name):
         return redirect(url_for('challenge', name=challenge['name']))
 
     # get the number of solvers to compute the actual score of the challenge
-    cur.execute('SELECT COUNT(*) AS solvers FROM challenge_attacks WHERE challenge_id = %s',
+    cur.execute('SELECT COUNT(*) AS solvers '
+                'FROM challenge_attacks AS CA JOIN users AS U '
+                'ON CA.user_id = U.id '
+                'WHERE NOT U.hidden AND challenge_id = %s',
                 [challenge['id']])
     solvers = cur.fetchone()['solvers']
 
