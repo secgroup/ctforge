@@ -71,7 +71,7 @@
 
     {% set ce_keys = ['mail', 'name', 'surname', 'nickname', 'challenge', 'timestamp', 'feedback', 'grade', 'updated'] %}
     <div role="tabpanel" class="tab-pane fade {{ 'active show' if tab == 'evaluations' }} mt-4" id="evaluations">
-        <table class="table table-condensed table-hover sortable" data-sorting="true" data-filtering="true">
+        <table class="table table-condensed table-hover sortable" data-order="[[8, &quot;asc&quot;]]" data-filtering="true">
             <thead>
                 <tr>
                     <td data-orderable="false"></td>
