@@ -75,7 +75,7 @@
                 <div class="col-md-4">
                     <div class="list-group">
                     {% for writeup in writeups %}
-                        <a href="{{ url_for('writeup', id=writeup.id) }}" class="list-group-item">{{ writeup.timestamp }}</a>
+                        <a href="{{ url_for('writeup', id=writeup.id) }}" class="list-group-item">{{ writeup.timestamp.strftime("%d/%m/%Y, %H:%M:%S") }}</a>
                     {% endfor %}
                     </div>
                 </div>

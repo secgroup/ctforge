@@ -22,7 +22,7 @@
 {% block title %}Writeup{% endblock %}
 {% block content %}
 
-<h2>{{ writeup.challenge_name }}</strong> ({{ writeup.challenge_points }}pts) Writeup</h2>
+<h2><strong>{{ writeup.challenge_name }}</strong> - Writeup</h2>
 <p><span class="text-muted">By {{ writeup.user_name }} {{ writeup.user_surname }}</span></p>
 <div class="row">
 	<div class="col-md-9">
@@ -44,7 +44,7 @@
 		<div class="list-group">
 		{% for w in writeups %}
 			<a href="{{ url_for('writeup', id=w.id) }}" class="list-group-item{{ ' active disabled' if w.id == writeup.id else '' }}">
-				{{ w.timestamp }}
+				{{ w.timestamp.strftime("%d/%m/%Y, %H:%M:%S") }}
 			</a>
 		{% endfor %}
 		</div>
