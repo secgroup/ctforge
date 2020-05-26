@@ -243,17 +243,18 @@ def imp_grades(args):
         chall_id = cur.fetchone()['id']
 
         with open(args.csv, 'r', newline='') as f:
-            fields = ['user_id', 'grade', 'excellent', 'unusual', 'comment']
-            reader = csv.DictReader(f, fieldnames=fields, delimiter='|', quotechar='"')
+            reader = csv.DictReader(f, delimiter='|', quotechar='"')
 
-            next(reader, None)
             try:
                 for line in reader:
-                    cur.execute('INSERT INTO challenges_evaluations (user_id, challenge_id, grade) '
-                                'VALUES (%s, %s, %s)', [line['user_id'], chall_id, line['grade']])
+                    cur.execute('INSERT INTO challenges_evaluations (user_id, challenge_id, grade, feedback) '
+                                'VALUES (%s, %s, %s, %s)', [line['user_id'], chall_id, line['grade'], line['comment']])
             except psycopg2.Error as e:
                 db_conn.rollback()
                 sys.stderr.write('Database error: {}'.format(e))
+            except KeyError as e:
+                # no need to rollback, this exception is raised before any insert is performed
+                sys.stderr.write('Malformed CSV, missing column `{}`'.format(e.args[0]))
             else:
                 db_conn.commit()
                 print('[*] Done.')
