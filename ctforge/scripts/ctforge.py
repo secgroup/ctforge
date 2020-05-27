@@ -29,6 +29,7 @@ import argparse
 import bcrypt
 import json
 import psycopg2
+import urllib.parse
 from shutil import copy2, rmtree
 from getpass import getpass
 from ctforge.database import db_connect
@@ -293,16 +294,23 @@ def create_csv_grading(args):
     db_conn = db_connect()
 
     with db_conn.cursor() as cur:
-        cur.execute('SELECT DISTINCT w.user_id '
-                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id '
-                    'WHERE c.name = %s ORDER BY w.user_id', [args.challenge])
-        users_id = cur.fetchall()
+        cur.execute('SELECT w.user_id, u.name, u.surname, w.id AS challenge_id '
+                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id JOIN users u ON w.user_id = u.id '
+                    'WHERE c.name = %s AND w.timestamp = ('
+                    '  SELECT MAX(timestamp) FROM writeups WHERE user_id = w.user_id'
+                    ') '
+                    'ORDER BY w.user_id', [args.challenge])
+        writeups = cur.fetchall()
+
+    for w in writeups:
+        w['user_name'] = w['name'] + ' ' + w['surname']
+        w['latest_writeup'] = urllib.parse.urljoin(app.config['URL'], '/writeup/'+str(w['challenge_id']))
 
     with open(args.csv, 'w', newline='') as f:
-        fields = ['user_id', 'grade', 'excellent', 'unusual', 'comment']
-        writer = csv.DictWriter(f, fieldnames=fields, delimiter='|', quotechar='"')
+        fields = ['user_id', 'user_name', 'latest_writeup', 'grade', 'excellent', 'unusual', 'comment']
+        writer = csv.DictWriter(f, fieldnames=fields, delimiter='|', quotechar='"', extrasaction='ignore')
         writer.writeheader()
-        writer.writerows(users_id)
+        writer.writerows(writeups)
 
 def exp_writeups(args):
     if args.dir is not None:
