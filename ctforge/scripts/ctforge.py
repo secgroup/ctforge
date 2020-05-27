@@ -36,6 +36,10 @@ from ctforge.database import db_connect
 
 from ctforge import app, utils, database, users as users_module, mail as mail_module
 
+
+CONFIG_FILE = os.path.expanduser('~/.ctforge/ctforge.conf')
+ 
+
 def db_create_schema():
     db_conn = database.db_connect('postgres')
     db_conn.autocommit = True
@@ -89,9 +93,8 @@ def ask(question, answer=None):
         return input()
 
 def init(args):
-    confile = os.path.expanduser('~/.ctforge/ctforge.conf')
     print(('\nWelcome to the installation script of CTForge\n'
-           'Please backup your {} file before continuing.\n'.format(confile)))
+           'Please backup your {} file before continuing.\n'.format(CONF_FILE)))
     
     resp = ask('Do you want to proceed? (y/n)', 'y' if args.yes else None)
     exit_on_resp(resp)
@@ -120,13 +123,13 @@ def init(args):
     db_add_admin(admin_name, admin_surname, admin_mail,
                  admin_nickname, admin_password)
 
-    resp = ask('Save configuration to {} ? (y/n)'.format(confile), 'y' if args.yes else None)
+    resp = ask('Save configuration to {} ? (y/n)'.format(CONFIG_FILE), 'y' if args.yes else None)
     exit_on_resp(resp)
-    os.makedirs(os.path.dirname(confile), mode=0o700, exist_ok=True)
+    os.makedirs(os.path.dirname(CONFIG_FILE), mode=0o700, exist_ok=True)
     try:
-        copy2(args.conf, confile)
+        copy2(args.conf, CONFIG_FILE)
     except Exception as e:
-        sys.stderr.write('Error: "{}"\n'.format(args.conf, confile, e))
+        sys.stderr.write('Error: "{}"\n'.format(args.conf, CONFIG_FILE, e))
 
     if app.config['LOG_FILE'] is not None:
         logfile = app.config['LOG_FILE']
@@ -321,7 +324,7 @@ def exp_writeups(args):
 def parse_args():
     parser = argparse.ArgumentParser(description='Initialize or run CTForge')
     parser.add_argument('-c', '--conf', dest='conf', type=str,
-                        default='ctforge.conf', help='Configuration file')
+                        default=CONFIG_FILE, help='Configuration file')
     subparsers = parser.add_subparsers(dest='command')
 
     parser_init = subparsers.add_parser('init', help='Install and initialize the framework')
