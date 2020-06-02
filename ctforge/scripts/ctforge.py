@@ -300,7 +300,7 @@ def create_csv_grading(args):
         cur.execute('SELECT w.user_id, u.name, u.surname, w.id AS challenge_id '
                     'FROM writeups w JOIN challenges c ON w.challenge_id = c.id JOIN users u ON w.user_id = u.id '
                     'WHERE c.name = %s AND w.timestamp = ('
-                    '  SELECT MAX(timestamp) FROM writeups WHERE user_id = w.user_id'
+                    '  SELECT MAX(timestamp) FROM writeups WHERE user_id = w.user_id AND challenge_id = w.challenge_id'
                     ') '
                     'ORDER BY w.user_id', [args.challenge])
         writeups = cur.fetchall()
