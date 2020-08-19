@@ -45,7 +45,7 @@
 
 {% from "_macros.html" import get_status_badge %}
 
-<meta http-equiv="refresh" content="900">
+<!-- <meta http-equiv="refresh" content="900"> -->
 
 <div class="card col-md-8 offset-md-2 mt-4 mb-4" id="freezeinfo" style="display: none;">
     <div class="card-body mx-auto h5 text-center">
@@ -93,99 +93,25 @@
              position: 'bottom'
          },
          tooltips: {
-                 // Disable the on-canvas tooltip
-                 enabled: true,
-             /*
-                 custom: function(tooltipModel) {
-                     // Tooltip Element
-                     var tooltipEl = document.getElementById('chartjs-tooltip');
-
-                     // Create element on first render
-                     if (!tooltipEl) {
-                         tooltipEl = document.createElement('div');
-                         tooltipEl.id = 'chartjs-tooltip';
-                         tooltipEl.className = 'tooltip bs-tooltip-top';
-                         tooltipEl.innerHTML = '<table></table>';
-                         document.body.appendChild(tooltipEl);
-                     }
-
-                     // Hide if no tooltip
-                     if (tooltipModel.opacity === 0) {
-                         tooltipEl.style.opacity = 0;
-                         return;
-                     }
-
-                     // Set caret Position
-                     tooltipEl.classList.remove('above', 'below', 'no-transform');
-                     if (tooltipModel.yAlign) {
-                         tooltipEl.classList.add(tooltipModel.yAlign);
-                     } else {
-                         tooltipEl.classList.add('no-transform');
-                     }
-
-                     function getBody(bodyItem) {
-                         return bodyItem.lines;
-                     }
-
-                     // Set Text
-                     if (tooltipModel.body) {
-                         var titleLines = tooltipModel.title || [];
-                         var bodyLines = tooltipModel.body.map(getBody);
-
-                         var innerHtml = '<thead>';
-
-                         titleLines.forEach(function(title) {
-                             innerHtml += '<tr><th>' + title + '</th></tr>';
-                         });
-                         innerHtml += '</thead><tbody>';
-
-                         bodyLines.forEach(function(body, i) {
-                             var colors = tooltipModel.labelColors[i];
-                             var style = 'background:' + colors.backgroundColor;
-                             style += '; border-color:' + colors.borderColor;
-                             style += '; border-width: 2px';
-                             var span = '<span style="' + style + '"></span>';
-                             innerHtml += '<tr><td>' + span + body + '</td></tr>';
-                         });
-                         innerHtml += '</tbody>';
-
-                         var tableRoot = tooltipEl.querySelector('table');
-                         tableRoot.innerHTML = innerHtml;
-                     }
-
-                     // `this` will be the overall tooltip
-                     var position = this._chart.canvas.getBoundingClientRect();
-
-                     // Display, position, and set styles for font
-                     tooltipEl.style.opacity = 1;
-                     tooltipEl.style.position = 'absolute';
-                     tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
-                     tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
-                     tooltipEl.style.fontFamily = tooltipModel._bodyFontFamily;
-                     tooltipEl.style.fontSize = tooltipModel.bodyFontSize + 'px';
-                     tooltipEl.style.fontStyle = tooltipModel._bodyFontStyle;
-                     tooltipEl.style.padding = tooltipModel.yPadding + 'px ' + tooltipModel.xPadding + 'px';
-                     tooltipEl.style.pointerEvents = 'none';
+             enabled: true,
+         },
+         scales: {
+             yAxes: [{
+                 scaleLabel: {
+                     display: true,
+                     labelString: 'Global Score'
                  }
-             */
-             },
-             scales: {
-                 yAxes: [{
-                     scaleLabel: {
-                         display: true,
-                         labelString: 'Global Score'
-                     },
-                     ticks: {
-                         beginAtZero: true
-                     }
-                 }],
-                 xAxes: [{ scaleLabel: {
+             }],
+             xAxes: [{
+                 scaleLabel: {
                      display: true,
                      labelString: 'Round'
-                 }}]
-             }
-         }
-     });
+                 }
+             }]
+         },
+     },
+     
+ });
 </script>
 
 <div class="row mt-5">
@@ -332,92 +258,104 @@
                  is_scrolling = false;
              });
          }
-         });
-
-         function updateTable() {
-             $.getJSON("/ctf_scoreboard", function (data) {
-                 current_round = data.current_round;
-                 scoreboard_round = data.round;
-                 if (seconds_left <= 0) {
-                     seconds_left = data.seconds_left;
-                     updateCountdown();
-                 }
-
-                 var rows = data.scores.map(function (t) {
-                     var row = {
-                         team: $("<td>")
-                             .addClass("align-middle")
-                             .append($("<div>").addClass("font-weight-bold").text(t.name))
-                             .append($("<small>").text(t.ip)),
-                         score: renderScore(t)};
-                     Object.keys(t.services).forEach(function (s) {
-                         row[s] = renderService(t.services[s]);
-                     });
-                     return row;
-                 });
-                 table.rows.load(rows);
-
-                 $("#rnd-scores").text(scoreboard_round -1);
-                 $("#rnd-current").text(current_round);
-
-                 if (scoreboard_round != current_round)
-                     $("#freezeinfo").show();
-                 else
-                     $("#freezeinfo").hide();
-             });
-         }
-
-         function updateChart() {
-             $.getJSON("/ctf_stats/300", function (scores) {
-                 if (!scores) return;
-
-                 scoreGraph.data.labels = []
-                 scoreGraph.data.datasets = []
-                 for (var team in scores) {
-                     if (scoreGraph.data.labels.length == 0) {
-                         scoreGraph.data.labels = Object.keys(scores[team])
-                     }
-                     var color  = '#' + intToRGB(hashCode(team + 'Oht3xZg8'));
-                     scoreGraph.data.datasets.push({
-                         label: team,
-                         data: Object.values(scores[team]),
-                         backgroundColor: color,
-                         borderColor: color,
-                         borderWidth: 3,
-                         pointRadius: 0,
-                         pointHitRadius: 3,
-                         fill: false
-                     })
-                 }
-                 scoreGraph.update()
-             });
-         }
-
-         function updateCountdown() {
-             seconds_left--;
-             var s = seconds_left % 3600;
-             var hours = Math.floor(seconds_left / 3600);
-             var minutes = Math.floor(s / 60);
-             var seconds = s % 60;
-             $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
-             if (seconds_left < 0) $("#countdown-container").hide()
-             else $("#countdown-container").show()
-
-         }
-
-         updateCountdown();
-         updateTable();
-         updateChart();
-         setInterval(function () {
-             if (seconds_left <= 0 || seconds_left % update_period == 0) {
-                 updateTable();
-             }
-             if (seconds_left % (update_period * 10) == 0) {
-                 updateChart();
-             }
-             updateCountdown();
-         }, 1000);
      });
+
+     function updateTable() {
+         $.getJSON("/ctf_scoreboard", function (data) {
+             current_round = data.current_round;
+             scoreboard_round = data.round;
+             if (seconds_left <= 0) {
+                 seconds_left = data.seconds_left;
+                 updateCountdown();
+             }
+
+             var rows = data.scores.map(function (t) {
+                 var row = {
+                     team: $("<td>")
+                         .addClass("align-middle")
+                         .append($("<div>").addClass("font-weight-bold").text(t.name))
+                         .append($("<small>").text(t.ip)),
+                     score: renderScore(t)};
+                 Object.keys(t.services).forEach(function (s) {
+                     row[s] = renderService(t.services[s]);
+                 });
+                 return row;
+             });
+             table.rows.load(rows);
+
+             $("#rnd-scores").text(scoreboard_round -1);
+             $("#rnd-current").text(current_round);
+
+             if (scoreboard_round != current_round)
+                 $("#freezeinfo").show();
+             else
+                 $("#freezeinfo").hide();
+         });
+     }
+
+     function updateChart() {
+         $.getJSON("/ctf_stats/20", function (scores) {
+             if (!scores) return;
+
+             scoreGraph.data.labels = []
+             scoreGraph.data.datasets = []
+
+             // top 10 teams
+             // TODO: show All button
+             // TODO: always show current team if logged in
+             scoreGraph.options.title = { display: true, text: 'Top 10' }
+             var topteams = Object.keys(scores)
+             topteams.sort(function (teamA, teamB) {
+                 return (scores[teamA][current_round-1] - scores[teamB][current_round-1])
+             }).reverse()
+             console.log(topteams)
+             topteams = topteams.slice(0,9)
+             
+             for (var team of topteams) {
+                 if (scoreGraph.data.labels.length == 0) {
+                     scoreGraph.data.labels = Object.keys(scores[team]).map(parseFloat)
+                 }
+                 var color  = '#' + intToRGB(hashCode(team + 'Oht3xZg8'));
+                 scoreGraph.data.datasets.push({
+                     label: team,
+                     data: Object.values(scores[team]),
+                     backgroundColor: color,
+                     borderColor: color,
+                     borderWidth: 3,
+                     pointRadius: 0,
+                     pointHitRadius: 4,
+                     fill: false
+                 })
+             }
+             scoreGraph.update()
+         });
+     }
+
+     function updateCountdown() {
+         seconds_left--;
+         var s = seconds_left % 3600;
+         var hours = Math.floor(seconds_left / 3600);
+         var minutes = Math.floor(s / 60);
+         var seconds = s % 60;
+         $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
+         if (seconds_left < 0) $("#countdown-container").hide()
+         else $("#countdown-container").show()
+
+     }
+
+     updateCountdown();
+     updateTable();
+     updateChart();
+     setInterval(function () {
+         if (seconds_left <= 0 || seconds_left % update_period == 0) {
+             updateTable();
+         }
+         if (seconds_left % (update_period * 10) == 0) {
+             updateChart();
+         }
+         updateCountdown();
+     }, 1000);
+ });
 </script>
 
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
