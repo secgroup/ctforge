@@ -22,7 +22,31 @@
 {% block title %}Home{% endblock %}
 {% block content %}
 
+<style>
+ .trial-badge {
+     background: #de0101dd;
+     color: white;
+     position: absolute;
+     font-weight:bold;
+     padding:0.3em;
+     padding-left: 2em;
+     padding-right: 2em;
+     font-size: 2em;
+     top: 10.3em;
+     left:50%;
+     transform: translateX(10%) ;
+     font-family: Teko,sans-serif;
+     box-shadow: 1px 1px 15px 1px #ee0101aa;
+     border-radius: 3px;
+ }
+ /* TODO: move the trial badge on mobile */
+</style>
+
 <div class="jumbotron cclogo"></div>
+<div class="trial-badge">
+    TRIAL
+</div>
+
 
 <p class="lead"><strong>CCIT CTF '20</strong> is the final Capture The Flag contest of the CyberChallenge.IT training program. It's now time to prove your skills!</p>
 
