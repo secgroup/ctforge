@@ -30,7 +30,7 @@
         <div>
             {% if rnd > 0 %}
             Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
-            Current round <span id="rnd-current">{{ rnd }}</span>.
+            Current round <span id="rnd-current">{{ rnd }}</span>.<br>
             <span id="countdown-container">
                 Next round starting in <span id="countdown"></span>
             </span>
@@ -63,48 +63,130 @@
      </div>
 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha512-s+xg36jbIujB2S2VKfpGmlC3T5V2TF3lY48DX7u2r9XzGzgPsa6wTpOQA7J9iffvdeBN0q9tKzRxVxw1JviZPg==" crossorigin="anonymous"></script>
-<canvas id="myChart" width="450" height="100"></canvas>
+<canvas id="scoregraph" width="450" height="100"></canvas>
 <script>
- window.chartColors = {
-     red: 'rgb(255, 99, 132)',
-     orange: 'rgb(255, 159, 64)',
-     yellow: 'rgb(255, 205, 86)',
-     green: 'rgb(75, 192, 192)',
-     blue: 'rgb(54, 162, 235)',
-     purple: 'rgb(153, 102, 255)',
-     grey: 'rgb(201, 203, 207)'
- };
- var ctx = document.getElementById('myChart').getContext('2d');
- var myChart = new Chart(ctx, {
+
+ function hashCode(str) { // java String#hashCode
+     var hash = 0;
+     for (var i = 0; i < str.length; i++) {
+         hash = str.charCodeAt(i) + ((hash << 5) - hash);
+     }
+     return hash;
+ } 
+
+ function intToRGB(i){
+     var c = (i & 0x00FFFFFF)
+         .toString(16)
+         .toUpperCase();
+     return "00000".substring(0, 6 - c.length) + c;
+ }
+
+ var ctx = document.getElementById('scoregraph').getContext('2d');
+ Chart.defaults.global.animation.duration = 0;
+ var scoreGraph = new Chart(ctx, {
      type: 'line',
      data: {
-         labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-         datasets: [{
-             label: '# of Votes',
-             data: [12, 19, 3, 5, 2, 3],
-             backgroundColor: [
-                 'rgba(255, 99, 132, 0.2)',
-                 'rgba(54, 162, 235, 0.2)',
-                 'rgba(255, 206, 86, 0.2)',
-                 'rgba(75, 192, 192, 0.2)',
-                 'rgba(153, 102, 255, 0.2)',
-                 'rgba(255, 159, 64, 0.2)'
-             ],
-             borderColor: window.chartColors.red,
-             borderWidth: 4,
-             fill: false
-         }]
+         labels: [],
+         datasets: []
      },
      options: {
-         scales: {
-             yAxes: [{
-                 ticks: {
-                     beginAtZero: true
+         legend: {
+             position: 'bottom'
+         },
+         tooltips: {
+                 // Disable the on-canvas tooltip
+                 enabled: true,
+             /*
+                 custom: function(tooltipModel) {
+                     // Tooltip Element
+                     var tooltipEl = document.getElementById('chartjs-tooltip');
+
+                     // Create element on first render
+                     if (!tooltipEl) {
+                         tooltipEl = document.createElement('div');
+                         tooltipEl.id = 'chartjs-tooltip';
+                         tooltipEl.className = 'tooltip bs-tooltip-top';
+                         tooltipEl.innerHTML = '<table></table>';
+                         document.body.appendChild(tooltipEl);
+                     }
+
+                     // Hide if no tooltip
+                     if (tooltipModel.opacity === 0) {
+                         tooltipEl.style.opacity = 0;
+                         return;
+                     }
+
+                     // Set caret Position
+                     tooltipEl.classList.remove('above', 'below', 'no-transform');
+                     if (tooltipModel.yAlign) {
+                         tooltipEl.classList.add(tooltipModel.yAlign);
+                     } else {
+                         tooltipEl.classList.add('no-transform');
+                     }
+
+                     function getBody(bodyItem) {
+                         return bodyItem.lines;
+                     }
+
+                     // Set Text
+                     if (tooltipModel.body) {
+                         var titleLines = tooltipModel.title || [];
+                         var bodyLines = tooltipModel.body.map(getBody);
+
+                         var innerHtml = '<thead>';
+
+                         titleLines.forEach(function(title) {
+                             innerHtml += '<tr><th>' + title + '</th></tr>';
+                         });
+                         innerHtml += '</thead><tbody>';
+
+                         bodyLines.forEach(function(body, i) {
+                             var colors = tooltipModel.labelColors[i];
+                             var style = 'background:' + colors.backgroundColor;
+                             style += '; border-color:' + colors.borderColor;
+                             style += '; border-width: 2px';
+                             var span = '<span style="' + style + '"></span>';
+                             innerHtml += '<tr><td>' + span + body + '</td></tr>';
+                         });
+                         innerHtml += '</tbody>';
+
+                         var tableRoot = tooltipEl.querySelector('table');
+                         tableRoot.innerHTML = innerHtml;
+                     }
+
+                     // `this` will be the overall tooltip
+                     var position = this._chart.canvas.getBoundingClientRect();
+
+                     // Display, position, and set styles for font
+                     tooltipEl.style.opacity = 1;
+                     tooltipEl.style.position = 'absolute';
+                     tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                     tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
+                     tooltipEl.style.fontFamily = tooltipModel._bodyFontFamily;
+                     tooltipEl.style.fontSize = tooltipModel.bodyFontSize + 'px';
+                     tooltipEl.style.fontStyle = tooltipModel._bodyFontStyle;
+                     tooltipEl.style.padding = tooltipModel.yPadding + 'px ' + tooltipModel.xPadding + 'px';
+                     tooltipEl.style.pointerEvents = 'none';
                  }
-             }]
+             */
+             },
+             scales: {
+                 yAxes: [{
+                     scaleLabel: {
+                         display: true,
+                         labelString: 'Global Points'
+                     },
+                     ticks: {
+                         beginAtZero: true
+                     }
+                 }],
+                 xAxes: [{ scaleLabel: {
+                     display: true,
+                     labelString: 'Round'
+                 }}]
+             }
          }
-     }
- });
+     });
 </script>
 
 <div class="row mt-5">
@@ -154,7 +236,7 @@
 
      if (s.integrity) {
          integrity_check = s.integrity.status ?
-                           $("<span class='badge badge-info'>UP</span>") :
+                           $("<span class='badge badge-success'>UP</span>") :
                            $("<span class='badge badge-danger'>CORRUPTED</span>");
          integrity_check.attr("title", "last checked at " + s.integrity.timestamp);
      } else {
@@ -249,9 +331,24 @@
      }
 
      function updateChart() {
-         $.getJSON("/ctf_stats/300", function (data) {
-             //makeChart('global_score', data, scoresChart);
+         $.getJSON("/ctf_stats/300", function (scores) {
+             if (!scores) return;
              
+             scoreGraph.data.labels = []
+             scoreGraph.data.datasets = []
+             for (var team in scores) {
+                 if (scoreGraph.data.labels.length == 0) {
+                     scoreGraph.data.labels = Object.keys(scores[team])
+                 }
+                 scoreGraph.data.datasets.push({
+                     label: team,
+                     data: Object.values(scores[team]),
+                     borderColor: '#' + intToRGB(hashCode(team + 'Oht3xZg8')),
+                     borderWidth: 3,
+                     fill: false
+                 })
+             }
+             scoreGraph.update()
          });
      }
 

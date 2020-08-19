@@ -32,3 +32,11 @@
     height: 350px;
     border: 0;
 }
+
+table.scoreboard .badge {
+    padding: 10px;
+    color: #fff;
+    font-weight: bold;
+    /*text-shadow: 0 0 4px #313131;*/
+    opacity: 0.8;
+}

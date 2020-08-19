@@ -32,8 +32,10 @@
 
 <div class="row">
     {% for team in teams %}
-    <div class="col-lg-4">
-        <h2 class="text-center">{{ team.name }} (team{{ team.id }})</h2>
+    <div class="col-lg-4 mt-4">
+        <div class="card">
+            <div  class="card-header text-center">{{ team.name }} (team{{ team.id }})</div>
+            <div class="card-body">
         <table class="table" id="team-{{ team.id }}">
             <thead><tr>
                 {% if config.SHOW_NAMES %}
@@ -52,6 +54,8 @@
               {% endfor %}
             </tbody>
         </table>
+            </div>
+        </div>
     </div>
     {% endfor %}
 </div>
