@@ -29,23 +29,39 @@
 {% endblock %}
 {% block content %}
 
+
 <div class="row">
     <div class="col-md-4">
-        <h2>Team Name</h2>
+        <div class="card">
+            <div class="card-body text-center">
+        <h3>Team Name</h3>
         <p>{{ team.name }}</p>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
-        <h2>Virtual Machine IP</h2>
+        <div class="card">
+            <div class="card-body text-center">
+        <h3>Virtual Machine IP</h3>
         <p>{{ team.ip }}</p>
+            </div>
+        </div>
     </div>
     <div class="col-md-4">
-        <h2>Flag Submission Token</h2>
+        <div class="card">
+            <div class="card-body text-center">
+        <h3>Flag Submission Token</h3>
         <p>{{ team.token }}</p>
+            </div>
+        </div>
     </div>
 </div>
-<div class="row">
+
+<div class="row mt-4">
     <div class="col-md-12">
-        <h2>Status of attacks in the last 15 minutes</h2>
+        <div class="card">
+            <div  class="card-header">Status of attacks in the last 15 minutes</div>
+            <div class="card-body">
         <!-- Table -->
         <table class="table">
             <thead><tr><td>Service</td><td>N. Attacks Inflicted</td><td>N. Attacks Suffered</td></tr></thead>
@@ -57,11 +73,15 @@
             {% endfor %}
             </tbody>
         </table>
+            </div>
+        </div>
     </div>
 </div>
-<div class="row">
+<div class="row mt-4">
     <div class="col-md-12">
-        <h2>Members</h2>
+        <div class="card">
+            <div  class="card-header">Members</div>
+            <div class="card-body">
         <table class="table">
             <thead><tr><td>&nbsp;</td><td>Member</td><td>Mail</td></tr></thead>
             <tbody>
@@ -79,6 +99,8 @@
             {% endfor %}
             </tbody>
         </table>
+            </div>
+        </div>
     </div>
 </div>
 
