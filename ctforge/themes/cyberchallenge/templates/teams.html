@@ -20,9 +20,15 @@
 
 {% extends "layout.html" %}
 {% block title %}Teams{% endblock %}
-{% block content %}
+{% block jumbotron %}
+<div class="jumbotron">
+    <div class="container">
+	<h1><span class="fa fa-group"></span> Teams</h1>
+    </div>    
+</div>
+{% endblock %}
 
-<h1>Teams</h1>
+{% block content %}
 
 <div class="row">
     {% for team in teams %}

@@ -20,9 +20,16 @@
 
 {% extends "layout.html" %}
 {% block title %}User Profile{% endblock %}
+{% block jumbotron %}
+<div class="jumbotron">
+    <div class="container">
+        <h1><span class="fa fa-user"></span> User Profile</h1>
+    </div>    
+</div>
+{% endblock %}
+
 {% block content %}
 
-<h1>User Profile</h1>
 
 <div class="row">
     <div class="col-md-8">
@@ -33,16 +40,14 @@
         </table>
     </div>
     <div class="col-md-4">
-        {% if config['JEOPARDY_ACTIVE'] %}
         <a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %} mb-3"
            download="{{ user.nickname }}.ovpn"
            {% if vpn_encoded %}
            href="data:application/octet-stream;base64,{{ vpn_encoded }}"
            {% endif %}>
             <i class="fa fa-download"></i>
-            {{ user.nickname }}.ovpn
+            {{ user.nickname }}.conf
         </a>
-        {% endif %}
         <a class="btn btn-dark d-block mb-3"
            target="_blank"
            href="#">

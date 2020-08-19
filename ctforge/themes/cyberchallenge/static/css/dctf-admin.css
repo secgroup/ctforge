@@ -60,6 +60,8 @@ textarea.form-control:disabled {
     border-bottom-right-radius: 0.25rem !important;
 }
 
+/*
+
 thead, tr {
     background-color: #32383e;
     background-clip: border-box;
@@ -77,3 +79,5 @@ table {
     background-color: #404448;
     background-clip: border-box;
 }
+
+*/

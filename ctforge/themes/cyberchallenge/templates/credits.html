@@ -20,9 +20,16 @@
 
 {% extends "layout.html" %}
 {% block title %}Credits{% endblock %}
-{% block content %}
 
-<h1>Credits</h1>
+{% block jumbotron %}
+<div class="jumbotron">
+    <div class="container">
+	<h1><span class="fa fa-info-circle"></span> Credits</h1>
+    </div>    
+</div>
+{% endblock %}
+
+{% block content %}
 
 <div class="card">
     <div class="card-body">
@@ -33,13 +40,13 @@
             <li>Mauro Tempesta (MrStorm), Ca' Foscari Venezia</li>
             <li>Lorenzo Veronese (wert310), Ca' Foscari Venezia</li>
         </ul>
-        <p>Services have been provided by Ca' Foscari. Blame these guys if you got stuck on some problems</p>
+        <p>Services have been provided by 10Sec S.r.l. Blame these guys if you got stuck on some problems</p>
         <ul>
             <li>Francesco Benvenuto (comewel), Ca' Foscari Venezia</li>
             <li>Marco Gasparini (xire), Ca' Foscari Venezia</li>
-            <li>Francesco Palmarini (erpalma), Ca' Foscari Venezia</li>
+            <li>Francesco Palmarini (erpalma), 10Sec S.r.l., Ca' Foscari Venezia</li>
             <li>Leonardo Veronese (xf4de), Ca' Foscari Venezia</li>
-            <li>Lorenzo Veronese (wert310), Ca' Foscari Venezia</li>
+            <li>Lorenzo Veronese (wert310), TU Wien</li>
         </ul>
     </div>
 </div>
@@ -57,22 +64,22 @@
     </div>
     <div class="col-sm-2 center">
         <a href="http://unive.it">
-            <img height="100" src="/static/img/unive.png">
+            <img height="100" style="-webkit-filter: invert(1); filter: invert(1);" src="/static/img/unive.png">
         </a>
     </div>
     <div class="col-sm-2 center">
-        <a href="https://cyberchallenge.it/" class="border rounded bg-light p-2"1>
-            <img width="140" src="https://cyberchallenge.it/static/assets/loghi/logo.png">
+        <a href="https://cyberchallenge.it/">
+            <img width="140" src="https://cyberchallenge.it/assets/loghi/logo-xl.png">
         </a>
     </div>
     <div class="col-sm-2 center">
-        <a href="https://www.consorzio-cini.it/index.php/it/laboratori-nazionali/labcs-home" class="border rounded bg-light p-2">
-            <img width="140" src="https://cyberchallenge.it/static/assets/loghi/logo_cini_2.png">
+        <a href="https://cybersecnatlab.it/">
+            <img width="140" src="https://www.sicurezzanazionale.gov.it/sisr.nsf/wp-content/uploads/2015/11/cini-CSNL.jpg">
         </a>
     </div>
     <div class="col-sm-2 center">
-        <a href="https://www.consorzio-cini.it" class="border rounded bg-light p-2">
-            <img width="140" src="https://cyberchallenge.it/static/assets/loghi/logo_cini.png">
+        <a href="https://www.consorzio-cini.it">
+            <img width="140" src="https://www.consorzio-cini.it/templates/lime_light/images/s5_logo.png">
         </a>
     </div>
 </div>
@@ -85,7 +92,7 @@
     </div>
     <p class="col-sm-12 text-center">
         <span>
-            CCIT CTF '19 is proudly powered by <a href="https://github.com/secgroup/ctforge/">CTForge</a>
+            CCIT CTF '20 is proudly powered by <a href="https://github.com/secgroup/ctforge/">CTForge</a>
         </span>
     </p> 
 </div>

@@ -20,13 +20,33 @@
 
 {% extends "layout.html" %}
 {% block title %}CTF Scoreboard{% endblock %}
+{% block container_fluid %}container-fluid{% endblock %}
+
+{% block jumbotron %}
+<div class="jumbotron">
+    <div class="container">
+	<h1><span class="fa fa-line-chart"></span> Scoreboard</h1>
+
+        <div>
+            {% if rnd > 0 %}
+            Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
+            Current round <span id="rnd-current">{{ rnd }}</span>.
+            <span id="countdown-container">
+                Next round starting in <span id="countdown"></span>
+            </span>
+            {% else %}
+            Attack/defense CTF is coming soon
+            {% endif %}
+        </div>
+    </div>    
+</div>
+{% endblock %}
+
 {% block content %}
 
 {% from "_macros.html" import get_status_badge %}
 
 <meta http-equiv="refresh" content="900">
-
-<h1>Scoreboard</h1>
 
 <div class="card col-md-8 offset-md-2 mt-4 mb-4" id="freezeinfo" style="display: none;">
     <div class="card-body mx-auto h5 text-center">
@@ -35,28 +55,64 @@
     </div>
 </div>
 
-<p>
-    {% if rnd > 0 %}
-    Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
-    Current round <span id="rnd-current">{{ rnd }}</span>.
-    <span id="countdown-container">
-        Next round starting in <span id="countdown"></span>
-    </span>
-    {% else %}
-    Attack/defense CTF is coming soon
-    {% endif %}
-</p>
+<!-- 
+     <div class="row mt-5">
+     <div class="col-md-12">
+     <div id="global_score" class="chart"></div>
+     </div>
+     </div>
+-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha512-s+xg36jbIujB2S2VKfpGmlC3T5V2TF3lY48DX7u2r9XzGzgPsa6wTpOQA7J9iffvdeBN0q9tKzRxVxw1JviZPg==" crossorigin="anonymous"></script>
+<canvas id="myChart" width="450" height="100"></canvas>
+<script>
+ window.chartColors = {
+     red: 'rgb(255, 99, 132)',
+     orange: 'rgb(255, 159, 64)',
+     yellow: 'rgb(255, 205, 86)',
+     green: 'rgb(75, 192, 192)',
+     blue: 'rgb(54, 162, 235)',
+     purple: 'rgb(153, 102, 255)',
+     grey: 'rgb(201, 203, 207)'
+ };
+ var ctx = document.getElementById('myChart').getContext('2d');
+ var myChart = new Chart(ctx, {
+     type: 'line',
+     data: {
+         labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+         datasets: [{
+             label: '# of Votes',
+             data: [12, 19, 3, 5, 2, 3],
+             backgroundColor: [
+                 'rgba(255, 99, 132, 0.2)',
+                 'rgba(54, 162, 235, 0.2)',
+                 'rgba(255, 206, 86, 0.2)',
+                 'rgba(75, 192, 192, 0.2)',
+                 'rgba(153, 102, 255, 0.2)',
+                 'rgba(255, 159, 64, 0.2)'
+             ],
+             borderColor: window.chartColors.red,
+             borderWidth: 4,
+             fill: false
+         }]
+     },
+     options: {
+         scales: {
+             yAxes: [{
+                 ticks: {
+                     beginAtZero: true
+                 }
+             }]
+         }
+     }
+ });
+</script>
 
-<div class="row">
+<div class="row mt-5">
     <div class="col-md-12">
         <table class="table scoreboard"></table>
     </div>
 </div>
-<div class="row mt-5">
-    <div class="col-md-12">
-        <div id="global_score" class="chart"></div>
-    </div>
-</div>
+
 
 <style>
  /* Add a counter to every td.counter in tbody */
@@ -76,16 +132,16 @@
 <script>
  var columns = [
      {"name": "position", "title":"#", "classes":"align-middle counter pl-4"},
-     {"name": "team", "title": "Team", "classes": "text-left"},
+     {"name": "team", "title": "Team", "classes": "align-middle text-left"},
      {% for s in services %}
      {
          "name": "{{ s.name }}",
-         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-secondary {% if not s.active %}disabled{% endif %}\" role=\"button\">{{ s.name }}</a>",
+         "title": "<a href=\"{{ url_for('service', name=s.name) }}\" class=\"btn btn-dark challenge-button {% if not s.active %}disabled{% endif %}\" role=\"button\">{{ s.name }}</a>",
          "classes": "text-center",
          "type": "html"
      },
      {% endfor %}
-     {"name": "score", "title": "Global Score", "classes": "text-center", "type": "html"}
+     {"name": "score", "title": "Global Score", "classes": "align-middle text-center", "type": "html"}
  ];
 
  function formatNumber(n) {
@@ -194,7 +250,8 @@
 
      function updateChart() {
          $.getJSON("/ctf_stats/300", function (data) {
-             makeChart('global_score', data, scoresChart);
+             //makeChart('global_score', data, scoresChart);
+             
          });
      }
 

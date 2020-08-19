@@ -18,7 +18,17 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
-body {
-	min-height: 500px;
-	padding-top: 70px;
+
+
+.center {
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+
+.cclogo {
+    background: transparent url("/static/img/cyberchallenge_logo_front.png") no-repeat top center;
+    background-size: contain;
+    height: 350px;
+    border: 0;
 }

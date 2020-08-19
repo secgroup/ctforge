@@ -20,9 +20,15 @@
 
 {% extends "layout.html" %}
 {% block title %}CTF Rules{% endblock %}
+{% block jumbotron %}
+<div class="jumbotron">
+    <div class="container">
+	<h1><span class="fa fa-book"></span> CTF Rules</h1>
+    </div>    
+</div>
+{% endblock %}
 {% block content %}
 
-<h1>CTF Rules</h1>
 <style>
  .card-body img {
      display: block;
@@ -39,7 +45,7 @@
     <div class="card-body">
 
         {% filter markdown %}
-The CCIT CTF Finals '19 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defense format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website (although no VPN is required to play this CTF).
+The CCIT CTF Finals '20 is a security competition for students who attended the [CyberChallenge.IT](https://cyberchallenge.it/) training program. The competition follows the typical attack/defense format. An introduction to this game setting can be found on the [FAUST CTF](https://2018.faustctf.net/information/attackdefense-for-beginners/) website.
 
 Access to the competition is granted to the 18 teams of universities involved in the CyberChallenge.IT project. Every team is composed by 4 selected participants of each local CCIT CTF that took place on Jun 6. Teams are required to declare a captain among them who will be in charge of handling the communication between her/his team and the organisers.
 
@@ -167,25 +173,25 @@ Some (but not all) services come with flag IDs. Flag IDs are identifiers that he
 
 ```json
 {  
-   "service_name_1":{  
-      "10.10.1.1":[  
-         "flag_id_1",
-         "flag_id_2",
-         "flag_id_3",
-         "flag_id_4",
-         "flag_id_5"
-      ],
-      "10.10.2.1":[ 
-         ...
-      ],
+  "service_name_1":{  
+    "10.10.1.1":[  
+      "flag_id_1",
+      "flag_id_2",
+      "flag_id_3",
+      "flag_id_4",
+      "flag_id_5"
+    ],
+    "10.10.2.1":[ 
       ...
-   },
-   "service_name_2":{  
-      "10.10.1.1":[  
-         ...
-      ],
+    ],
+    ...
+  },
+  "service_name_2":{  
+    "10.10.1.1":[  
       ...
-   }
+    ],
+    ...
+  }
 }
 ```
 
@@ -270,15 +276,15 @@ Information about active network connections can be seen using `netstat` as foll
 ```
 diff@diff:~$ netstat -natup
 (Not all processes could be identified, non-owned process info
- will not be shown, you would have to be root to see it all.)
- Active Internet connections (servers and established)
- Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
- tcp        0      0 0.0.0.0:8000            0.0.0.0:*               LISTEN      32098/python    
- tcp        0      0 0.0.0.0:42765           0.0.0.0:*               LISTEN      238/python      
- tcp        0      0 0.0.0.0:42766           0.0.0.0:*               LISTEN      -               
- tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -               
- tcp        0    672 192.168.69.22:22        192.168.69.159:51987    ESTABLISHED -               
- tcp6       0      0 :::22                   :::*                    LISTEN      -  
+will not be shown, you would have to be root to see it all.)
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:8000            0.0.0.0:*               LISTEN      32098/python    
+tcp        0      0 0.0.0.0:42765           0.0.0.0:*               LISTEN      238/python      
+tcp        0      0 0.0.0.0:42766           0.0.0.0:*               LISTEN      -               
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -               
+tcp        0    672 192.168.69.22:22        192.168.69.159:51987    ESTABLISHED -               
+tcp6       0      0 :::22                   :::*                    LISTEN      -  
 ```
 
 Column `Proto` reports the transport protocol in use, `Local Address` and `Foreign Address` denote, respectively, addresses of the parts involved in the connection, `State` is the state of the connection (except for connectionless protocols) and `PID/Program name` shows the PID and the name of the program that has created the connection. The last column shows information only of processes owned by the user that gives the command: if you want to see them all, you have to run the command as root.
