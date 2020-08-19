@@ -26,7 +26,6 @@
 <div class="jumbotron">
     <div class="container">
 	<h1><span class="fa fa-line-chart"></span> Scoreboard</h1>
-
         <div>
             {% if rnd > 0 %}
             Scores computed at round <span id="rnd-scores">{{ rnd - 1 }}</span>.
@@ -38,7 +37,7 @@
             Attack/defense CTF is coming soon
             {% endif %}
         </div>
-    </div>    
+    </div>
 </div>
 {% endblock %}
 
@@ -55,7 +54,7 @@
     </div>
 </div>
 
-<!-- 
+<!--
      <div class="row mt-5">
      <div class="col-md-12">
      <div id="global_score" class="chart"></div>
@@ -72,7 +71,7 @@
          hash = str.charCodeAt(i) + ((hash << 5) - hash);
      }
      return hash;
- } 
+ }
 
  function intToRGB(i){
      var c = (i & 0x00FFFFFF)
@@ -174,7 +173,7 @@
                  yAxes: [{
                      scaleLabel: {
                          display: true,
-                         labelString: 'Global Points'
+                         labelString: 'Global Score'
                      },
                      ticks: {
                          beginAtZero: true
@@ -195,6 +194,9 @@
     </div>
 </div>
 
+<div style="position: fixed; left: 60px; bottom: 20px; opacity: 0.8">
+    <button class="btn btn-small btn-primary" id="auto-scroll"><span class="fa fa-arrows-v"></span> Auto scroll</button>
+</div>
 
 <style>
  /* Add a counter to every td.counter in tbody */
@@ -297,86 +299,125 @@
      var current_round = {{ rnd }};
      var update_period = {{ rnd_duration / 20 }};
 
-     function updateTable() {
-         $.getJSON("/ctf_scoreboard", function (data) {
-             current_round = data.current_round;
-             scoreboard_round = data.round;
-             if (seconds_left <= 0) {
-                 seconds_left = data.seconds_left;
-                 updateCountdown();
-             }
-
-             var rows = data.scores.map(function (t) {
-                 var row = {
-                     team: $("<td>")
-                         .addClass("align-middle")
-                         .append($("<div>").addClass("font-weight-bold").text(t.name))
-                         .append($("<small>").text(t.ip)),
-                     score: renderScore(t)};
-                 Object.keys(t.services).forEach(function (s) {
-                     row[s] = renderService(t.services[s]);
+     var timer = null;
+     var is_scrolling = false;
+     $('#auto-scroll').click(function () {
+         if (is_scrolling) {
+             $('html, body').stop();
+             console.log('clear')
+             window.clearInterval(timer);
+             is_scrolling = false;
+         } else {
+             is_scrolling = true;
+             let auto_scroll_initial_delay = 1000;
+             let auto_scroll_half_duration = 120000;
+             let scroll_page = function () {
+                 console.log("asdasd")
+                 $('html, body').delay(auto_scroll_initial_delay).animate({
+                     scrollTop: $(document).height() - $(window).height()
+                 }, auto_scroll_half_duration, function () {
+                     $(this).animate({
+                         scrollTop: 0
+                     }, auto_scroll_half_duration);
+                     $(this).stop()
                  });
-                 return row;
-             });
-             table.rows.load(rows);
-
-             $("#rnd-scores").text(scoreboard_round -1);
-             $("#rnd-current").text(current_round);
-
-             if (scoreboard_round != current_round)
-                 $("#freezeinfo").show();
-             else
-                 $("#freezeinfo").hide();
-         });
-     }
-
-     function updateChart() {
-         $.getJSON("/ctf_stats/300", function (scores) {
-             if (!scores) return;
-             
-             scoreGraph.data.labels = []
-             scoreGraph.data.datasets = []
-             for (var team in scores) {
-                 if (scoreGraph.data.labels.length == 0) {
-                     scoreGraph.data.labels = Object.keys(scores[team])
-                 }
-                 scoreGraph.data.datasets.push({
-                     label: team,
-                     data: Object.values(scores[team]),
-                     borderColor: '#' + intToRGB(hashCode(team + 'Oht3xZg8')),
-                     borderWidth: 3,
-                     fill: false
-                 })
              }
-             scoreGraph.update()
+             scroll_page();
+             timer = window.setInterval(scroll_page, auto_scroll_half_duration*3);
+             // stop auto scroll on some events
+             $(document).on('wheel', function () {
+                 $('html, body').stop();
+                 console.log('clear')
+                 window.clearInterval(timer);
+                 is_scrolling = false;
+             });
+         }
          });
-     }
 
-     function updateCountdown() {
-         seconds_left--;
-         var s = seconds_left % 3600;
-         var hours = Math.floor(seconds_left / 3600);
-         var minutes = Math.floor(s / 60);
-         var seconds = s % 60;
-         $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
-         if (seconds_left < 0) $("#countdown-container").hide()
-         else $("#countdown-container").show()
+         function updateTable() {
+             $.getJSON("/ctf_scoreboard", function (data) {
+                 current_round = data.current_round;
+                 scoreboard_round = data.round;
+                 if (seconds_left <= 0) {
+                     seconds_left = data.seconds_left;
+                     updateCountdown();
+                 }
 
-     }
+                 var rows = data.scores.map(function (t) {
+                     var row = {
+                         team: $("<td>")
+                             .addClass("align-middle")
+                             .append($("<div>").addClass("font-weight-bold").text(t.name))
+                             .append($("<small>").text(t.ip)),
+                         score: renderScore(t)};
+                     Object.keys(t.services).forEach(function (s) {
+                         row[s] = renderService(t.services[s]);
+                     });
+                     return row;
+                 });
+                 table.rows.load(rows);
 
-     updateCountdown();
-     updateTable();
-     updateChart();
-     setInterval(function () {
-         if (seconds_left <= 0 || seconds_left % update_period == 0) {
-             updateTable();
+                 $("#rnd-scores").text(scoreboard_round -1);
+                 $("#rnd-current").text(current_round);
+
+                 if (scoreboard_round != current_round)
+                     $("#freezeinfo").show();
+                 else
+                     $("#freezeinfo").hide();
+             });
          }
-         if (seconds_left % (update_period * 10) == 0) {
-             updateChart();
+
+         function updateChart() {
+             $.getJSON("/ctf_stats/300", function (scores) {
+                 if (!scores) return;
+
+                 scoreGraph.data.labels = []
+                 scoreGraph.data.datasets = []
+                 for (var team in scores) {
+                     if (scoreGraph.data.labels.length == 0) {
+                         scoreGraph.data.labels = Object.keys(scores[team])
+                     }
+                     var color  = '#' + intToRGB(hashCode(team + 'Oht3xZg8'));
+                     scoreGraph.data.datasets.push({
+                         label: team,
+                         data: Object.values(scores[team]),
+                         backgroundColor: color,
+                         borderColor: color,
+                         borderWidth: 3,
+                         pointRadius: 0,
+                         pointHitRadius: 3,
+                         fill: false
+                     })
+                 }
+                 scoreGraph.update()
+             });
          }
+
+         function updateCountdown() {
+             seconds_left--;
+             var s = seconds_left % 3600;
+             var hours = Math.floor(seconds_left / 3600);
+             var minutes = Math.floor(s / 60);
+             var seconds = s % 60;
+             $("#countdown").text(hours + " h, " + minutes + " m, " + seconds + " s");
+             if (seconds_left < 0) $("#countdown-container").hide()
+             else $("#countdown-container").show()
+
+         }
+
          updateCountdown();
-     }, 1000);
- });
+         updateTable();
+         updateChart();
+         setInterval(function () {
+             if (seconds_left <= 0 || seconds_left % update_period == 0) {
+                 updateTable();
+             }
+             if (seconds_left % (update_period * 10) == 0) {
+                 updateChart();
+             }
+             updateCountdown();
+         }, 1000);
+     });
 </script>
 
 <script language="javascript" type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
