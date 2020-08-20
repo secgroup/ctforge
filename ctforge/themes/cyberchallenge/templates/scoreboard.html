@@ -314,7 +314,7 @@
          updateChart()
      });
 
-     if (localStorage.getItem('show-all-teams')) {
+     if (JSON.parse(localStorage.getItem('show-all-teams'))) {
          $("#showallcheckbox").attr("checked", true)
      }
      $("#showallcheckbox").change(function () {
