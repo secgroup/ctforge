@@ -54,65 +54,24 @@
     </div>
 </div>
 
-<!--
-     <div class="row mt-5">
-     <div class="col-md-12">
-     <div id="global_score" class="chart"></div>
-     </div>
-     </div>
--->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha512-s+xg36jbIujB2S2VKfpGmlC3T5V2TF3lY48DX7u2r9XzGzgPsa6wTpOQA7J9iffvdeBN0q9tKzRxVxw1JviZPg==" crossorigin="anonymous"></script>
+
+<div class="form-inline pull-right">
+    <div class="form-check mb-2 mr-sm-3">
+        <input class="form-check-input" type="checkbox" id="showallcheckbox">
+        <label class="form-check-label" for="showallcheckbox">Show All Teams</label>
+    </div>
+    
+    <div class="input-group mb-2 mr-sm-2">
+        <input type="text" class="form-control form-control-sm" id="ticktodisplay" placeholder="Ticks to Display">
+        <div class="input-group-append">
+            <button class="input-group-text" id="tickstodisplay-refresh"><span class="fa fa-refresh"></span></button>
+        </div>
+    </div>
+    
+</div>
+
 <canvas id="scoregraph" width="450" height="100"></canvas>
-<script>
-
- function hashCode(str) { // java String#hashCode
-     var hash = 0;
-     for (var i = 0; i < str.length; i++) {
-         hash = str.charCodeAt(i) + ((hash << 5) - hash);
-     }
-     return hash;
- }
-
- function intToRGB(i){
-     var c = (i & 0x00FFFFFF)
-         .toString(16)
-         .toUpperCase();
-     return "00000".substring(0, 6 - c.length) + c;
- }
-
- var ctx = document.getElementById('scoregraph').getContext('2d');
- Chart.defaults.global.animation.duration = 0;
- var scoreGraph = new Chart(ctx, {
-     type: 'line',
-     data: {
-         labels: [],
-         datasets: []
-     },
-     options: {
-         legend: {
-             position: 'bottom'
-         },
-         tooltips: {
-             enabled: true,
-         },
-         scales: {
-             yAxes: [{
-                 scaleLabel: {
-                     display: true,
-                     labelString: 'Global Score'
-                 }
-             }],
-             xAxes: [{
-                 scaleLabel: {
-                     display: true,
-                     labelString: 'Round'
-                 }
-             }]
-         },
-     },
-     
- });
-</script>
 
 <div class="row mt-5">
     <div class="col-md-12">
@@ -217,6 +176,55 @@
      ]);
  }
 
+ 
+ function hashCode(str) {
+     var hash = 0;
+     for (var i = 0; i < str.length; i++) {
+         hash = str.charCodeAt(i) + ((hash << 5) - hash);
+     }
+     return hash;
+ }
+
+ function intToRGB(i){
+     var c = (i & 0x00FFFFFF)
+         .toString(16)
+         .toUpperCase();
+     return "00000".substring(0, 6 - c.length) + c;
+ }
+
+ var ctx = document.getElementById('scoregraph').getContext('2d');
+ Chart.defaults.global.animation.duration = 0;
+ var scoreGraph = new Chart(ctx, {
+     type: 'line',
+     data: {
+         labels: [],
+         datasets: []
+     },
+     options: {
+         legend: {
+             position: 'bottom'
+         },
+         tooltips: {
+             enabled: true,
+         },
+         scales: {
+             yAxes: [{
+                 scaleLabel: {
+                     display: true,
+                     labelString: 'Global Score'
+                 }
+             }],
+             xAxes: [{
+                 scaleLabel: {
+                     display: true,
+                     labelString: 'Round'
+                 }
+             }]
+         },
+     },
+     
+ });
+
  $(document).ready(function() {
      var table = FooTable.init(".scoreboard", {
          "columns": columns
@@ -293,8 +301,33 @@
          });
      }
 
+     if (localStorage.getItem('ticks-to-display')) {
+         $("#ticktodisplay").val(localStorage.getItem('ticks-to-display'))
+     }
+     $("#tickstodisplay-refresh").click(function (){
+         var ticks = $("#ticktodisplay").val()
+         if (ticks) {
+             localStorage.setItem("ticks-to-display", ticks)
+         } else {
+             localStorage.removeItem("ticks-to-display")
+         }
+         updateChart()
+     });
+
+     if (localStorage.getItem('show-all-teams')) {
+         $("#showallcheckbox").attr("checked", true)
+     }
+     $("#showallcheckbox").change(function () {
+         var current = JSON.parse(localStorage.getItem('show-all-teams'))
+         localStorage.setItem('show-all-teams', !current)
+         console.log(localStorage.getItem('show-all-teams'))
+         updateChart()
+     })
+     
      function updateChart() {
-         $.getJSON("/ctf_stats/20", function (scores) {
+         var ticks_to_display = (localStorage.getItem('ticks-to-display') |0) || 20;
+         
+         $.getJSON(`/ctf_stats/${ticks_to_display}`, function (scores) {
              if (!scores) return;
 
              scoreGraph.data.labels = []
@@ -303,13 +336,16 @@
              // top 10 teams
              // TODO: show All button
              // TODO: always show current team if logged in
-             scoreGraph.options.title = { display: true, text: 'Top 10' }
              var topteams = Object.keys(scores)
-             topteams.sort(function (teamA, teamB) {
-                 return (scores[teamA][current_round-1] - scores[teamB][current_round-1])
-             }).reverse()
-             console.log(topteams)
-             topteams = topteams.slice(0,9)
+             var show_all_teams = JSON.parse(localStorage.getItem('show-all-teams'));
+             scoreGraph.options.title = { display: false }
+             if (!show_all_teams) {
+                 scoreGraph.options.title = { display: true, text: 'Top 10' }
+                 topteams.sort(function (teamA, teamB) {
+                     return (scores[teamA][current_round-1] - scores[teamB][current_round-1])
+                 }).reverse()
+                 topteams = topteams.slice(0,9)
+             }
              
              for (var team of topteams) {
                  if (scoreGraph.data.labels.length == 0) {
