@@ -34,26 +34,26 @@
 <div class="row">
     <div class="col-md-8">
         <table class="table">
-            <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
+            <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }}</td></tr>
             <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
             <tr><td>Affiliation:</td><td>{{ user.affiliation }}</td></tr>
         </table>
     </div>
     <div class="col-md-4">
         <a class="btn btn-dark d-block {% if not vpn_encoded %}disabled{% endif %} mb-3"
-           download="{{ user.nickname }}.ovpn"
+           download="{{ user.surname.replace(' ', '').strip().lower() }}.ovpn"
            {% if vpn_encoded %}
            href="data:application/octet-stream;base64,{{ vpn_encoded }}"
            {% endif %}>
             <i class="fa fa-download"></i>
-            {{ user.nickname }}.conf
+            {{ user.surname.replace(" ","").strip().lower() }}.conf
         </a>
-        <a class="btn btn-dark d-block mb-3"
+        <!-- <a class="btn btn-dark d-block mb-3"
            target="_blank"
            href="#">
             <i class="fa fa-slack"></i>
             Join on Slack
-        </a>
+        </a> -->
     </div>
 </div>
 {% if config['JEOPARDY_ACTIVE'] %}

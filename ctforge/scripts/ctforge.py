@@ -146,7 +146,7 @@ def imp(args):
         for i,user in enumerate(users):
             print("{}".format(i))
             sys.stdout.flush()
-            db_add_user(name=user[0], surname=user[1], nickname=user[2], mail=user[3], affiliation=user[4], password=user[5])
+            db_add_user(name=user[0], surname=user[1], nickname=None, mail=user[3], affiliation=user[4], password=user[5])
         args.users.close()
         print('Done!')
 

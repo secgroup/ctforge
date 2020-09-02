@@ -1179,6 +1179,7 @@ def service(name):
 
 @app.route('/teams')
 @attackdefense_mode_required
+@login_required
 def teams():
     """Print teams data."""
 

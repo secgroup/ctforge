@@ -47,7 +47,7 @@ CREATE TABLE users (
     team_id       INT NULL,
     name          VARCHAR(45) NOT NULL,
     surname       VARCHAR(45) NOT NULL,
-    nickname      VARCHAR(45) NOT NULL,
+    nickname      VARCHAR(45), -- NOT NULL,
     mail          VARCHAR(70) NOT NULL,
     affiliation   VARCHAR(100) NULL,
     password      VARCHAR(100) NOT NULL,
@@ -55,8 +55,8 @@ CREATE TABLE users (
     hidden        BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (id),
     FOREIGN KEY (team_id) REFERENCES teams (id),
-    UNIQUE (mail),
-    UNIQUE (nickname)
+    UNIQUE (mail) --,
+    -- UNIQUE (nickname)
 );
 
 CREATE TABLE challenges (

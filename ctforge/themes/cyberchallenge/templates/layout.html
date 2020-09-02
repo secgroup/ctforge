@@ -80,7 +80,7 @@
                         {% if config.ATTACKDEFENSE_ACTIVE %}
                         <li class="nav-item {% if request.path == url_for('scoreboard') %}active{% endif %}"><a class="nav-link" href="{{ url_for('scoreboard') }}">Scoreboard</a></li>
                         {% endif %}
-                        {% if config.ATTACKDEFENSE_ACTIVE %}
+                        {% if config.ATTACKDEFENSE_ACTIVE and current_user.is_authenticated %}
                         <li class="nav-item {% if request.path == url_for('teams') %}active{% endif %}"><a class="nav-link" href="{{ url_for('teams') }}">Teams</a></li>
                         {% endif %}
                         {% if config.ATTACKDEFENSE_ACTIVE %}
@@ -118,9 +118,12 @@
             {% block content %}
             {% endblock %}
             {% block footer %}
-            <hr>
-            <footer>
-                <p class="muted credit">A <a href="mailto:info@10sec.it">10Sec S.r.l.</a> and <a href="https://secgroup.github.io/">c00kies@venice</a> production | Join us on <a href="https://ccit19.slack.com">Slack</a></p>
+            
+            <footer class="footer">
+                <div class="container">
+                    <span class="text-muted">A <a href="mailto:info@10sec.it">10Sec S.r.l.</a> and <a href="https://secgroup.github.io/">c00kies@venice</a> production <!-- | Join us on <a href="https://ccit19.slack.com">Slack</a></p> -->
+                    </span>
+                </div>
             </footer><!-- /footer -->
             {% endblock %}
         </div> <!-- /container -->
