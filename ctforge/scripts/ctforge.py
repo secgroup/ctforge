@@ -94,7 +94,7 @@ def ask(question, answer=None):
 
 def init(args):
     print(('\nWelcome to the installation script of CTForge\n'
-           'Please backup your {} file before continuing.\n'.format(CONF_FILE)))
+           'Please backup your {} file before continuing.\n'.format(CONFIG_FILE)))
     
     resp = ask('Do you want to proceed? (y/n)', 'y' if args.yes else None)
     exit_on_resp(resp)
