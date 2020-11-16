@@ -50,7 +50,7 @@ def send_password_reset_link(user):
         'Hi {name},\n'
         'Please click on the link below to reset the password of your account:\n\n{link}\n\n'
         'Please ignore this email if you did not request to reset your password.\n\n'
-        'Cheers,\nThe WUTCTF organizers'
+        'Cheers,\nThe SASCTF organizers'
     ).format(sender=app.config['MAIL_ADDRESS'], receiver=user.mail, name=user.name, link=link)
     send_email(app.config['MAIL_ADDRESS'], app.config['MAIL_PASSWORD'], user.mail, email_text)
 
@@ -61,9 +61,9 @@ def send_activation_link(user):
         'To: {receiver}\n'
         'Subject: Account activation\n\n'
         'Hi {name},\n'
-        'Welcome to WUTCTF! Please click on the link below to activate your account:\n\n{link}\n\n'
+        'Welcome to SASCTF2020WS! Please click on the link below to activate your account:\n\n{link}\n\n'
         'Keep in mind that your nickname is public! Choose wisely and avoid bad words ;)\n'
         'In case of problems, don\'t hesitate to contact us.\n\n'
-        'Cheers,\nThe WUTCTF organizers'
+        'Cheers,\nThe SASCTF organizers'
     ).format(sender=app.config['MAIL_ADDRESS'], receiver=user.mail, name=user.name, link=link)
     send_email(app.config['MAIL_ADDRESS'], app.config['MAIL_PASSWORD'], user.mail, email_text)
