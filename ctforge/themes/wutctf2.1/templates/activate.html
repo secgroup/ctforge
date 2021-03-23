@@ -1,0 +1,49 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}User Activation{% endblock %}
+{% block navigation %}{% endblock %}
+{% block content %}
+
+<div class="row">
+    <div class="col-sm-8">
+        <form class="form-signin" action="{{ url_for('activate', token=token) }}" method="post">
+            <h2 class="form-signin-heading">Activate user {{ mail }}</h2>
+            {{ form.csrf_token }}
+
+            {{ form.nickname.label(class="control-label") }}
+            {{ form.nickname(placeholder="Nickname", class="form-control", type="text", required=True) }}
+
+            {{ form.password.label(class="control-label") }}
+            {{ form.password(placeholder="Password", class="form-control", required=True) }}
+            
+            {{ form.password_ver.label(class="control-label") }}
+            {{ form.password_ver(placeholder="Password (verification)", class="form-control", required=True) }}
+
+            <br/>
+            <button class="btn btn-lg btn-dark" type="submit">Activate</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+{% block footer %}{% endblock %}
+

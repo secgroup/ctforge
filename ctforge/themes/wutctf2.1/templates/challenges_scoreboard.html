@@ -1,0 +1,148 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}Challenge Scoreboard{% endblock %}
+
+{% block container_fluid %}container-fluid{% endblock %}
+
+{% block content %}
+
+<h1>Scoreboard</h1>
+
+{% if settings['ctf_running'] or (settings['time_enabled'] and settings['ctf_ended']) %}
+
+<script type="text/javascript" src="{{ url_for('static', filename='js/amcharts.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/serial.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/chart_dark.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/amstock.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/jeopardy_charts.js') }}"></script>
+
+<div class="row">
+    <div class="col-md-12">
+        {% if affiliations|length > 1 %}
+        <div class="float-right">
+            <label for="scoreboard-filter">Scoreboard</label>
+            <select id="scoreboard-filter">
+                <option>Global</option>
+                {% for a in affiliations %}
+                <option>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+
+        <!-- Table filled dynamically via JS -->
+        <div class="table-responsive">
+            <table class="table scoreboard w-100"></table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div id="challenges_time" class="chart"></div>
+    </div>
+</div>
+
+<script>
+// Second-order function that generates filters used to plot charts
+function filter_by_affiliation (affiliation) {
+     return function (row) {
+         return affiliation === 'Global' || row['affiliation'] === affiliation;
+     }
+ }
+
+ // Current filter
+ var data_filter = filter_by_affiliation('Global');
+
+ function updateCharts(data) {
+     makeChart("challenges_time", data.filter(data_filter), challengesChart);
+ }
+
+function renderChallenge(challName) {
+    return function (row, type) {
+        let c = row.challenges[challName];
+        if (type !== "display") {
+            return c.points;
+        }
+        if (row.challenges[challName].timestamp === null) {
+            return "<span class='fa fa-remove alert-danger bg-no'></span>";
+        } else {
+            return $("<span>").attr("aria-hidden", "true").addClass("alert-info")
+                .attr("title", c.timestamp).text(c.points).prop("outerHTML");
+        }
+    }
+}
+
+$(document).ready(function() {
+    $('.scoreboard').DataTable({
+        "ajax": {
+            "url": "/scoreboard_jeopardy",
+            "dataSrc": ""
+        },
+        "columns": [
+            { "name": "position", "defaultContent": "", "title": "#", "className": "text-left counter" },
+            { "name": "user", "data": "user", "title": "User", "className": "text-left" },
+            {% if affiliations|length > 1 %}
+            { "name": "affiliation", "data": "affiliation", "title": "Course", "className": "text-left" },
+            {% endif %}
+            {% for c in challenges %}
+            { "name": "challenges-{{ c.name }}", "data": renderChallenge("{{ c.name }}"),
+                "title": "<a href=\"{{ url_for('challenge', name=c.name) }}\" class=\"btn btn-secondary {% if not c.active %}disabled{% endif %}\" role=\"button\">{{ c.name }}</a>",
+                "className": "text-center" },
+            {% endfor %}
+            { "name": "points", "data": "points", "title": "Leetscore", "className": "text-right" },
+        ],
+        "ordering": false,
+        "paging": false,
+        "dom": "t"
+    });
+    $(".scoreboard").DataTable().on("xhr", (e, settings, json) => {
+        updateCharts(json);
+    });
+    $("#scoreboard-filter").on("change", (e) => {
+        let val = (e.target.value === "Global") ? "" : `^${e.target.value}$`;
+        let table = $('.scoreboard').DataTable();
+        table.column("affiliation:name").search(val, true).draw();
+
+        data_filter = filter_by_affiliation(e.target.value);
+        updateCharts(table.ajax.json());
+    });
+    setInterval( () => {
+        $('.scoreboard').DataTable().ajax.reload();
+    }, 30000 );
+} );
+</script>
+
+{% else %}
+
+<div class="card">
+    <div class="card-body mx-auto h5">
+        {% if settings['time_enabled'] %}
+        The CTF starts at {{ settings['start_time'] }}
+        {% else %}
+        The CTF is coming soon!
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

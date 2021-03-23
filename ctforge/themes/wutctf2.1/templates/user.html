@@ -1,0 +1,75 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}User Profile{% endblock %}
+{% block content %}
+
+<h1>User Profile</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <table class="table">
+            <tr><td>Name:</td><td>{{ user.name }} {{ user.surname }} ({{ user.nickname }})</td></tr>
+            <tr><td>Mail:</td><td>{{ user.mail }}</td></tr>
+            <tr><td>Username (on testbed):</td><td>stud{{ user.id }}</td></tr>
+            {% if user.affiliation %}
+            <tr><td>Course:</td><td>{{ user.affiliation }}</td></tr>
+            {% endif %}
+        </table>
+    </div>
+    <div class="col-md-4">
+        <a class="btn btn-dark d-block mb-3"
+	   href="ssh://stud{{ user.id }}@10.3.0.4:22">
+            <i class="fa fa-terminal"></i>
+            testbed (10.3.0.4)
+        </a>
+        <a class="btn btn-dark d-block mb-3"
+           download="wutctf-{{ user.id }}_ed25519"
+           {% if ssh_encoded %}
+           href="data:application/octet-stream;base64,{{ ssh_encoded }}"
+           {% endif %}>
+            <i class="fa fa-download"></i>
+            ssh private key
+        </a>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <h2>Solved Challenges</h2>
+
+        {% if challenges|length > 0 %}
+        <table class="table">
+            <thead><tr><td>Challenge</td><td>Score</td><td>Time</td></tr></thead>
+            <tbody>
+            {% for chal in challenges %}
+                <tr>
+                    <td>{{ chal.name }}</td><td>{{ chal.points }}</td><td>{{ chal.timestamp }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <h3 align="center">No Challenges</h3>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

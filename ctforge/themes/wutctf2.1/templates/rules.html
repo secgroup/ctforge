@@ -1,0 +1,87 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}CTF Design{% endblock %}
+{% block content %}
+
+<h1>CTF Rules</h1>
+<p>
+    WUTCTF2.0 is a security competition for students attending the Introduction to Security (<a href="https://tuwel.tuwien.ac.at/course/view.php?id=22147">184.783 VU</a> and <a href="https://tuwel.tuwien.ac.at/course/view.php?id=21976">192.082 UE</a>) courses at <a href="https://tuwien.ac.at">TU Wien</a>. Please refer to <a href="https://tuwel.tuwien.ac.at">TUWEL</a> pages for more information including lectures, deadlines and grading rules.
+</p>
+
+
+<h3>Flags</h3>
+<p>
+    The aim of each challenge is to get a string (called flag) that proves a successful exploitation. Flag format is <code>WUT{...}</code> unless differently specified.
+</p>
+
+
+<h3>Leetscore</h3>
+<p>
+To make the competition more thrilling, we provide a scoreboard that reflects your <strong><a href="https://www.urbandictionary.com/define.php?term=leetness">leetness</a></strong>, which we measure in terms of <em>hacking speed</em>. Each challenge is worth a certain amount of points that decrease according to your rank on that specific problem. The formula we use to compute points is
+    <pre><code>points = floor(100 / (X+1)**0.15)</code></pre>
+    where <code>X</code> is the number of students who solved the challenge at the time of the submission. To exemplify, the first solver will obtain the full <code>100</code> points, the second gets <code>90</code>, the third <code>84</code> and so on. You can see on <a href="https://www.wolframalpha.com/input/?i=floor%28100%2Fx%5E0.15%29+from+x+0+to+300">WolframAlpha</a> how points decrease over the number of solvers.
+</p>
+<p>
+    <strong>Leetpoints</strong> are earned right after submitting a flag and they <strong>do not affect the course grading</strong>: the only purpose of the scoreboard on this platform is to have fun and fight for honor! Furthermore, students are free to solve any published challenge (even from a different course) to increase their rank in the scoreboard!
+</p>
+
+
+<h3>Write-ups</h3>
+<p>
+    After submitting a flag you are expected to write a report, called write-up, and send it using the submission form before the challenge deadline. The CTF platform provides a template for every write-up, that specifies the content that you are required to include, e.g., the entire code developed to exploit a challenge or a patch to fix the vulnerability. <strong>Write-ups not following the template will not be evaluated</strong>. Please refer to the grading system published on TUWEL pages for more details.
+</p>
+
+
+<h3>Technical and Human Behaviour</h3>
+<p>We'd like everyone to enjoy a fair game. For this reason we ask you to follow these simple rules:</p>
+<ul>
+    <li>No attacks against the infrastructure (this website and challenges) including denial-of-service (DoS), floods, DNS poisoning, ARP spoofing, MITM, etc... The CTF platform is <a hreaf="https://github.com/secgroup/ctforge">open source</a> and we welcome everyone to perform a securty review of its source code. Report us any vulnerability you may find for an additional bonus!</li>
+    <li>Don't try to bruteforce flags by doing an unreasonable number of attempts in the flag submission page. We guarantee our flags to be unguessable&trade;.</li>
+    <li>Vulnerability/network scanners are useless for these challenges and not allowed. Do something better.</li>
+    <li>If you find a way to hack into a service/challenge more easily than intended, please report it to the tutors.</li>
+</ul>
+<p>
+    Rules anyway may change as more issues are raised by the participants. Also, the organizers keep the right to change them at any time. Keep in mind that it is not possible/feasible to list all the rules and the exceptions to rules that apply to the CTF competition. When in doubt, use common sense or ask the tutors/teaching assistants.
+</p>
+
+
+<h3>Collaboration Policy</h3>
+<p>
+    For any challenge, you can use all resources listed on the website and in TUWEL lecture notes, referred textbooks, and URLs mentioned on the slides and in the challenge description. It is strictly prohibited to use solutions/code from similar courses or to take solutions/code from Internet searches. If you discuss with other people, list them (i.e., cite your sources) and indicate how your solution was affected by that discussion.
+</p>
+<p>
+    Solutions have to be kept strictly confidential: spreading of information is easy to detect and it will likely spoil the fun of other participants trying to solve the tasks. In case of uncertainty, ask the tutors or teaching assistants. There is no warning: if you are caught cheating or violating any of these rules, you might be banned from the course.
+</p>
+
+
+<h3>Communication</h3>
+<p>
+    Please use the forums hosted on TUWEL if you have doubts about the challenges or if you need clarification on a specific topic. If you think you have any question or request that cannot be publicly shared, send us a mail at <a href="mailto:introsec@list.tuwien.ac.at">introsec@list.tuwien.ac.at</a>.
+</p>
+
+
+<h3>Credits</h3>
+<p>
+    The CTF platform, the gaming infrastructure and most challenges have been designed by <a href="https://minimalblue.com">Marco Squarcina</a> and <a href="https://informatics.tuwien.ac.at/people/mauro-tempesta">Mauro Tempesta</a> based on previous work for the Security course at <a href="https://www.unive.it/">Università Ca' Foscari</a> and for the <a href="https://cyberchallenge.it/">CyberChallenge.IT</a> training program. Lorenzo Veronese contributed to the CTF platform and to the infrastructure. The tutors tested all the challenges before release and provided useful feedback.
+</p>
+
+{% endblock %}

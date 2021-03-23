@@ -1,0 +1,110 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+{% extends "layout.html" %}
+{% block title %}{{ challenge.name }}{% endblock %}
+{% block content %}
+
+<h2 class="clearfix">{{ challenge.name }}
+    <span class="text-muted">({{ challenge.points }} points)</span>
+{% if solved %}
+    <span class="fa fa-check alert-info" aria-hidden="true" style="background: none"></span>
+{% endif %}
+    <span class="small float-right">{{ challenge.tags }}</span>
+</h2>
+
+<div class="card">
+    <div class="card-body">
+        {% if challenge.deadline %}
+        <h5>Deadline: {{ challenge.deadline }}</h5>
+        {% endif %}
+        {{ challenge.description|safe }}
+    </div>
+</div>
+
+{% if challenge.active %}
+    {% if not solved %}
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+            <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
+                {{ flag_form.hidden_tag() }}
+                <div class="form-group">
+                    {{ flag_form.flag.label(class="sr-only") }}
+                    {{ flag_form.flag(placeholder="Flag", class="form-control", required=True) }}
+                </div>
+                <button class="btn btn-dark" type="submit">Submit</button>
+            </form>
+        </div>
+        <div class="col-md-2"></div>
+    </div>
+    {% endif %}
+{% else %}
+    <div class="row">
+        <p class="lead d-block w-100 h4 text-center mt-4">Challenge disabled</p>
+    </div>
+{% endif %}
+
+{% if challenge.writeup and solved %}
+    <hr>
+    {% if writeups %}
+        <div class="row">
+            <div class="col-md-8">
+            {% if evaluation %}
+                <h3>Evaluation</h3>
+                    <ul>
+                        <li>Time: {{ evaluation.timestamp.strftime("%d/%m/%Y, %H:%M:%S") }}</li>
+                        {% if graded %}
+                            <li>Grade: <strong>{{ evaluation.grade }}</strong>/1.0</li>
+                        {% endif %}
+                    </ul>
+                    <p>Feedback</p>
+                    <textarea class="form-control" rows="5">{{ evaluation.feedback }}</textarea>
+            {% endif %}
+            </div>
+            <div class="col-md-4">
+                <div class="list-group">
+                {% for writeup in writeups %}
+                    <a href="{{ url_for('writeup', id=writeup.id) }}" class="list-group-item">{{ writeup.timestamp.strftime("%d/%m/%Y, %H:%M:%S") }}</a>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    {% if challenge.active and not graded %}
+        <div class="row">
+            <div class="col-md-12">
+            <h3>Submit a writeup</h3>
+            <p>Writeup submission can be performed until the deadline</p>
+            </div>
+            <div class="col-md-12">
+                <form class="form-submit" action="{{ url_for('challenge', name=challenge.name) }}" method="post">
+                    {{ writeup_form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ writeup_form.writeup(placeholder="Writeup data", class="form-control", rows="20", required=True) }}
+                    </div>
+                    <button class="btn btn-dark" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

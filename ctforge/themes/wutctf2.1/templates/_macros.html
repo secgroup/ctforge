@@ -1,0 +1,139 @@
+
+{# CTForge: Forge your own CTF. #}
+
+{# Copyright (C) 2016-2020  Marco Squarcina #}
+{# Copyright (C) 2016-2020  Mauro Tempesta #}
+{# Copyright (C) 2016-2020  Lorenzo Veronese #}
+
+{# This program is free software: you can redistribute it and/or modify #}
+{# it under the terms of the GNU Affero General Public License as published #}
+{# by the Free Software Foundation, either version 3 of the License, or #}
+{# (at your option) any later version. #}
+
+{# This program is distributed in the hope that it will be useful, #}
+{# but WITHOUT ANY WARRANTY; without even the implied warranty of #}
+{# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the #}
+{# GNU Affero General Public License for more details. #}
+
+{# You should have received a copy of the GNU Affero General Public License #}
+{# along with this program.  If not, see <https://www.gnu.org/licenses/>. #}
+
+
+{% macro render_pretty_bools(data) %}
+  	{% if data is none %}
+	    <span class="fa fa-minus" alt="none"></span><span class="d-none">none</span>
+	{% elif data is sameas true %}
+	    <span class="fa fa-check" alt="yes"></span><span class="d-none">yes</span>
+	{% elif data is sameas false %}
+	    <span class="fa fa-remove" alt="no"></span><span class="d-none">no</span>
+	{% else %}
+	    {{ data }}
+	{% endif %}
+{% endmacro %}
+
+{% macro tabify(data, keys, target, id, class='') %}
+    <div role="tabpanel" class="tab-pane fade {{ class }}" id="{{ id }}">
+        <div style="padding-top: 20px;">
+            <p>
+                <a href="{{ url_for('add_' ~ target) }}" style="background: none">
+                    <button type="button" class="btn btn-info">
+                        <span class="fa fa-plus"></span>
+                        add new {{ target }}
+                    </button>
+                </a>
+            </p>
+        </div>
+        <table class="table table-condensed table-hover">
+            <thead>
+                <tr>
+                    <td>&nbsp;</td>
+                {% for k in keys %}
+                    <td>{{ k }}</td>
+                {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+        {% for d in data %}
+            {% if d.active == 0 or d.hidden %}
+                <tr class="text-muted danger">
+            {% else %}
+                <tr>
+            {% endif %}
+                    <td>
+                        <a href="{{ url_for('edit_' ~ target, id=d.id) }}" style="background: none">
+                            <span class="fa fa-pencil"></span>
+                        </a>
+                    </td>
+                {% for k in keys %}
+                    <td>{{ render_pretty_bools(d[k]) }}</td>
+                {% endfor %}
+                <tr>
+        {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endmacro %}
+
+{% macro render_inline_fields(form) %}
+    {% for field in form %}
+        {% if field.type == 'CSRFTokenField' %}
+        {% elif field.type == 'BooleanField' %}
+             <div class="form-group">
+                <div class="col-md-offset-2 col-md-10">
+                    <div class="checkbox">
+                        <label>
+                            {{ field }} {{ field.name }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+        {% elif field.type == 'FormField' and field.form.__class__.__name__ == 'OptionalDateTimeField' %}
+            <div class="form-group">
+                <div class="col-md-10">
+                    <div class="checkbox">
+                        <label>{{ field.active(id=field.active.name) }} deadline</label>
+                    </div>
+
+                    {% set visibility = "" if field.active.data else " d-none" %}
+                    {{ field.time(class="form-control"+visibility, id=field.time.name) }}
+                </div>
+                <script type="text/javascript">
+                    $(function () {
+                        $("#{{ field.time.name }}").flatpickr({
+                            "enableTime": true,
+                            "dateFormat": "Y-m-d H:i",
+                            "time_24hr": true
+                        });
+                        $("#{{ field.active.name }}").on("change", () => {
+                            $("#{{ field.time.name }}").toggleClass("d-none");
+                        })
+                    });
+                </script>
+            </div>
+        {% else %}
+            {% if field.flags.required %}
+                <div class="form-group has-feedback has-error">
+                    <span class="fa fa-hand-left form-control-feedback" aria-hidden="true"></span>
+            {% else %}
+                <div class="form-group">
+            {% endif %}
+                    {{ field.label(class="col-sm-2 control-label") }}
+                    <div class="col-md-10" >
+                        {{ field(class="form-control") }}
+                    </div>
+                </div>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro get_status_badge(status) %}
+    {% if status == 1 %}
+        <span class="label label-info">UP</span>
+    {% elif status == 0 %}
+        <span class="label label-danger">CORRUPTED</span>
+    {% elif status == 2 %}
+        <span class="label label-warning">NO FLAG</span>
+    {% else %}
+        <span class="label label-warning">NOT CHECKED</span>
+    {% endif %}
+{% endmacro %}
