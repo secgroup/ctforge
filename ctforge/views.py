@@ -29,7 +29,7 @@ import math
 import base64
 import psycopg2
 import psycopg2.extras
-from flask import request, render_template, redirect, url_for, flash, abort, jsonify
+from flask import request, render_template, redirect, url_for, flash, abort, jsonify, send_file
 from flask_login import current_user, login_required, login_user, logout_user
 from functools import wraps
 from collections import defaultdict
@@ -598,6 +598,47 @@ def edit_challenge(id):
             return render_template('admin/data.html', form=form,
                                    target='challenge', action='edit')
     return redirect(url_for('admin', tab='challenges'))
+
+@app.route('/admin/challenge/<int:id>/writeups.zip')
+@jeopardy_mode_required
+@admin_required
+def get_writeups(id):
+    import zipfile
+    import io
+    from textwrap import dedent
+    db_conn = get_db_connection()
+    with db_conn.cursor() as cur:
+        cur.execute('SELECT * FROM challenges WHERE id = %s', [id])
+        challenge = cur.fetchone()
+    if challenge is None:
+        return abort(404)
+
+    file_data = io.BytesIO()
+    with db_conn.cursor() as cur, zipfile.ZipFile(file_data, 'w') as zipf:
+        # get the challenge writeups
+        cur.execute((
+            'SELECT W.writeup AS writeup, U.id AS user_id, U.mail AS mail, '
+            '       U.name AS name, U.surname AS surname, '
+            '       W.timestamp AS timestamp '
+            'FROM (SELECT user_id, challenge_id, MAX(id) AS id'
+            '      FROM writeups GROUP BY user_id, challenge_id) AS WT '
+            'JOIN writeups AS W ON WT.id = W.id '
+            'JOIN users AS U ON W.user_id = U.id '
+            'WHERE W.challenge_id = %s'), [id])
+        for wt in cur:
+            fname = 'writeup-{}.txt'.format(wt['user_id'])
+            content = dedent('''\
+            {} {} ({})
+
+            Submission time: {}
+
+            {}
+            ''').format(wt['name'], wt['surname'], wt['mail'], wt['timestamp'], wt['writeup'])
+            zipf.writestr(fname, content)
+
+    file_data.seek(0)
+    return send_file(file_data, attachment_filename="{}-writeups.zip".format(challenge['name']),
+                     as_attachment=True)
 
 
 @app.route('/admin/evaluation/<int:challenge_id>/<int:user_id>', methods=['GET', 'POST'])
