@@ -297,9 +297,9 @@ def create_csv_grading(args):
     db_conn = db_connect()
 
     with db_conn.cursor() as cur:
-        cur.execute('SELECT w.user_id, u.name, u.surname, w.id AS challenge_id, ca.timestamp AS submission_time '
-                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id JOIN challenge_attacks ca ON c.id = ca.challenge_id '
-                    'JOIN users u ON w.user_id = u.id WHERE c.name = %s AND w.timestamp = ('
+        cur.execute('SELECT w.user_id, u.name, u.surname, w.id AS writeup_id, ca.timestamp AS submission_time '
+                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id JOIN users u ON w.user_id = u.id '
+                    'JOIN challenge_attacks ca ON (c.id = ca.challenge_id AND u.id = ca.user_id) WHERE c.name = %s AND w.timestamp = ('
                     '  SELECT MAX(timestamp) FROM writeups WHERE user_id = w.user_id AND challenge_id = w.challenge_id'
                     ') '
                     'ORDER BY w.user_id', [args.challenge])
@@ -307,7 +307,7 @@ def create_csv_grading(args):
 
     for w in writeups:
         w['user_name'] = w['name'] + ' ' + w['surname']
-        w['latest_writeup'] = urllib.parse.urljoin(app.config['URL'], '/writeup/'+str(w['challenge_id']))
+        w['latest_writeup'] = urllib.parse.urljoin(app.config['URL'], '/writeup/'+str(w['writeup_id']))
 
     with open(args.csv, 'w', newline='') as f:
         fields = ['user_id', 'user_name', 'latest_writeup', 'grade', 'excellent', 'unusual', 'comment']
