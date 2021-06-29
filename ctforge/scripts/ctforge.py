@@ -297,9 +297,9 @@ def create_csv_grading(args):
     db_conn = db_connect()
 
     with db_conn.cursor() as cur:
-        cur.execute('SELECT w.user_id, u.name, u.surname, w.id AS challenge_id '
-                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id JOIN users u ON w.user_id = u.id '
-                    'WHERE c.name = %s AND w.timestamp = ('
+        cur.execute('SELECT w.user_id, u.name, u.surname, w.id AS challenge_id, ca.timestamp AS submission_time '
+                    'FROM writeups w JOIN challenges c ON w.challenge_id = c.id JOIN challenge_attacks ca ON c.id = ca.challenge_id '
+                    'JOIN users u ON w.user_id = u.id WHERE c.name = %s AND w.timestamp = ('
                     '  SELECT MAX(timestamp) FROM writeups WHERE user_id = w.user_id AND challenge_id = w.challenge_id'
                     ') '
                     'ORDER BY w.user_id', [args.challenge])
@@ -311,6 +311,8 @@ def create_csv_grading(args):
 
     with open(args.csv, 'w', newline='') as f:
         fields = ['user_id', 'user_name', 'latest_writeup', 'grade', 'excellent', 'unusual', 'comment']
+        if args.timestamp:
+            fields.insert(2, 'submission_time')
         writer = csv.DictWriter(f, fieldnames=fields, delimiter='|', quotechar='"', extrasaction='ignore')
         writer.writeheader()
         writer.writerows(writeups)
@@ -368,6 +370,7 @@ def parse_args():
     parser_export.add_argument('challenge', type=str, help='Name of the challenge')
     parser_export.add_argument('-d', '--dir', type=str, help='Directory where to save writeups')
     parser_export.add_argument('-f', '--csv', type=str, help='File for grading')
+    parser_export.add_argument('-t', '--time', dest='timestamp', action='store_true', help='Add the timestamp of the flag submission to the CSV')
 
     return parser.parse_args()
 
